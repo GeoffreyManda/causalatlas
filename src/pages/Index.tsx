@@ -1,20 +1,8 @@
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { estimandsData } from '@/data/estimands';
-import EstimandCard from '@/components/EstimandCard';
-import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
-  const [selectedTier, setSelectedTier] = useState<string>('All');
-  
-  const tiers = ['All', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
-  
-  const filteredEstimands = selectedTier === 'All' 
-    ? estimandsData 
-    : estimandsData.filter(e => e.tier === selectedTier);
-
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -46,44 +34,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Estimand Library */}
-      <section className="py-12">
-        <div className="container">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-4">Estimand Library</h2>
-            <p className="text-muted-foreground mb-6">
-              Browse and explore causal estimands organized by complexity tier
-            </p>
-            
-            {/* Tier Filter */}
-            <div className="flex flex-wrap gap-2">
-              {tiers.map((tier) => (
-                <Badge
-                  key={tier}
-                  variant={selectedTier === tier ? "default" : "outline"}
-                  className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedTier(tier)}
-                >
-                  {tier}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          
-          {/* Estimand Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEstimands.map((estimand) => (
-              <EstimandCard key={estimand.id} estimand={estimand} />
-            ))}
-          </div>
-          
-          {filteredEstimands.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              No estimands found for this tier
-            </div>
-          )}
-        </div>
-      </section>
     </div>
   );
 };

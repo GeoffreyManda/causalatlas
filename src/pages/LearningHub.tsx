@@ -1,11 +1,11 @@
-import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { GraduationCap, Target, BookOpen, Code } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const LearningHub = () => {
   const navigate = useNavigate();
-
+  
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -61,7 +61,7 @@ const LearningHub = () => {
 
             {/* Causal Estimands Path */}
             <Card 
-              onClick={() => navigate('/slides')}
+              onClick={() => navigate('/estimands')}
               className="p-12 cursor-pointer hover:scale-105 transition-all hover:shadow-2xl bg-gradient-to-br from-card via-card to-tier-intermediate/10"
             >
               <div className="flex flex-col items-center text-center space-y-6">

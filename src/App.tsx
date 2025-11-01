@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import LearningHub from "./pages/LearningHub";
 import TheoryView from "./pages/TheoryView";
 import SlidesView from "./pages/SlidesView";
+import EstimandsLibrary from "./pages/EstimandsLibrary";
 import NetworkView from "./pages/NetworkView";
 import TerminalView from "./pages/TerminalView";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/learning" element={<LearningHub />} />
           <Route path="/theory" element={<TheoryView />} />
           <Route path="/slides" element={<SlidesView />} />
+          <Route path="/estimands" element={<EstimandsLibrary />} />
           <Route path="/network" element={<NetworkView />} />
           <Route path="/terminal" element={<TerminalView />} />
           <Route path="/playground" element={<TerminalView />} />
