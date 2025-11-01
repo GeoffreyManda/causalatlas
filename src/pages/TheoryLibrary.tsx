@@ -1,15 +1,22 @@
 import Navigation from '@/components/Navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { allTheoryTopics } from '@/data/allTheoryTopics';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const TheoryLibrary = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedTier, setSelectedTier] = useState<string>('all');
+  
+  // Apply filter from URL param on mount
+  useEffect(() => {
+    const tier = searchParams.get('tier');
+    if (tier) setSelectedTier(tier);
+  }, [searchParams]);
   
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced', 'Frontier'];
   

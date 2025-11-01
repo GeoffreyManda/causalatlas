@@ -16,12 +16,6 @@ const NetworkView = () => {
   const [searchParams] = useSearchParams();
   const highlightNodeId = searchParams.get('node');
   const [activeTab, setActiveTab] = useState<string>('estimands');
-  const [refsReady, setRefsReady] = useState(false);
-
-  // Ensure refs are ready after first render
-  useEffect(() => {
-    setRefsReady(true);
-  }, []);
   
   // State for estimands filters
   const [selectedTier, setSelectedTier] = useState<string>('all');
@@ -50,7 +44,8 @@ const NetworkView = () => {
 
   // Estimands Network Effect
   useEffect(() => {
-    if (!estimandsSvgRef.current || activeTab !== 'estimands' || !refsReady) return;
+    console.log('Estimands useEffect running, ref:', !!estimandsSvgRef.current, 'tab:', activeTab);
+    if (!estimandsSvgRef.current || activeTab !== 'estimands') return;
 
     const filteredEstimands = estimandsData.filter(e => {
       if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
@@ -196,6 +191,12 @@ const NetworkView = () => {
       event.stopPropagation();
       if (d.data.type === 'estimand' && d.data.id) {
         navigate(`/estimand-overview?id=${d.data.id}`);
+      } else if (d.data.type === 'framework') {
+        navigate(`/estimands?framework=${encodeURIComponent(d.data.name)}`);
+      } else if (d.data.type === 'design') {
+        navigate(`/estimands?design=${encodeURIComponent(d.data.name)}`);
+      } else if (d.data.type === 'family') {
+        navigate(`/estimands?family=${encodeURIComponent(d.data.name)}`);
       }
     });
 
@@ -218,26 +219,24 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate, refsReady]);
+  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate]);
 
   // Theory Network Effect
   useEffect(() => {
-    if (!theorySvgRef.current || activeTab !== 'theory' || !refsReady) return;
+    console.log('Theory useEffect running, ref:', !!theorySvgRef.current, 'tab:', activeTab);
+    if (!theorySvgRef.current || activeTab !== 'theory') return;
 
     const filteredTopics = allTheoryTopics.filter(topic => {
       if (selectedTheoryTier !== 'all' && topic.tier !== selectedTheoryTier) return false;
       return true;
     });
 
+    const svg = d3.select(theorySvgRef.current);
+    svg.selectAll('*').remove();
+
     const width = 1200;
     const height = 800;
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
-
-    d3.select(theorySvgRef.current).selectAll('*').remove();
-
-    const svg = d3.select(theorySvgRef.current)
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('class', 'w-full h-full');
 
     // Build hierarchy: root → tiers → topics
     const groupedByTier = d3.group(filteredTopics, d => d.tier);
@@ -291,6 +290,9 @@ const NetworkView = () => {
       .on('click', (event: any, d: any) => {
         if (d.data.id) {
           navigate(`/theory-overview?id=${d.data.id}`);
+        } else if (d.parent && !d.parent.parent) {
+          // This is a tier node (parent is root)
+          navigate(`/theory-library?tier=${encodeURIComponent(d.data.name)}`);
         }
       });
 
@@ -313,7 +315,7 @@ const NetworkView = () => {
         }
       });
 
-  }, [selectedTheoryTier, activeTab, navigate, refsReady]);
+  }, [selectedTheoryTier, activeTab, navigate]);
 
   return (
     <div className="min-h-screen bg-background">

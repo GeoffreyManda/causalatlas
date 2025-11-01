@@ -1,14 +1,29 @@
 import Navigation from '@/components/Navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { estimandsData } from '@/data/estimands';
 import EstimandCard from '@/components/EstimandCard';
 import { Badge } from '@/components/ui/badge';
 
 const EstimandsLibrary = () => {
+  const [searchParams] = useSearchParams();
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
   const [selectedFamily, setSelectedFamily] = useState<string>('all');
+  
+  // Apply filters from URL params on mount
+  useEffect(() => {
+    const tier = searchParams.get('tier');
+    const framework = searchParams.get('framework');
+    const design = searchParams.get('design');
+    const family = searchParams.get('family');
+    
+    if (tier) setSelectedTier(tier);
+    if (framework) setSelectedFramework(framework);
+    if (design) setSelectedDesign(design);
+    if (family) setSelectedFamily(family);
+  }, [searchParams]);
   
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
   const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
