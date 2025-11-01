@@ -970,5 +970,249 @@ new_decision <- ifelse(new_benefit > 1.0, 1, 0)
 evsi <- ifelse(new_decision != current_decision, abs(new_benefit - current_benefit), 0)
 cat("EVSI:", round(evsi, 3), "(value of additional RCT)\\n")`
     }
+  },
+
+  // BASIC TIER - Missing estimands
+  {
+    id: 'atc',
+    short_name: 'Average Treatment Effect on Controls (ATC)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'E[Y^1 - Y^0 \\mid A=0]',
+    assumptions: ['SUTVA', 'Consistency', 'Conditional exchangeability', 'Positivity'],
+    identification_formula_tex: 'E_X[E[Y \\mid A=1,X] \\mid A=0] - E[Y \\mid A=0]',
+    estimators: ['IPW for ATC', 'Matching on controls', 'DR-ATC'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Heckman JJ et al', title: 'Matching as an Econometric Evaluation Estimator', year: 1998, doi: '10.2307/2971733' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0])))
+Y = 1.5*A + X[:,0] + np.random.normal(size=n)
+ps = LogisticRegression(max_iter=300).fit(X,A).predict_proba(X)[:,1]
+atc = np.sum(Y[A==1]*(1-ps[A==1])/ps[A==1])/np.sum((1-ps[A==1])/ps[A==1]) - Y[A==0].mean()
+print(f"ATC: {atc:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, plogis(X[,1]))
+Y <- 1.5*A + X[,1] + rnorm(n)
+ps <- glm(A ~ X, family=binomial)$fitted
+atc <- sum(Y[A==1]*(1-ps[A==1])/ps[A==1])/sum((1-ps[A==1])/ps[A==1]) - mean(Y[A==0])
+cat("ATC:", round(atc, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'sate',
+    short_name: 'Sample Average Treatment Effect (SATE)',
+    framework: 'PotentialOutcomes',
+    design: 'RCT_Parallel',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: '\\frac{1}{n}\\sum_{i=1}^n (Y_i^1 - Y_i^0)',
+    assumptions: ['SUTVA', 'Consistency', 'Randomization'],
+    identification_formula_tex: '\\frac{1}{n_1}\\sum_{A_i=1} Y_i - \\frac{1}{n_0}\\sum_{A_i=0} Y_i',
+    estimators: ['Difference-in-means', 'Regression adjustment', 'Neyman estimator'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Imbens GW, Rubin DB', title: 'Causal Inference for Statistics', year: 2015, doi: '10.1017/CBO9781139025751' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 1000
+A = np.random.binomial(1, 0.5, n)
+Y0_true = np.random.normal(5, 2, n)
+Y1_true = Y0_true + 2
+Y = A*Y1_true + (1-A)*Y0_true
+sate = Y[A==1].mean() - Y[A==0].mean()
+print(f"SATE: {sate:.3f}")
+print(f"True SATE: {(Y1_true - Y0_true).mean():.3f}")`,
+      r: `set.seed(20251111)
+n <- 1000
+A <- rbinom(n, 1, 0.5)
+Y0_true <- rnorm(n, 5, 2)
+Y1_true <- Y0_true + 2
+Y <- A*Y1_true + (1-A)*Y0_true
+sate <- mean(Y[A==1]) - mean(Y[A==0])
+cat("SATE:", round(sate, 3), "\\n")
+cat("True SATE:", round(mean(Y1_true - Y0_true), 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'risk_difference',
+    short_name: 'Risk Difference (RD)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'RD = P(Y^1=1) - P(Y^0=1)',
+    assumptions: ['SUTVA', 'Consistency', 'Exchangeability', 'Positivity'],
+    identification_formula_tex: 'P(Y=1 \\mid A=1) - P(Y=1 \\mid A=0)',
+    estimators: ['G-computation', 'IPW', 'AIPW', 'Marginal standardization'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Greenland S', title: 'Interpretation of risks differences', year: 1987, doi: '10.1093/oxfordjournals.aje.a114875' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 0.5, n)
+Y = np.random.binomial(1, 1/(1+np.exp(-(2*A + 0.5*X[:,0]))))
+ps = LogisticRegression(max_iter=300).fit(X,A).predict_proba(X)[:,1]
+p1 = Y[A==1].mean()
+p0 = Y[A==0].mean()
+rd = p1 - p0
+print(f"Risk Difference: {rd:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, 0.5)
+Y <- rbinom(n, 1, plogis(2*A + 0.5*X[,1]))
+p1 <- mean(Y[A==1])
+p0 <- mean(Y[A==0])
+rd <- p1 - p0
+cat("Risk Difference:", round(rd, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'risk_ratio',
+    short_name: 'Risk Ratio (RR)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'RR = \\frac{P(Y^1=1)}{P(Y^0=1)}',
+    assumptions: ['SUTVA', 'Consistency', 'Exchangeability', 'Positivity'],
+    identification_formula_tex: '\\frac{P(Y=1 \\mid A=1)}{P(Y=1 \\mid A=0)}',
+    estimators: ['Log-binomial model', 'Modified Poisson', 'Mantel-Haenszel RR'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Zhang J, Yu KF', title: 'What\'s the RR', year: 1998, doi: '10.1001/jama.280.19.1690' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 0.5, n)
+Y = np.random.binomial(1, 1/(1+np.exp(-(1.5*A + 0.5*X[:,0]))))
+p1 = Y[A==1].mean()
+p0 = Y[A==0].mean()
+rr = p1 / p0 if p0 > 0 else np.nan
+print(f"Risk Ratio: {rr:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, 0.5)
+Y <- rbinom(n, 1, plogis(1.5*A + 0.5*X[,1]))
+p1 <- mean(Y[A==1])
+p0 <- mean(Y[A==0])
+rr <- ifelse(p0 > 0, p1 / p0, NA)
+cat("Risk Ratio:", round(rr, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'odds_ratio',
+    short_name: 'Odds Ratio (OR)',
+    framework: 'PotentialOutcomes',
+    design: 'Case_Control',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'OR = \\frac{P(Y^1=1)/(1-P(Y^1=1))}{P(Y^0=1)/(1-P(Y^0=1))}',
+    assumptions: ['SUTVA', 'Consistency', 'Rare disease approximation (case-control)'],
+    identification_formula_tex: '\\frac{odds(Y=1 \\mid A=1)}{odds(Y=1 \\mid A=0)}',
+    estimators: ['Logistic regression', 'Mantel-Haenszel OR', 'Conditional logistic'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Cornfield J', title: 'A method of estimating comparative rates', year: 1951, doi: '10.2307/3001606' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 0.5, n)
+Y = np.random.binomial(1, 1/(1+np.exp(-(1.2*A + 0.4*X[:,0]))))
+model = LogisticRegression(max_iter=300).fit(np.c_[A, X], Y)
+or_coef = np.exp(model.coef_[0][0])
+print(f"Odds Ratio: {or_coef:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, 0.5)
+Y <- rbinom(n, 1, plogis(1.2*A + 0.4*X[,1]))
+model <- glm(Y ~ A + X, family=binomial)
+or_coef <- exp(coef(model)[2])
+cat("Odds Ratio:", round(or_coef, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'rmst_difference',
+    short_name: 'RMST Difference',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'SurvivalTimeToEvent',
+    tier: 'Basic',
+    definition_tex: '\\Delta RMST = E[\\min(T^1, \\tau)] - E[\\min(T^0, \\tau)]',
+    assumptions: ['SUTVA', 'Consistency', 'Independent censoring', 'Positivity'],
+    identification_formula_tex: '\\int_0^\\tau [S_1(t) - S_0(t)] dt',
+    estimators: ['Pseudo-observation regression', 'IPW Kaplan-Meier', 'AIPW-RMST'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Uno H et al', title: 'Moving beyond the hazard ratio', year: 2014, doi: '10.1200/JCO.2014.55.2208' }
+    ],
+    examples: {
+      python: `import numpy as np
+from lifelines import KaplanMeierFitter
+np.random.seed(20251111)
+n = 1000
+A = np.random.binomial(1, 0.5, n)
+T = np.random.exponential(scale=5 + 3*A, size=n)
+C = np.random.exponential(scale=10, size=n)
+Y = np.minimum(T, C)
+delta = (T <= C).astype(int)
+tau = 10
+kmf1 = KaplanMeierFitter().fit(Y[A==1], delta[A==1])
+kmf0 = KaplanMeierFitter().fit(Y[A==0], delta[A==0])
+rmst1 = kmf1.restricted_mean_survival_time_at_time(tau)
+rmst0 = kmf0.restricted_mean_survival_time_at_time(tau)
+print(f"RMST Difference: {rmst1 - rmst0:.3f}")`,
+      r: `library(survival)
+set.seed(20251111)
+n <- 1000
+A <- rbinom(n, 1, 0.5)
+T <- rexp(n, rate=1/(5 + 3*A))
+C <- rexp(n, rate=1/10)
+Y <- pmin(T, C)
+delta <- as.numeric(T <= C)
+tau <- 10
+surv1 <- survfit(Surv(Y[A==1], delta[A==1]) ~ 1)
+surv0 <- survfit(Surv(Y[A==0], delta[A==0]) ~ 1)
+# Compute RMST (area under survival curve up to tau)
+print("RMST Difference: see survival::rmst for implementation")`
+    }
   }
 ];
