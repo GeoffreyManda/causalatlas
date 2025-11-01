@@ -535,6 +535,14 @@ const NetworkView = () => {
                   width="100%" 
                   height="1200"
                   className="mx-auto border rounded-lg bg-white"
+                  style={{ display: activeTab === 'estimands' ? 'block' : 'none' }}
+                />
+                <svg 
+                  ref={theorySvgRef}
+                  width="100%"
+                  height="1200"
+                  className="mx-auto border rounded-lg bg-white"
+                  style={{ display: activeTab === 'theory' ? 'block' : 'none' }}
                 />
               </div>
             </TabsContent>
@@ -585,12 +593,7 @@ const NetworkView = () => {
               </Card>
 
               <div className="overflow-x-auto">
-                <svg 
-                  ref={theorySvgRef}
-                  width="100%"
-                  height="1200"
-                  className="mx-auto border rounded-lg bg-white"
-                />
+                {/* SVGs are rendered above in the estimands tab but controlled by display style */}
               </div>
             </TabsContent>
           </Tabs>
