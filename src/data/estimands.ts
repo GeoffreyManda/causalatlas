@@ -33,6 +33,171 @@ export interface Estimand {
 }
 
 export const estimandsData: Estimand[] = [
+  // ========== FOUNDATIONAL THEORY ==========
+  {
+    id: 'dags_scm',
+    short_name: 'DAGs & Structural Causal Models',
+    framework: 'SCM',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'G = (V, E), \\quad Y := f_Y(PA_Y, U_Y)',
+    assumptions: ['Acyclicity', 'Independent error terms', 'Causal sufficiency or measured confounders'],
+    identification_formula_tex: 'P(y | do(x)) = \\sum_z P(y | x, z) P(z)',
+    estimators: ['Graphical identification', 'Backdoor adjustment', 'Front-door criterion'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Pearl J', title: 'Causality: Models, Reasoning, and Inference', year: 2009, doi: '10.1017/CBO9780511803161' }
+    ],
+    examples: {
+      python: `import numpy as np
+# Simulate DAG: X -> Y <- Z, X -> Z
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=n)
+Z = 0.5*X + np.random.normal(size=n)
+Y = 1.5*X + 0.8*Z + np.random.normal(size=n)
+# Backdoor adjustment: control for Z
+from sklearn.linear_model import LinearRegression
+model = LinearRegression().fit(np.c_[X, Z], Y)
+causal_effect = model.coef_[0]
+print(f"Causal effect of X on Y: {causal_effect:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- rnorm(n)
+Z <- 0.5*X + rnorm(n)
+Y <- 1.5*X + 0.8*Z + rnorm(n)
+model <- lm(Y ~ X + Z)
+cat("Causal effect of X on Y:", round(coef(model)[2], 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'd_separation',
+    short_name: 'd-separation & Conditional Independence',
+    framework: 'SCM',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'X \\perp\\!\\!\\!\\perp Y \\mid Z \\text{ in } G',
+    assumptions: ['Markov property', 'Faithfulness', 'Causal sufficiency'],
+    identification_formula_tex: '\\text{d-sep}(X, Y | Z) \\Rightarrow X \\perp\\!\\!\\!\\perp Y \\mid Z',
+    estimators: ['Conditional independence tests', 'Graphical criteria'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Pearl J', title: 'Probabilistic reasoning using graphs', year: 1988, doi: '10.1145/1056126.1056128' }
+    ],
+    examples: {
+      python: `import numpy as np
+from scipy.stats import chi2_contingency
+np.random.seed(20251111)
+n = 3000
+# X -> Z <- Y (collider: X indep Y | nothing, dep | Z)
+X = np.random.binomial(1, 0.5, n)
+Y = np.random.binomial(1, 0.5, n)
+Z = np.random.binomial(1, 0.3 + 0.3*X + 0.3*Y, n)
+# Test X indep Y
+table_unconditional = np.array([[((X==0) & (Y==0)).sum(), ((X==0) & (Y==1)).sum()],
+                                 [((X==1) & (Y==0)).sum(), ((X==1) & (Y==1)).sum()]])
+chi2, p_uncond, _, _ = chi2_contingency(table_unconditional)
+print(f"X indep Y (unconditional): p={p_uncond:.3f} (should be >0.05)")`,
+      r: `set.seed(20251111)
+n <- 3000
+X <- rbinom(n, 1, 0.5)
+Y <- rbinom(n, 1, 0.5)
+Z <- rbinom(n, 1, 0.3 + 0.3*X + 0.3*Y)
+test <- chisq.test(table(X, Y))
+cat("X indep Y: p=", round(test$p.value, 3), "(should be >0.05)\\n")`
+    }
+  },
+
+  {
+    id: 'do_calculus',
+    short_name: 'do-Calculus & Intervention',
+    framework: 'SCM',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: 'P(y | do(x)) = \\sum_z P(y | x, z) P(z)',
+    assumptions: ['Causal sufficiency', 'Correct DAG structure', 'Positivity'],
+    identification_formula_tex: '\\text{Apply rules 1-3 of do-calculus}',
+    estimators: ['Adjustment formula', 'ID algorithm', 'Backdoor/frontdoor'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Pearl J', title: 'Causal diagrams for empirical research', year: 1995, doi: '10.2307/2337329' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+# X <- Z -> Y, X -> Y (backdoor Z)
+Z = np.random.normal(size=n)
+X = 0.6*Z + np.random.normal(size=n)
+Y = 1.8*X + 0.9*Z + np.random.normal(size=n)
+# Adjustment formula: E[Y | do(X=x)] = sum_z E[Y|X=x,Z=z] P(Z=z)
+from sklearn.linear_model import LinearRegression
+model = LinearRegression().fit(np.c_[X, Z], Y)
+x_new = 1.0
+z_samples = np.random.choice(Z, size=5000, replace=True)
+interventional_mean = (model.coef_[0]*x_new + model.coef_[1]*z_samples + model.intercept_).mean()
+print(f"E[Y | do(X=1)]: {interventional_mean:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+Z <- rnorm(n)
+X <- 0.6*Z + rnorm(n)
+Y <- 1.8*X + 0.9*Z + rnorm(n)
+model <- lm(Y ~ X + Z)
+x_new <- 1.0
+z_samples <- sample(Z, 5000, replace=TRUE)
+interventional_mean <- mean(coef(model)[2]*x_new + coef(model)[3]*z_samples + coef(model)[1])
+cat("E[Y | do(X=1)]:", round(interventional_mean, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'graphoids',
+    short_name: 'Graphoid Axioms & Semi-Graphoids',
+    framework: 'SCM',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Advanced',
+    definition_tex: '(X \\perp\\!\\!\\!\\perp Y \\mid Z) \\Rightarrow \\text{Symmetry, Decomposition, Weak Union, Contraction}',
+    assumptions: ['Probability distribution', 'DAG faithfulness'],
+    identification_formula_tex: '\\text{Graphoid properties hold for } \\perp\\!\\!\\!\\perp_G',
+    estimators: ['Constraint-based learning', 'PC algorithm', 'FCI'],
+    discovery_status: 'identifiable',
+    eif_status: 'non_pathwise',
+    references: [
+      { authors: 'Pearl J, Paz A', title: 'Graphoids: graph-based logic', year: 1987, doi: '10.1016/0304-3975(87)90136-4' }
+    ],
+    examples: {
+      python: `import numpy as np
+# Demonstrate graphoid symmetry: X indep Y | Z => Y indep X | Z
+np.random.seed(20251111)
+n = 5000
+Z = np.random.normal(size=n)
+X = Z + np.random.normal(size=n)
+Y = Z + np.random.normal(size=n)  # X, Y independent given Z
+from scipy.stats import pearsonr
+r_xy_given_z = pearsonr(X - Z, Y - Z)[0]  # Partial correlation
+print(f"Partial corr(X, Y | Z): {r_xy_given_z:.3f} (should be ~0)")
+# Symmetry verified: Y indep X | Z
+r_yx_given_z = pearsonr(Y - Z, X - Z)[0]
+print(f"Partial corr(Y, X | Z): {r_yx_given_z:.3f} (symmetric)")`,
+      r: `set.seed(20251111)
+n <- 5000
+Z <- rnorm(n)
+X <- Z + rnorm(n)
+Y <- Z + rnorm(n)
+library(ppcor)
+r_xy <- pcor.test(X, Y, Z)$estimate
+cat("Partial corr(X, Y | Z):", round(r_xy, 3), "\\n")`
+    }
+  },
+
   {
     id: 'intro_causality',
     short_name: 'Introduction to Causal Inference',

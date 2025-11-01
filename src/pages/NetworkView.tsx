@@ -11,8 +11,8 @@ const NetworkView = () => {
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const width = 1200;
-    const height = 800;
+    const width = 1400;
+    const height = 900;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll('*').remove();
@@ -21,40 +21,89 @@ const NetworkView = () => {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    // Create nodes and links
+    // Create HIERARCHICAL nodes
     const nodes: any[] = [];
     const links: any[] = [];
 
-    // Add framework nodes
+    // Layer 1: Frameworks (top)
     const frameworks = Array.from(new Set(estimandsData.map(e => e.framework)));
     frameworks.forEach((fw, i) => {
-      nodes.push({ id: `fw_${fw}`, label: fw, type: 'framework', group: 0 });
+      nodes.push({ 
+        id: `fw_${fw}`, 
+        label: fw, 
+        type: 'framework', 
+        x: 200 + i * 250,
+        y: 100,
+        fx: 200 + i * 250, // Fixed position
+        fy: 100
+      });
     });
 
-    // Add estimand nodes
-    estimandsData.forEach((estimand, i) => {
+    // Layer 2: Estimands grouped by tier (hierarchical tiers)
+    const tierY = { Basic: 300, Intermediate: 500, Advanced: 700, Frontier: 850 };
+    const tierCounts = { Basic: 0, Intermediate: 0, Advanced: 0, Frontier: 0 };
+
+    estimandsData.forEach((estimand) => {
+      const fwIndex = frameworks.indexOf(estimand.framework);
+      const tierCount = tierCounts[estimand.tier as keyof typeof tierCounts];
+      
       nodes.push({
         id: estimand.id,
         label: estimand.short_name,
         type: 'estimand',
         tier: estimand.tier,
-        group: 1 + frameworks.indexOf(estimand.framework),
+        framework: estimand.framework,
+        design: estimand.design,
+        x: 200 + fwIndex * 250 + (tierCount % 3 - 1) * 80,
+        y: tierY[estimand.tier as keyof typeof tierY]
       });
       
-      // Link to framework
+      tierCounts[estimand.tier as keyof typeof tierCounts]++;
+      
+      // Hierarchical link to framework
       links.push({
         source: `fw_${estimand.framework}`,
         target: estimand.id,
-        type: 'implements',
+        type: 'belongs_to'
       });
     });
 
-    // Create simulation
+    // Add causal dependencies (theory -> applications)
+    const dependencies = [
+      { from: 'dags_scm', to: 'ate' },
+      { from: 'dags_scm', to: 'att' },
+      { from: 'd_separation', to: 'cate' },
+      { from: 'do_calculus', to: 'ate' },
+      { from: 'do_calculus', to: 'nde' },
+      { from: 'intro_causality', to: 'ate' },
+      { from: 'ate', to: 'att' },
+      { from: 'ate', to: 'cate' },
+      { from: 'msm', to: 'doubleml' },
+      { from: 'late', to: 'nde' },
+    ];
+
+    dependencies.forEach(dep => {
+      const sourceNode = nodes.find(n => n.id === dep.from);
+      const targetNode = nodes.find(n => n.id === dep.to);
+      if (sourceNode && targetNode) {
+        links.push({
+          source: dep.from,
+          target: dep.to,
+          type: 'causal_dependency'
+        });
+      }
+    });
+
+    // Force simulation with FIXED hierarchical positions
     const simulation = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id((d: any) => d.id).distance(150))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(50));
+      .force('x', d3.forceX((d: any) => d.x).strength(0.9))  // Lock to x
+      .force('y', d3.forceY((d: any) => d.y).strength(0.9))  // Lock to y
+      .force('collision', d3.forceCollide().radius(50))
+      .force('link', d3.forceLink(links)
+        .id((d: any) => d.id)
+        .distance((d: any) => d.type === 'causal_dependency' ? 100 : 150)
+        .strength(0.3));
+
 
     // Add links
     const link = svg.append('g')
