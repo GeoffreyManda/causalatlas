@@ -29,9 +29,13 @@ interface TheorySlideProps {
   onSlideChange?: (index: number) => void;
   topicId?: string;
   onDownload?: () => void;
+  onPreviousDeck?: () => void;
+  onNextDeck?: () => void;
+  hasPreviousDeck?: boolean;
+  hasNextDeck?: boolean;
 }
 
-const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, topicId, onDownload }: TheorySlideProps) => {
+const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, topicId, onDownload, onPreviousDeck, onNextDeck, hasPreviousDeck, hasNextDeck }: TheorySlideProps) => {
   // Group topics and estimands by tier
   const theoryByTier = {
     Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
@@ -254,15 +258,15 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
           )}
 
           <div className="grid grid-cols-4 gap-3 w-full max-w-5xl mb-6">
-            {/* Slide Navigation */}
+            {/* Slide Deck Navigation */}
             <Button 
-              onClick={() => onSlideChange(slideIndex - 1)} 
-              disabled={slideIndex === 0}
+              onClick={onPreviousDeck}
+              disabled={!hasPreviousDeck}
               variant="outline" 
               className="gap-2 h-14"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous Slide
+              Previous Slide Deck
             </Button>
             
             <Button 
@@ -274,13 +278,23 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
               Restart Slides
             </Button>
 
+            <Button 
+              onClick={onNextDeck}
+              disabled={!hasNextDeck}
+              variant="outline" 
+              className="gap-2 h-14"
+            >
+              Next Slide Deck
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+
             {/* Main Navigation */}
             <Button onClick={() => onNavigate('/')} variant="outline" className="gap-2 h-14">
               <Home className="h-4 w-4" />
               Home
             </Button>
 
-            <Button onClick={() => onNavigate(`/network?node=${topicId}`)} variant="default" className="gap-2 h-14">
+            <Button onClick={() => onNavigate(`/network?node=${topicId}`)} variant="default" className="gap-2 h-14 col-span-4">
               <Network className="h-4 w-4" />
               Back to Network
             </Button>

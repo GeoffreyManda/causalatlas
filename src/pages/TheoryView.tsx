@@ -122,6 +122,25 @@ const TheoryView = () => {
     }
   };
 
+  // Navigate to previous/next topic deck
+  const currentIndex = allTopics.findIndex(t => t.id === topicId);
+  const hasPreviousDeck = currentIndex > 0;
+  const hasNextDeck = currentIndex < allTopics.length - 1;
+
+  const goToPreviousDeck = () => {
+    if (hasPreviousDeck) {
+      const previousTopic = allTopics[currentIndex - 1];
+      handleTopicChange(previousTopic.id);
+    }
+  };
+
+  const goToNextDeck = () => {
+    if (hasNextDeck) {
+      const nextTopic = allTopics[currentIndex + 1];
+      handleTopicChange(nextTopic.id);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Navigation />
@@ -329,6 +348,10 @@ const TheoryView = () => {
             onSlideChange={setSlideIndex}
             topicId={topicId}
             onDownload={downloadSlides}
+            onPreviousDeck={goToPreviousDeck}
+            onNextDeck={goToNextDeck}
+            hasPreviousDeck={hasPreviousDeck}
+            hasNextDeck={hasNextDeck}
           />
         </div>
 

@@ -113,6 +113,25 @@ const SlidesView = () => {
     }
   };
 
+  // Navigate to previous/next estimand deck
+  const currentIndex = estimandsData.findIndex(e => e.id === estimandId);
+  const hasPreviousDeck = currentIndex > 0;
+  const hasNextDeck = currentIndex < estimandsData.length - 1;
+
+  const goToPreviousDeck = () => {
+    if (hasPreviousDeck) {
+      const previousEstimand = estimandsData[currentIndex - 1];
+      handleEstimandChange(previousEstimand.id);
+    }
+  };
+
+  const goToNextDeck = () => {
+    if (hasNextDeck) {
+      const nextEstimand = estimandsData[currentIndex + 1];
+      handleEstimandChange(nextEstimand.id);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Navigation />
@@ -273,6 +292,10 @@ const SlidesView = () => {
             onSlideChange={setSlideIndex}
             estimandId={estimandId}
             onDownload={downloadSlides}
+            onPreviousDeck={goToPreviousDeck}
+            onNextDeck={goToNextDeck}
+            hasPreviousDeck={hasPreviousDeck}
+            hasNextDeck={hasNextDeck}
           />
         </div>
 
