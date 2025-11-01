@@ -38,7 +38,8 @@ const SlidesView = () => {
   const assumptionSlides = Math.max(1, Math.ceil(currentEstimand.assumptions.length / 4));
   const estimatorSlides = Math.ceil(currentEstimand.estimators.length / 6);
   const referenceSlides = Math.ceil(currentEstimand.references.length / 3);
-  const totalSlides = 1 + 1 + assumptionSlides + estimatorSlides + 2 + referenceSlides; // title + definition + assumptions + estimators + 2 code + references
+  const totalContentSlides = 1 + 1 + assumptionSlides + estimatorSlides + 2 + referenceSlides; // title + definition + assumptions + estimators + 2 code + references
+  const totalSlides = totalContentSlides + 1; // +1 for navigation slide
 
   // Filter estimands
   const filteredEstimands = estimandsData.filter(e => {
@@ -82,9 +83,10 @@ const SlidesView = () => {
     const loadingToast = toast.loading('Generating PDF...');
     
     try {
+      // Only include content slides in PDF, exclude navigation slide
       await generateSlidesFromRenderer(
         (index) => setSlideIndex(index),
-        totalSlides,
+        totalContentSlides,
         'slide-container',
         `${currentEstimand.short_name.replace(/[^a-z0-9]/gi, '_')}_slides.pdf`,
         (current, total) => {
@@ -250,44 +252,16 @@ const SlidesView = () => {
 
         {/* Slide (16:9 PowerPoint ratio) */}
         <div className="flex items-center justify-center mb-8" id="slide-container">
-          <EstimandSlideStandalone estimand={currentEstimand} slideIndex={slideIndex} />
+          <EstimandSlideStandalone 
+            estimand={currentEstimand} 
+            slideIndex={slideIndex}
+            totalContentSlides={totalContentSlides}
+            totalSlides={totalSlides}
+            onNavigate={navigate}
+            onSlideChange={setSlideIndex}
+            estimandId={estimandId}
+          />
         </div>
-
-        {/* End of slides navigation card */}
-        {slideIndex === totalSlides - 1 && (
-          <div className="mb-6 p-6 rounded-lg border-2 border-primary bg-card shadow-lg">
-            <h3 className="text-xl font-bold mb-4 text-center">End of Slides</h3>
-            <p className="text-center text-muted-foreground mb-6">
-              You've reached the last slide. Where would you like to go next?
-            </p>
-            <div className="grid md:grid-cols-3 gap-3">
-              <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-              <Button onClick={() => navigate('/learning')} variant="outline" className="gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Learning Hub
-              </Button>
-              <Button onClick={() => navigate(`/network?node=${estimandId}`)} variant="default" className="gap-2">
-                <Network className="h-4 w-4" />
-                Back to Network
-              </Button>
-              <Button onClick={() => navigate('/estimands')} variant="outline" className="gap-2">
-                <Target className="h-4 w-4" />
-                Estimands Library
-              </Button>
-              <Button onClick={() => navigate('/theory')} variant="outline" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                Theory Slides
-              </Button>
-              <Button onClick={() => setSlideIndex(0)} variant="outline" className="gap-2">
-                <ChevronLeft className="h-4 w-4" />
-                Restart Slides
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Navigation controls */}
         <div className="space-y-4">

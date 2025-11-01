@@ -1,16 +1,48 @@
-import { Estimand } from '@/data/estimands';
+import { Estimand, estimandsData } from '@/data/estimands';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Activity, BookOpen, Code, FileText, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Activity, BookOpen, Code, FileText, Target, Home, Network, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import { allTheoryTopics } from '@/data/allTheoryTopics';
+import { estimandFamilies } from '@/data/estimandFamilies';
 
 interface EstimandSlideStandaloneProps {
   estimand: Estimand;
   slideIndex: number;
+  totalContentSlides?: number;
+  totalSlides?: number;
+  onNavigate?: (path: string) => void;
+  onSlideChange?: (index: number) => void;
+  estimandId?: string;
 }
 
-const EstimandSlideStandalone = ({ estimand, slideIndex }: EstimandSlideStandaloneProps) => {
+const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, estimandId }: EstimandSlideStandaloneProps) => {
+  // Group topics and estimands by tier
+  const theoryByTier = {
+    Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
+    Intermediate: allTheoryTopics.filter(t => t.tier === 'Intermediate'),
+    Advanced: allTheoryTopics.filter(t => t.tier === 'Advanced'),
+  };
+
+  const estimandsByTier = {
+    Basic: estimandsData.filter(e => e.tier === 'Basic'),
+    Intermediate: estimandsData.filter(e => e.tier === 'Intermediate'),
+    Advanced: estimandsData.filter(e => e.tier === 'Advanced'),
+    Frontier: estimandsData.filter(e => e.tier === 'Frontier'),
+  };
   // Helper: Split arrays into chunks
   const chunkArray = <T,>(arr: T[], size: number): T[][] => {
     const chunks: T[][] = [];
@@ -225,6 +257,143 @@ const EstimandSlideStandalone = ({ estimand, slideIndex }: EstimandSlideStandalo
         </div>
       );
     }
+  }
+
+  // Navigation Slide (final slide, non-downloadable)
+  if (totalContentSlides !== undefined && slideIndex === totalContentSlides && onNavigate && onSlideChange && totalSlides) {
+    return (
+      <div className="w-full aspect-[16/9] bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-xl shadow-2xl p-8">
+        <div className="h-full flex flex-col items-center justify-center">
+          <h2 className="text-5xl font-bold mb-3 text-center">End of Slides</h2>
+          <p className="text-center text-muted-foreground mb-6 text-lg">
+            You've reached the last slide. Where would you like to go next?
+          </p>
+          
+          <div className="grid grid-cols-4 gap-3 w-full max-w-5xl mb-6">
+            {/* Slide Navigation */}
+            <Button 
+              onClick={() => onSlideChange(slideIndex - 1)} 
+              disabled={slideIndex === 0}
+              variant="outline" 
+              className="gap-2 h-14"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous Slide
+            </Button>
+            
+            <Button 
+              onClick={() => onSlideChange(0)} 
+              variant="outline" 
+              className="gap-2 h-14"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Restart Slides
+            </Button>
+
+            {/* Main Navigation */}
+            <Button onClick={() => onNavigate('/')} variant="outline" className="gap-2 h-14">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+
+            <Button onClick={() => onNavigate(`/network?node=${estimandId}`)} variant="default" className="gap-2 h-14">
+              <Network className="h-4 w-4" />
+              Back to Network
+            </Button>
+
+            {/* Nested Dropdown Menus */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 h-14 col-span-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Learning Hub
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto bg-popover z-[100]">
+                <DropdownMenuLabel>Theory Topics by Level</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {Object.entries(theoryByTier).map(([tier, topics]) => (
+                  <DropdownMenuSub key={tier}>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <Badge variant="outline" className="mr-2">{tier}</Badge>
+                      {topics.length} topics
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                      {topics.map(t => (
+                        <DropdownMenuItem 
+                          key={t.id} 
+                          onClick={() => onNavigate(`/theory?id=${t.id}`)}
+                          className="cursor-pointer"
+                        >
+                          {t.title}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 h-14 col-span-2">
+                  <Target className="h-4 w-4" />
+                  Estimands Library
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto bg-popover z-[100]">
+                <DropdownMenuLabel>Estimands by Level</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {Object.entries(estimandsByTier).map(([tier, ests]) => (
+                  <DropdownMenuSub key={tier}>
+                    <DropdownMenuSubTrigger className="cursor-pointer">
+                      <Badge variant="outline" className="mr-2">{tier}</Badge>
+                      {ests.length} estimands
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                      {ests.map(e => (
+                        <DropdownMenuItem 
+                          key={e.id} 
+                          onClick={() => onNavigate(`/slides?estimand=${e.id}`)}
+                          className="cursor-pointer"
+                        >
+                          {e.short_name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 h-14 col-span-4">
+                  <BookOpen className="h-4 w-4" />
+                  Generated Slides
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-72 max-h-96 overflow-y-auto bg-popover z-[100]">
+                <DropdownMenuLabel>Slides by Family</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {estimandFamilies.map(family => (
+                  <DropdownMenuItem 
+                    key={family.id} 
+                    onClick={() => onNavigate(`/slides?family=${family.id}`)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">{family.title}</span>
+                      <span className="text-xs text-muted-foreground">{family.description}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return null;
