@@ -1,12 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { estimandsData } from '@/data/estimands';
+import { Button } from '@/components/ui/button';
 import * as d3 from 'd3';
 
 const NetworkView = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
+  const [layoutMode, setLayoutMode] = useState<'static' | 'dynamic'>('static');
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -94,15 +96,16 @@ const NetworkView = () => {
       }
     });
 
-    // Force simulation with FIXED hierarchical positions
+    // Force simulation with conditional positioning
     const simulation = d3.forceSimulation(nodes)
-      .force('x', d3.forceX((d: any) => d.x).strength(0.9))  // Lock to x
-      .force('y', d3.forceY((d: any) => d.y).strength(0.9))  // Lock to y
+      .force('x', d3.forceX((d: any) => d.x).strength(layoutMode === 'static' ? 0.9 : 0.3))
+      .force('y', d3.forceY((d: any) => d.y).strength(layoutMode === 'static' ? 0.9 : 0.3))
       .force('collision', d3.forceCollide().radius(50))
+      .force('charge', d3.forceManyBody().strength(layoutMode === 'dynamic' ? -400 : -100))
       .force('link', d3.forceLink(links)
         .id((d: any) => d.id)
         .distance((d: any) => d.type === 'causal_dependency' ? 100 : 150)
-        .strength(0.3));
+        .strength(layoutMode === 'dynamic' ? 0.5 : 0.3));
 
 
     // Add links
@@ -188,18 +191,34 @@ const NetworkView = () => {
     return () => {
       simulation.stop();
     };
-  }, []);
+  }, [layoutMode]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="container py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Estimand Network</h1>
-          <p className="text-muted-foreground">
-            Interactive visualization of causal estimands and their relationships
-          </p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Causal Inference Organogram</h1>
+            <p className="text-muted-foreground">
+              Interactive network showing frameworks, estimands, and difficulty levels • Click nodes to explore slides
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant={layoutMode === 'static' ? 'default' : 'outline'}
+              onClick={() => setLayoutMode('static')}
+            >
+              Static Layout
+            </Button>
+            <Button 
+              variant={layoutMode === 'dynamic' ? 'default' : 'outline'}
+              onClick={() => setLayoutMode('dynamic')}
+            >
+              Dynamic Layout
+            </Button>
+          </div>
         </div>
 
         {/* Legend */}
@@ -235,7 +254,10 @@ const NetworkView = () => {
         </div>
 
         <p className="text-sm text-muted-foreground mt-4 text-center">
-          Drag nodes to explore • Larger nodes represent frameworks • Colors indicate complexity tier
+          {layoutMode === 'static' 
+            ? 'Hierarchical layout: Frameworks → Estimands by Tier • Drag nodes to adjust • Click to view slides'
+            : 'Force-directed layout: Dynamic clustering by relationships • Drag nodes to explore • Click to view slides'
+          }
         </p>
       </div>
     </div>
