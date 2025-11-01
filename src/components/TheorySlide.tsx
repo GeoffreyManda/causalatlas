@@ -2,6 +2,7 @@ import { TheoryTopic } from '@/data/theory';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { BookOpen, Target, Lightbulb } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import 'katex/dist/katex.min.css';
 
 interface TheorySlideProps {
@@ -72,7 +73,9 @@ const TheorySlide = ({ topic, slideIndex }: TheorySlideProps) => {
                   <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-lg">{i * 3 + idx + 1}</span>
                   </div>
-                  <p className="text-2xl text-foreground/90 leading-relaxed">{obj}</p>
+                  <div className="text-2xl text-foreground/90 leading-relaxed prose prose-lg max-w-none">
+                    <ReactMarkdown>{obj}</ReactMarkdown>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -98,7 +101,9 @@ const TheorySlide = ({ topic, slideIndex }: TheorySlideProps) => {
             {definitionChunks[i].map((def, idx) => (
               <Card key={idx} className="p-6 bg-gradient-to-r from-card to-muted/20 border-l-4 border-primary">
                 <h3 className="text-2xl font-bold text-primary mb-3">{def.term}</h3>
-                <p className="text-xl text-muted-foreground leading-relaxed">{def.definition}</p>
+                <div className="text-xl text-muted-foreground leading-relaxed prose prose-lg max-w-none">
+                  <ReactMarkdown>{def.definition}</ReactMarkdown>
+                </div>
               </Card>
             ))}
           </div>
@@ -119,12 +124,10 @@ const TheorySlide = ({ topic, slideIndex }: TheorySlideProps) => {
               {contentChunks.length > 1 && ` (${i + 1}/${contentChunks.length})`}
             </h2>
           </div>
-          <div className="prose prose-lg max-w-none">
-            <div className="text-lg leading-relaxed space-y-4 text-foreground/90">
-              {contentChunks[i].map((para, idx) => (
-                <p key={idx} className="whitespace-pre-wrap">{para}</p>
-              ))}
-            </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {contentChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
           </div>
         </div>
       );

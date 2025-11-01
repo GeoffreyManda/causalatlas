@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Play, Copy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 
@@ -78,7 +79,9 @@ const BasicModeContent = ({ estimand }: { estimand: Estimand }) => {
           {estimand.assumptions.slice(0, 3).map((assumption, idx) => (
             <li key={idx} className="flex items-start gap-2">
               <span className="text-primary mt-1">•</span>
-              <span>{assumption}</span>
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>{assumption}</ReactMarkdown>
+              </div>
             </li>
           ))}
         </ul>
@@ -161,7 +164,9 @@ const ExpertModeContent = ({ estimand }: { estimand: Estimand }) => {
             {estimand.assumptions.map((assumption, idx) => (
               <li key={idx} className="flex items-start gap-2">
                 <span className="text-primary font-bold mt-1">{idx + 1}.</span>
-                <span className="font-mono text-sm">{assumption}</span>
+                <div className="font-mono text-sm prose prose-sm max-w-none">
+                  <ReactMarkdown>{assumption}</ReactMarkdown>
+                </div>
               </li>
             ))}
           </ul>
