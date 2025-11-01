@@ -31,26 +31,6 @@ const getFrameworkColor = (framework: string) => {
   return colors[framework as keyof typeof colors] || 'bg-muted';
 };
 
-const getDesignIcon = (design: string) => {
-  // RCT designs
-  if (design.includes('RCT') || design === 'Cluster_RCT' || design === 'Stepped_Wedge' || design === 'Factorial') {
-    return '🎲 RCT';
-  }
-  // Observational designs
-  if (design === 'Cohort' || design === 'Case_Control' || design === 'Cross_Sectional' || design === 'Case_Cohort') {
-    return '👁️ Observational';
-  }
-  // Time-to-event designs
-  if (design === 'SCCS' || design === 'Case_Crossover') {
-    return '⏱️ TTE';
-  }
-  // Quasi-experimental
-  if (design === 'Regression_Discontinuity' || design === 'Natural_Experiment') {
-    return '🔬 Quasi-Exp';
-  }
-  return '📊 Other';
-};
-
 const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
   const navigate = useNavigate();
   
@@ -73,9 +53,6 @@ const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
         <CardDescription className="flex flex-wrap gap-1 mt-2">
           <Badge variant="outline" className={getFrameworkColor(estimand.framework)}>
             {estimand.framework}
-          </Badge>
-          <Badge variant="default" className="bg-blue-600 text-white">
-            {getDesignIcon(estimand.design)}
           </Badge>
           <Badge variant="outline">{estimand.design.replace(/_/g, ' ')}</Badge>
         </CardDescription>
