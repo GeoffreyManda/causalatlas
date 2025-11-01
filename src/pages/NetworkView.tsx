@@ -175,19 +175,28 @@ const NetworkView = () => {
       .attr('font-weight', (d: any) => d.data.type === 'estimand' ? 'normal' : 'bold')
       .attr('fill', 'hsl(215 25% 15%)');
 
-    // Click handler - all nodes are now clickable
+    // Click handler - navigate to appropriate content
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
       if (d.data.type === 'estimand') {
         navigate(`/slides?id=${d.data.id}`, { state: { from: '/network' } });
       } else if (d.data.type === 'framework') {
-        setSelectedFramework(d.data.name);
-        setSelectedDesign('all');
-        setSelectedFamily('all');
+        // Navigate to theory page for this framework or filter
+        const frameworkIds: Record<string, string> = {
+          'PotentialOutcomes': 'potential-outcomes',
+          'SCM': 'scm',
+          'PrincipalStratification': 'principal-stratification',
+          'ProximalNegativeControl': 'proximal-negative-control',
+          'BayesianDecision': 'bayesian-decision'
+        };
+        const fwId = frameworkIds[d.data.name];
+        if (fwId) navigate(`/theory?id=${fwId}`, { state: { from: '/network' } });
       } else if (d.data.type === 'design') {
+        // Filter by design
         setSelectedDesign(d.data.name);
         setSelectedFamily('all');
       } else if (d.data.type === 'family') {
+        // Filter by family
         setSelectedFamily(d.data.name);
       }
     });
@@ -220,7 +229,7 @@ const NetworkView = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Causal Inference Tree Map</h1>
           <p className="text-muted-foreground max-w-3xl">
-            Hierarchical view: Framework → Study Design → Estimand Family → Individual Estimands. Click estimand nodes to view slides.
+            Hierarchical view: Framework → Study Design → Estimand Family → Individual Estimands. Click any node: frameworks open theory slides, designs/families filter, estimands open detailed slides.
           </p>
         </div>
 
