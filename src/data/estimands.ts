@@ -592,6 +592,98 @@ cat("NN-style ATE:", round(mean(cate), 3), "\\n")`
   },
 
   {
+    id: 'tarnet',
+    short_name: 'TARNet (Treatment-Agnostic Representation Network)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'DeepRepresentation',
+    tier: 'Advanced',
+    definition_tex: '\\psi = E[\\mu_1(\\Phi(X)) - \\mu_0(\\Phi(X))]',
+    assumptions: ['Shared representation layer', 'Treatment-specific heads', 'Exchangeability'],
+    identification_formula_tex: '\\text{Shared feature extractor } \\Phi, \\text{ separate heads } h_0, h_1',
+    estimators: ['End-to-end deep learning', 'Shared + split architecture'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Shalit U et al', title: 'Estimating individual treatment effect', year: 2017, doi: '10.48550/arXiv.1606.03976' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.neural_network import MLPRegressor
+np.random.seed(20251111)
+n, p = 2000, 15
+X = np.random.normal(size=(n,p))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0])))
+tau_true = 1.8 + 0.6*X[:,0]
+Y = tau_true*A + X[:,0] + 0.3*X[:,1] + np.random.normal(size=n)
+nn1 = MLPRegressor(hidden_layer_sizes=(64,32), max_iter=500, random_state=0)
+nn0 = MLPRegressor(hidden_layer_sizes=(64,32), max_iter=500, random_state=0)
+nn1.fit(X[A==1], Y[A==1])
+nn0.fit(X[A==0], Y[A==0])
+cate_tarnet = nn1.predict(X) - nn0.predict(X)
+print(f"TARNet ATE: {cate_tarnet.mean():.3f}, std: {cate_tarnet.std():.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000; p <- 15
+X <- matrix(rnorm(n*p), n, p)
+A <- rbinom(n, 1, plogis(X[,1]))
+tau_true <- 1.8 + 0.6*X[,1]
+Y <- tau_true*A + X[,1] + 0.3*X[,2] + rnorm(n)
+mu1 <- lm(Y ~ X, subset=A==1)
+mu0 <- lm(Y ~ X, subset=A==0)
+cate <- predict(mu1, newdata=data.frame(X)) - predict(mu0, newdata=data.frame(X))
+cat("TARNet-style ATE:", round(mean(cate), 3), ", std:", round(sd(cate), 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'cevae',
+    short_name: 'CEVAE (Causal Effect VAE)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'DeepRepresentation',
+    tier: 'Frontier',
+    definition_tex: '\\psi = E[\\mu_1(Z) - \\mu_0(Z)] \\text{ with latent } Z',
+    assumptions: ['Latent confounder structure', 'Proxy variable access', 'Correct generative model'],
+    identification_formula_tex: '\\text{VAE with causal graphical model prior}',
+    estimators: ['Variational inference', 'Latent variable modeling'],
+    discovery_status: 'identifiable',
+    eif_status: 'unknown',
+    references: [
+      { authors: 'Louizos C et al', title: 'Causal Effect Inference with Deep Latent-Variable Models', year: 2017, doi: '10.48550/arXiv.1705.08821' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.linear_model import Ridge
+np.random.seed(20251111)
+n, p = 2000, 20
+Z = np.random.normal(size=(n,3))
+X = Z @ np.random.normal(size=(3,p)) + np.random.normal(0, 0.5, size=(n,p))
+A = np.random.binomial(1, 1/(1+np.exp(-Z[:,0])))
+Y = 2*A + Z[:,0] + 0.5*Z[:,1] + np.random.normal(size=n)
+pca = PCA(n_components=3).fit(X)
+Z_hat = pca.transform(X)
+mu1 = Ridge().fit(np.c_[Z_hat, A][A==1], Y[A==1]).predict(np.c_[Z_hat, np.ones(n)])
+mu0 = Ridge().fit(np.c_[Z_hat, A][A==0], Y[A==0]).predict(np.c_[Z_hat, np.zeros(n)])
+ate_cevae = (mu1 - mu0).mean()
+print(f"CEVAE-style ATE: {ate_cevae:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000; p <- 20
+Z <- matrix(rnorm(n*3), n, 3)
+X <- Z %*% matrix(rnorm(3*p), 3, p) + matrix(rnorm(n*p, 0, 0.5), n, p)
+A <- rbinom(n, 1, plogis(Z[,1]))
+Y <- 2*A + Z[,1] + 0.5*Z[,2] + rnorm(n)
+pca <- prcomp(X, rank.=3)
+Z_hat <- pca$x
+mu1 <- lm(Y ~ Z_hat, subset=A==1)
+mu0 <- lm(Y ~ Z_hat, subset=A==0)
+ate <- mean(predict(mu1, newdata=data.frame(Z_hat)) - 
+            predict(mu0, newdata=data.frame(Z_hat)))
+cat("CEVAE-style ATE:", round(ate, 3), "\\n")`
+    }
+  },
+
+  {
     id: 'causal_forests',
     short_name: 'Causal Forests (GRF)',
     framework: 'PotentialOutcomes',
