@@ -6,8 +6,9 @@ const Navigation = () => {
   
   const navItems = [
     { path: '/', label: 'Home', icon: BookOpen },
-    { path: '/theory', label: 'Causal Theory', icon: GraduationCap },
-    { path: '/slides', label: 'Estimands', icon: Presentation },
+    { path: '/learning', label: 'Structured Learning', icon: GraduationCap },
+    { path: '/network', label: 'Interactive Network', icon: Network },
+    { path: '/playground', label: 'Executable Playground', icon: Terminal },
   ];
 
   return (
