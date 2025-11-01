@@ -2304,7 +2304,7 @@ cat("DragonNet ATE: requires Python TensorFlow implementation\\n")`
 
   // ========== FRONTIER TIER - Selected key estimands ==========
   {
-    id: 'manski_bounds',
+    id: 'manski_bounds_frontier',
     short_name: 'Manski Bounds (Partial Identification)',
     framework: 'PotentialOutcomes',
     design: 'Cohort',

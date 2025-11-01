@@ -5,13 +5,17 @@ import EstimandCard from '@/components/EstimandCard';
 import { Badge } from '@/components/ui/badge';
 
 const EstimandsLibrary = () => {
-  const [selectedTier, setSelectedTier] = useState<string>('All');
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+  const [selectedFramework, setSelectedFramework] = useState<string>('all');
   
-  const tiers = ['All', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
+  const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
+  const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
   
-  const filteredEstimands = selectedTier === 'All' 
-    ? estimandsData 
-    : estimandsData.filter(e => e.tier === selectedTier);
+  const filteredEstimands = estimandsData.filter(e => {
+    if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
+    if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,25 +36,48 @@ const EstimandsLibrary = () => {
       {/* Estimand Library */}
       <section className="py-12">
         <div className="container">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Filter by Difficulty Tier</h2>
+          {/* Filters */}
+          <div className="mb-8 p-6 rounded-lg border bg-card">
+            <h2 className="text-2xl font-bold mb-6">Filters</h2>
             
-            {/* Tier Filter */}
-            <div className="flex flex-wrap gap-2">
-              {tiers.map((tier) => (
-                <Badge
-                  key={tier}
-                  variant={selectedTier === tier ? "default" : "outline"}
-                  className="cursor-pointer px-4 py-2 text-sm hover:scale-105 transition-transform"
-                  onClick={() => setSelectedTier(tier)}
-                >
-                  {tier}
-                </Badge>
-              ))}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Tier Filter */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Filter by Tier</h3>
+                <div className="flex flex-wrap gap-2">
+                  {tiers.map((tier) => (
+                    <Badge
+                      key={tier}
+                      variant={selectedTier === tier ? "default" : "outline"}
+                      className="cursor-pointer px-4 py-2 text-sm hover:scale-105 transition-transform"
+                      onClick={() => setSelectedTier(tier)}
+                    >
+                      {tier === 'all' ? 'All Tiers' : tier}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Framework Filter */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Filter by Framework</h3>
+                <div className="flex flex-wrap gap-2">
+                  {frameworks.map((fw) => (
+                    <Badge
+                      key={fw}
+                      variant={selectedFramework === fw ? "default" : "outline"}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFramework(fw)}
+                    >
+                      {fw === 'all' ? 'All Frameworks' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
             
             <p className="text-sm text-muted-foreground mt-4">
-              Showing {filteredEstimands.length} estimand{filteredEstimands.length !== 1 ? 's' : ''}
+              Showing {filteredEstimands.length} of {estimandsData.length} estimand{filteredEstimands.length !== 1 ? 's' : ''}
             </p>
           </div>
           
