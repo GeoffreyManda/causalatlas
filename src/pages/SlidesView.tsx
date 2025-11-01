@@ -62,27 +62,15 @@ const SlidesView = () => {
   const goToNext = () => {
     if (slideIndex < totalSlides - 1) {
       setSlideIndex(slideIndex + 1);
-    } else {
-      // Move to next estimand
-      const currentIdx = estimandsData.findIndex(e => e.id === estimandId);
-      if (currentIdx < estimandsData.length - 1) {
-        setSearchParams({ id: estimandsData[currentIdx + 1].id });
-        setSlideIndex(0);
-      }
     }
+    // Removed auto-jump to next estimand
   };
 
   const goToPrevious = () => {
     if (slideIndex > 0) {
       setSlideIndex(slideIndex - 1);
-    } else {
-      // Move to previous estimand
-      const currentIdx = estimandsData.findIndex(e => e.id === estimandId);
-      if (currentIdx > 0) {
-        setSearchParams({ id: estimandsData[currentIdx - 1].id });
-        setSlideIndex(totalSlides - 1);
-      }
     }
+    // Removed auto-jump to previous estimand
   };
 
   const handleEstimandChange = (newEstimandId: string) => {
@@ -265,13 +253,49 @@ const SlidesView = () => {
           <EstimandSlideStandalone estimand={currentEstimand} slideIndex={slideIndex} />
         </div>
 
+        {/* End of slides navigation card */}
+        {slideIndex === totalSlides - 1 && (
+          <div className="mb-6 p-6 rounded-lg border-2 border-primary bg-card shadow-lg">
+            <h3 className="text-xl font-bold mb-4 text-center">End of Slides</h3>
+            <p className="text-center text-muted-foreground mb-6">
+              You've reached the last slide. Where would you like to go next?
+            </p>
+            <div className="grid md:grid-cols-3 gap-3">
+              <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+              <Button onClick={() => navigate('/learning')} variant="outline" className="gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Learning Hub
+              </Button>
+              <Button onClick={() => navigate(`/network?node=${estimandId}`)} variant="default" className="gap-2">
+                <Network className="h-4 w-4" />
+                Back to Network
+              </Button>
+              <Button onClick={() => navigate('/estimands')} variant="outline" className="gap-2">
+                <Target className="h-4 w-4" />
+                Estimands Library
+              </Button>
+              <Button onClick={() => navigate('/theory')} variant="outline" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                Theory Slides
+              </Button>
+              <Button onClick={() => setSlideIndex(0)} variant="outline" className="gap-2">
+                <ChevronLeft className="h-4 w-4" />
+                Restart Slides
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Navigation controls */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
               onClick={goToPrevious}
-              disabled={slideIndex === 0 && estimandsData.findIndex(e => e.id === estimandId) === 0}
+              disabled={slideIndex === 0}
               className="gap-2"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -296,7 +320,7 @@ const SlidesView = () => {
             <Button
               variant="outline"
               onClick={goToNext}
-              disabled={slideIndex === totalSlides - 1 && estimandsData.findIndex(e => e.id === estimandId) === estimandsData.length - 1}
+              disabled={slideIndex === totalSlides - 1}
               className="gap-2"
             >
               Next
