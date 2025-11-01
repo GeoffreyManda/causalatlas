@@ -1,9 +1,23 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Network, Terminal, Presentation, GraduationCap } from 'lucide-react';
+import { BookOpen, Network, Terminal, GraduationCap, User, LogIn } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 
 const Navigation = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user || null);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, []);
   
   const navItems = [
     { path: '/', label: 'Home', icon: BookOpen },
@@ -26,25 +40,43 @@ const Navigation = () => {
         </Link>
         
         {!isHomePage && (
-          <div className="ml-auto flex gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex gap-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+            
+            {user ? (
+              <Link to="/profile">
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" size="sm">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </div>

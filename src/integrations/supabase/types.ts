@@ -14,7 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          requirement_type: string
+          requirement_value: number
+          tier: Database["public"]["Enums"]["cert_tier"]
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          requirement_type: string
+          requirement_value: number
+          tier?: Database["public"]["Enums"]["cert_tier"]
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          requirement_type?: string
+          requirement_value?: number
+          tier?: Database["public"]["Enums"]["cert_tier"]
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      certifications: {
+        Row: {
+          cert_name: string
+          cert_tier: Database["public"]["Enums"]["cert_tier"]
+          certificate_url: string | null
+          id: string
+          is_paid: boolean
+          issued_at: string
+          user_id: string
+        }
+        Insert: {
+          cert_name: string
+          cert_tier: Database["public"]["Enums"]["cert_tier"]
+          certificate_url?: string | null
+          id?: string
+          is_paid?: boolean
+          issued_at?: string
+          user_id: string
+        }
+        Update: {
+          cert_name?: string
+          cert_tier?: Database["public"]["Enums"]["cert_tier"]
+          certificate_url?: string | null
+          id?: string
+          is_paid?: boolean
+          issued_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          current_level: Database["public"]["Enums"]["user_level"]
+          display_name: string | null
+          id: string
+          total_xp: number
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          current_level?: Database["public"]["Enums"]["user_level"]
+          display_name?: string | null
+          id: string
+          total_xp?: number
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          current_level?: Database["public"]["Enums"]["user_level"]
+          display_name?: string | null
+          id?: string
+          total_xp?: number
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          completed_at: string
+          content_id: string
+          content_type: string
+          id: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed_at?: string
+          content_id: string
+          content_type: string
+          id?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed_at?: string
+          content_id?: string
+          content_type?: string
+          id?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +200,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      cert_tier: "basics" | "intermediate" | "advanced" | "expert"
+      user_level: "beginner" | "intermediate" | "advanced" | "expert" | "master"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +328,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      cert_tier: ["basics", "intermediate", "advanced", "expert"],
+      user_level: ["beginner", "intermediate", "advanced", "expert", "master"],
+    },
   },
 } as const
