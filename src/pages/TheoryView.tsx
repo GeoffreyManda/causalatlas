@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import TheorySlide from '@/components/TheorySlide';
@@ -13,7 +13,19 @@ const TheoryView = () => {
   const [slideIndex, setSlideIndex] = useState(0);
 
   const currentTopic = causalTheory.find(t => t.id === topicId) || causalTheory[0];
-  const totalSlides = 6; // title + objectives + definitions + content + code + references
+  
+  // Calculate total slides dynamically based on content
+  const contentParagraphs = currentTopic.content.split('\n\n').filter(p => p.trim()).length;
+  const objectiveSlides = Math.ceil(currentTopic.learningObjectives.length / 3);
+  const definitionSlides = Math.ceil(currentTopic.keyDefinitions.length / 3);
+  const contentSlides = Math.ceil(contentParagraphs / 3);
+  const referenceSlides = Math.ceil(currentTopic.references.length / 3);
+  const totalSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
+
+  // Reset slide index when topic changes
+  useEffect(() => {
+    setSlideIndex(0);
+  }, [topicId]);
 
   const goToNext = () => {
     if (slideIndex < totalSlides - 1) {

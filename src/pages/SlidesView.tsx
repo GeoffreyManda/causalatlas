@@ -13,7 +13,17 @@ const SlidesView = () => {
   const [slideIndex, setSlideIndex] = useState(0);
 
   const currentEstimand = estimandsData.find(e => e.id === estimandId) || estimandsData[0];
-  const totalSlides = 7; // title + definition + assumptions + estimators + python + r + references
+  
+  // Calculate total slides dynamically based on content
+  const assumptionSlides = Math.max(1, Math.ceil(currentEstimand.assumptions.length / 4));
+  const estimatorSlides = Math.ceil(currentEstimand.estimators.length / 6);
+  const referenceSlides = Math.ceil(currentEstimand.references.length / 3);
+  const totalSlides = 1 + 1 + assumptionSlides + estimatorSlides + 2 + referenceSlides; // title + definition + assumptions + estimators + 2 code + references
+
+  // Reset slide index when estimand changes
+  useEffect(() => {
+    setSlideIndex(0);
+  }, [estimandId]);
 
   const goToNext = () => {
     if (slideIndex < totalSlides - 1) {
