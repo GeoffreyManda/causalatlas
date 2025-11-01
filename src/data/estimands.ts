@@ -156,8 +156,8 @@ cat("CATE mean:", round(mean(cate), 3), "\\n")`
   },
 
   {
-    id: 'qte',
-    short_name: 'Quantile Treatment Effect (QTE)',
+    id: 'qte_advanced',
+    short_name: 'Quantile Treatment Effect (QTE) - Advanced',
     framework: 'PotentialOutcomes',
     design: 'Cohort',
     estimand_family: 'DistributionalQuantile',
@@ -274,8 +274,8 @@ cat("LATE:", round(late, 3), "\\n")`
   },
 
   {
-    id: 'nde',
-    short_name: 'Natural Direct Effect (NDE)',
+    id: 'nde_advanced',
+    short_name: 'Natural Direct Effect (NDE) - Advanced',
     framework: 'PotentialOutcomes',
     design: 'Cohort',
     estimand_family: 'MediationPathSpecific',
