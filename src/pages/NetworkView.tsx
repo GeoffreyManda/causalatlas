@@ -196,6 +196,8 @@ const NetworkView = () => {
         navigate(`/estimands?design=${encodeURIComponent(d.data.name)}`);
       } else if (d.data.type === 'family') {
         navigate(`/estimands?family=${encodeURIComponent(d.data.name)}`);
+      } else if (d.data.type === 'root') {
+        navigate('/estimands');
       }
     });
 
@@ -363,6 +365,10 @@ const NetworkView = () => {
         navigate(`/theory-overview?id=${d.data.id}`);
       } else if (d.data.type === 'tier') {
         navigate(`/theory-library?tier=${encodeURIComponent(d.data.name)}`);
+      } else if (d.data.type === 'category') {
+        navigate('/theory-library');
+      } else if (d.data.type === 'root') {
+        navigate('/theory-library');
       }
     });
 
