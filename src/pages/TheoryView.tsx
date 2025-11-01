@@ -46,7 +46,35 @@ const TheoryView = () => {
   const definitionSlides = Math.ceil(currentTopic.keyDefinitions.length / 3);
   const contentSlides = Math.ceil(contentParagraphs / 3);
   const referenceSlides = Math.ceil(currentTopic.references.length / 3);
-  const totalContentSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
+  
+  // Calculate new section slides (each has at least 1 placeholder slide)
+  const backgroundSlides = currentTopic.backgroundMotivation ? Math.ceil(currentTopic.backgroundMotivation.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const historicalSlides = currentTopic.historicalContext ? Math.ceil(currentTopic.historicalContext.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const conditionsSlides = currentTopic.conditionsAssumptions ? Math.ceil(currentTopic.conditionsAssumptions.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const dataStructureSlides = currentTopic.dataStructureDesign ? Math.ceil(currentTopic.dataStructureDesign.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const targetParamSlides = currentTopic.targetParameter ? Math.ceil(currentTopic.targetParameter.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const identificationSlides = currentTopic.identificationStrategy ? Math.ceil(currentTopic.identificationStrategy.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const estimationSlides = currentTopic.estimationPlan ? Math.ceil(currentTopic.estimationPlan.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const diagnosticsSlides = currentTopic.diagnosticsValidation ? Math.ceil(currentTopic.diagnosticsValidation.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const sensitivitySlides = currentTopic.sensitivityRobustness ? Math.ceil(currentTopic.sensitivityRobustness.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  const ethicsSlides = currentTopic.ethicsGovernance ? Math.ceil(currentTopic.ethicsGovernance.split('\n\n').filter(p => p.trim()).length / 3) : 1;
+  
+  const totalContentSlides = 1 // title
+    + backgroundSlides 
+    + historicalSlides 
+    + objectiveSlides 
+    + conditionsSlides 
+    + definitionSlides 
+    + dataStructureSlides 
+    + targetParamSlides 
+    + identificationSlides 
+    + contentSlides 
+    + estimationSlides 
+    + diagnosticsSlides 
+    + sensitivitySlides 
+    + ethicsSlides 
+    + 2 // code examples (Python + R)
+    + referenceSlides;
   const totalSlides = totalContentSlides + 1; // +1 for navigation slide
 
   // Filter topics
