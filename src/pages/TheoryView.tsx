@@ -17,7 +17,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import { estimandFamilies } from '@/data/estimandFamilies';
+import { estimandsData } from '@/data/estimands';
 
 // Combine original theory topics with new ones
 const allTopics = [...allTheoryTopics, ...causalTheory];
@@ -51,6 +56,20 @@ const TheoryView = () => {
   });
 
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced'];
+
+  // Group topics and estimands by tier for nested menus
+  const theoryByTier = {
+    Foundational: allTopics.filter(t => t.tier === 'Foundational'),
+    Intermediate: allTopics.filter(t => t.tier === 'Intermediate'),
+    Advanced: allTopics.filter(t => t.tier === 'Advanced'),
+  };
+
+  const estimandsByTier = {
+    Basic: estimandsData.filter(e => e.tier === 'Basic'),
+    Intermediate: estimandsData.filter(e => e.tier === 'Intermediate'),
+    Advanced: estimandsData.filter(e => e.tier === 'Advanced'),
+    Frontier: estimandsData.filter(e => e.tier === 'Frontier'),
+  };
 
   // Reset slide index when topic changes or restart param
   useEffect(() => {
@@ -117,30 +136,130 @@ const TheoryView = () => {
                 Navigate To
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-64 bg-popover z-[100]">
               <DropdownMenuLabel>Main Sections</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => navigate('/')} className="gap-2 cursor-pointer">
                 <Home className="h-4 w-4" />
                 Home
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/learning')} className="gap-2 cursor-pointer">
-                <GraduationCap className="h-4 w-4" />
-                Learning Hub
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(`/network?node=${topicId}`)} className="gap-2 cursor-pointer">
                 <Network className="h-4 w-4" />
                 Network View (Return to Node)
               </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Slide Navigation</DropdownMenuLabel>
+              <DropdownMenuItem 
+                onClick={goToPrevious} 
+                disabled={slideIndex === 0}
+                className="gap-2 cursor-pointer"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous Slide
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={goToNext} 
+                disabled={slideIndex === totalSlides - 1}
+                className="gap-2 cursor-pointer"
+              >
+                <ChevronRight className="h-4 w-4" />
+                Next Slide
+              </DropdownMenuItem>
+              
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Related Content</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigate('/estimands')} className="gap-2 cursor-pointer">
-                <Target className="h-4 w-4" />
-                Estimands Library
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/slides')} className="gap-2 cursor-pointer">
-                <BookOpen className="h-4 w-4" />
-                Generated Slides
-              </DropdownMenuItem>
+              
+              {/* Learning Hub with nested tiers */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Learning Hub
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                  <DropdownMenuItem onClick={() => navigate('/learning')} className="cursor-pointer font-semibold">
+                    View All Topics
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {Object.entries(theoryByTier).map(([tier, topics]) => (
+                    <DropdownMenuSub key={tier}>
+                      <DropdownMenuSubTrigger className="cursor-pointer">
+                        <Badge variant="outline" className="mr-2">{tier}</Badge>
+                        {topics.length} topics
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                        {topics.map(t => (
+                          <DropdownMenuItem 
+                            key={t.id} 
+                            onClick={() => navigate(`/theory?id=${t.id}`)}
+                            className="cursor-pointer"
+                          >
+                            {t.title}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {/* Estimands Library with nested tiers */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <Target className="h-4 w-4 mr-2" />
+                  Estimands Library
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                  <DropdownMenuItem onClick={() => navigate('/estimands')} className="cursor-pointer font-semibold">
+                    View All Estimands
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {Object.entries(estimandsByTier).map(([tier, ests]) => (
+                    <DropdownMenuSub key={tier}>
+                      <DropdownMenuSubTrigger className="cursor-pointer">
+                        <Badge variant="outline" className="mr-2">{tier}</Badge>
+                        {ests.length} estimands
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-64 max-h-80 overflow-y-auto bg-popover z-[100]">
+                        {ests.map(e => (
+                          <DropdownMenuItem 
+                            key={e.id} 
+                            onClick={() => navigate(`/slides?estimand=${e.id}`)}
+                            className="cursor-pointer"
+                          >
+                            {e.short_name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+
+              {/* Generated Slides with families */}
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Generated Slides
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-72 max-h-80 overflow-y-auto bg-popover z-[100]">
+                  <DropdownMenuItem onClick={() => navigate('/slides')} className="cursor-pointer font-semibold">
+                    View All Families
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {estimandFamilies.map(family => (
+                    <DropdownMenuItem 
+                      key={family.id} 
+                      onClick={() => navigate(`/slides?family=${family.id}`)}
+                      className="cursor-pointer"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{family.title}</span>
+                        <span className="text-xs text-muted-foreground">{family.description}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -205,7 +324,9 @@ const TheoryView = () => {
             topic={currentTopic} 
             slideIndex={slideIndex}
             totalContentSlides={totalContentSlides}
+            totalSlides={totalSlides}
             onNavigate={navigate}
+            onSlideChange={setSlideIndex}
             topicId={topicId}
           />
         </div>
