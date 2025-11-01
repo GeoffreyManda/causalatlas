@@ -26,8 +26,13 @@ const SlidesView = () => {
   // Get parameters from URL
   const urlEstimandId = searchParams.get('id') || searchParams.get('estimand');
   const urlFamily = searchParams.get('family');
-  
-  const estimandId = urlEstimandId || estimandsData[0].id;
+
+  // If family is provided without a specific estimand id, start with the first estimand in that family
+  const familyEstimands = urlFamily
+    ? estimandsData.filter(e => e.estimand_family === urlFamily)
+    : estimandsData;
+  const estimandId = urlEstimandId || familyEstimands[0]?.id || estimandsData[0].id;
+
   const [slideIndex, setSlideIndex] = useState(0);
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
