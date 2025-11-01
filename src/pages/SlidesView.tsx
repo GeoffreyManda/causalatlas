@@ -19,6 +19,7 @@ const SlidesView = () => {
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
+  const [selectedFamily, setSelectedFamily] = useState<string>('all');
 
   // Get referrer from state or default to estimands page
   const referrer = (location.state as any)?.from || '/estimands';
@@ -36,12 +37,14 @@ const SlidesView = () => {
     if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
     if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
     if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
+    if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
     return true;
   });
 
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
   const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
   const designs = ['all', ...Array.from(new Set(estimandsData.map(e => e.design))).sort()];
+  const families = ['all', ...Array.from(new Set(estimandsData.map(e => e.estimand_family))).sort()];
 
   // Reset slide index when estimand changes
   useEffect(() => {
@@ -127,50 +130,69 @@ const SlidesView = () => {
 
         {/* Filters */}
         <div className="mb-6 p-4 rounded-lg border bg-card">
-          <div className="flex flex-col gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter by Tier</label>
-              <div className="flex flex-wrap gap-2">
-                {tiers.map(tier => (
-                  <Badge
-                    key={tier}
-                    variant={selectedTier === tier ? 'default' : 'outline'}
-                    className="cursor-pointer px-4 py-2 hover:scale-105 transition-transform"
-                    onClick={() => setSelectedTier(tier)}
-                  >
-                    {tier === 'all' ? 'All Tiers' : tier}
-                  </Badge>
-                ))}
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Tier</label>
+                <div className="flex flex-wrap gap-2">
+                  {tiers.map(tier => (
+                    <Badge
+                      key={tier}
+                      variant={selectedTier === tier ? 'default' : 'outline'}
+                      className="cursor-pointer px-4 py-2 hover:scale-105 transition-transform"
+                      onClick={() => setSelectedTier(tier)}
+                    >
+                      {tier === 'all' ? 'All Tiers' : tier}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Type</label>
+                <div className="flex flex-wrap gap-2">
+                  {families.map(family => (
+                    <Badge
+                      key={family}
+                      variant={selectedFamily === family ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFamily(family)}
+                    >
+                      {family === 'all' ? 'All Types' : family === 'SurvivalTimeToEvent' ? 'Survival/Time-to-Event' : family.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter by Framework</label>
-              <div className="flex flex-wrap gap-2">
-                {frameworks.map(fw => (
-                  <Badge
-                    key={fw}
-                    variant={selectedFramework === fw ? 'default' : 'outline'}
-                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
-                    onClick={() => setSelectedFramework(fw)}
-                  >
-                    {fw === 'all' ? 'All Frameworks' : fw.replace(/([A-Z])/g, ' $1').trim()}
-                  </Badge>
-                ))}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Framework</label>
+                <div className="flex flex-wrap gap-2">
+                  {frameworks.map(fw => (
+                    <Badge
+                      key={fw}
+                      variant={selectedFramework === fw ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFramework(fw)}
+                    >
+                      {fw === 'all' ? 'All Frameworks' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter by Study Design</label>
-              <div className="flex flex-wrap gap-2">
-                {designs.map(design => (
-                  <Badge
-                    key={design}
-                    variant={selectedDesign === design ? 'default' : 'outline'}
-                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
-                    onClick={() => setSelectedDesign(design)}
-                  >
-                    {design === 'all' ? 'All Designs' : design.replace(/_/g, ' ')}
-                  </Badge>
-                ))}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Study Design</label>
+                <div className="flex flex-wrap gap-2">
+                  {designs.map(design => (
+                    <Badge
+                      key={design}
+                      variant={selectedDesign === design ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedDesign(design)}
+                    >
+                      {design === 'all' ? 'All Designs' : design.replace(/_/g, ' ')}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
