@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import LearningHub from "./pages/LearningHub";
 import TheoryView from "./pages/TheoryView";
 import TheoryLibrary from "./pages/TheoryLibrary";
+import TheoryTopicOverview from "./pages/TheoryTopicOverview";
 import SlidesView from "./pages/SlidesView";
 import EstimandsLibrary from "./pages/EstimandsLibrary";
 import NetworkView from "./pages/NetworkView";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/learning" element={<LearningHub />} />
           <Route path="/theory" element={<TheoryView />} />
           <Route path="/theory-library" element={<TheoryLibrary />} />
+          <Route path="/theory-overview" element={<TheoryTopicOverview />} />
           <Route path="/slides" element={<SlidesView />} />
           <Route path="/estimands" element={<EstimandsLibrary />} />
           <Route path="/network" element={<NetworkView />} />

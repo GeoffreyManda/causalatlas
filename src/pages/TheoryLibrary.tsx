@@ -29,7 +29,7 @@ const TheoryLibrary = () => {
   };
 
   const handleTopicClick = (topicId: string) => {
-    navigate(`/slides?id=${topicId}`);
+    navigate(`/theory-overview?id=${topicId}`);
   };
 
   return (
@@ -132,13 +132,13 @@ const TheoryLibrary = () => {
                       </div>
                     )}
 
-                    {/* View Slides Button */}
+                    {/* View Overview Button */}
                     <Button 
                       variant="outline" 
                       className="w-full mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                       size="sm"
                     >
-                      View Interactive Slides
+                      View Learning Path
                     </Button>
                   </div>
                 </CardContent>
