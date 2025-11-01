@@ -4,11 +4,19 @@ import { estimandsData } from '@/data/estimands';
 import EstimandSlideStandalone from '@/components/EstimandSlideStandalone';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Presentation, Download, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Presentation, Download, Home, Network, GraduationCap, Target, BookOpen } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { generateSlidesFromRenderer } from '@/lib/pdfGenerator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const SlidesView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,16 +116,42 @@ const SlidesView = () => {
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
-        {/* Back button and header */}
+        {/* Navigation menu and download */}
         <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(referrer)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Presentation className="h-4 w-4" />
+                Navigate To
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Main Sections</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigate('/')} className="gap-2 cursor-pointer">
+                <Home className="h-4 w-4" />
+                Home
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/learning')} className="gap-2 cursor-pointer">
+                <GraduationCap className="h-4 w-4" />
+                Learning Hub
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/network')} className="gap-2 cursor-pointer">
+                <Network className="h-4 w-4" />
+                Network View
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Related Content</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => navigate('/estimands')} className="gap-2 cursor-pointer">
+                <Target className="h-4 w-4" />
+                Estimands Library
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/theory')} className="gap-2 cursor-pointer">
+                <BookOpen className="h-4 w-4" />
+                Theory Slides
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button
             variant="outline"
             onClick={downloadSlides}
