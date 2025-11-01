@@ -240,9 +240,9 @@ const NetworkView = () => {
 
     // Categorize topics into Math vs Causal
     const mathTopicIds = [
-      'probability_theory', 'expectation_and_moments', 'convergence_and_limit_theorems',
-      'measure_theory_for_statistics', 'linear_algebra_for_statistics', 'optimization_methods',
-      'empirical_process_theory', 'semiparametric_efficiency_theory'
+      'probability_theory', 'expectation_theory', 'convergence_limit_theorems',
+      'measure_theory', 'linear_algebra_statistics', 'optimization_methods',
+      'empirical_processes', 'semiparametric_theory'
     ];
 
     // Build hierarchy: Root → Category (Math/Causal) → Tier → Topics
