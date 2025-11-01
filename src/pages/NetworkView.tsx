@@ -217,12 +217,15 @@ const NetworkView = () => {
       return true;
     });
 
-    const svg = d3.select(theorySvgRef.current);
-    svg.selectAll('*').remove();
-
     const width = 1200;
     const height = 800;
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+
+    d3.select(theorySvgRef.current).selectAll('*').remove();
+
+    const svg = d3.select(theorySvgRef.current)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'w-full h-full');
 
     // Build hierarchy: root → tiers → topics
     const groupedByTier = d3.group(filteredTopics, d => d.tier);
@@ -420,7 +423,7 @@ const NetworkView = () => {
               </Card>
 
               <div className="overflow-x-auto">
-                <svg ref={estimandsSvgRef} width="1800" height="1200" className="mx-auto border rounded-lg"></svg>
+                <svg ref={estimandsSvgRef} className="mx-auto border rounded-lg w-full" style={{ minHeight: '1200px' }}></svg>
               </div>
             </TabsContent>
 
@@ -470,7 +473,7 @@ const NetworkView = () => {
               </Card>
 
               <div className="overflow-x-auto">
-                <svg ref={theorySvgRef} width="1200" height="800" className="mx-auto border rounded-lg"></svg>
+                <svg ref={theorySvgRef} className="mx-auto border rounded-lg w-full" style={{ minHeight: '800px' }}></svg>
               </div>
             </TabsContent>
           </Tabs>
