@@ -1,5 +1,5 @@
 import Navigation from '@/components/Navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { estimandsData } from '@/data/estimands';
 import { allTheoryTopics } from '@/data/allTheoryTopics';
@@ -16,6 +16,12 @@ const NetworkView = () => {
   const [searchParams] = useSearchParams();
   const highlightNodeId = searchParams.get('node');
   const [activeTab, setActiveTab] = useState<string>('estimands');
+  const [refsReady, setRefsReady] = useState(false);
+
+  // Ensure refs are ready after first render
+  useEffect(() => {
+    setRefsReady(true);
+  }, []);
   
   // State for estimands filters
   const [selectedTier, setSelectedTier] = useState<string>('all');
@@ -27,7 +33,7 @@ const NetworkView = () => {
   const [selectedTheoryTier, setSelectedTheoryTier] = useState<string>('all');
 
   // Calculate available filter options for estimands
-  const getFilteredEstimands = () => {
+  const currentFiltered = useMemo(() => {
     return estimandsData.filter(e => {
       if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
       if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
@@ -35,9 +41,7 @@ const NetworkView = () => {
       if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
       return true;
     });
-  };
-
-  const currentFiltered = getFilteredEstimands();
+  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily]);
   
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
   const frameworks = ['all', ...Array.from(new Set(currentFiltered.map(e => e.framework)))];
@@ -46,7 +50,15 @@ const NetworkView = () => {
 
   // Estimands Network Effect
   useEffect(() => {
-    if (!estimandsSvgRef.current || activeTab !== 'estimands') return;
+    if (!estimandsSvgRef.current || activeTab !== 'estimands' || !refsReady) return;
+
+    const filteredEstimands = estimandsData.filter(e => {
+      if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
+      if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+      if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
+      if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
+      return true;
+    });
 
     const width = 1800;
     const height = 1200;
@@ -57,7 +69,7 @@ const NetworkView = () => {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    const filteredEstimands = currentFiltered;
+    // Build hierarchy: Root → Framework → Design → Family → Estimands
 
     // Build hierarchy: Root → Framework → Design → Family → Estimands
     const hierarchy: any = { name: 'Causal Inference', type: 'root', children: [] };
@@ -182,7 +194,7 @@ const NetworkView = () => {
 
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
-      if (d.data.type === 'estimand') {
+      if (d.data.type === 'estimand' && d.data.id) {
         navigate(`/estimand-overview?id=${d.data.id}`);
       }
     });
@@ -206,11 +218,11 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate, currentFiltered]);
+  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate, refsReady]);
 
   // Theory Network Effect
   useEffect(() => {
-    if (!theorySvgRef.current || activeTab !== 'theory') return;
+    if (!theorySvgRef.current || activeTab !== 'theory' || !refsReady) return;
 
     const filteredTopics = allTheoryTopics.filter(topic => {
       if (selectedTheoryTier !== 'all' && topic.tier !== selectedTheoryTier) return false;
@@ -277,7 +289,9 @@ const NetworkView = () => {
         d3.select(this).attr('opacity', 0.7);
       })
       .on('click', (event: any, d: any) => {
-        navigate(`/theory-overview?id=${d.data.id}`);
+        if (d.data.id) {
+          navigate(`/theory-overview?id=${d.data.id}`);
+        }
       });
 
     cell.append('text')
@@ -299,7 +313,7 @@ const NetworkView = () => {
         }
       });
 
-  }, [selectedTheoryTier, activeTab, navigate]);
+  }, [selectedTheoryTier, activeTab, navigate, refsReady]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -423,7 +437,12 @@ const NetworkView = () => {
               </Card>
 
               <div className="overflow-x-auto">
-                <svg ref={estimandsSvgRef} className="mx-auto border rounded-lg w-full" style={{ minHeight: '1200px' }}></svg>
+                <svg 
+                  ref={estimandsSvgRef} 
+                  width="100%" 
+                  height="1200"
+                  className="mx-auto border rounded-lg bg-white"
+                />
               </div>
             </TabsContent>
 
@@ -473,7 +492,12 @@ const NetworkView = () => {
               </Card>
 
               <div className="overflow-x-auto">
-                <svg ref={theorySvgRef} className="mx-auto border rounded-lg w-full" style={{ minHeight: '800px' }}></svg>
+                <svg 
+                  ref={theorySvgRef}
+                  width="100%"
+                  height="800"
+                  className="mx-auto border rounded-lg bg-white"
+                />
               </div>
             </TabsContent>
           </Tabs>
