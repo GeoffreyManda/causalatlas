@@ -14,7 +14,7 @@ import SlidesView from "./pages/SlidesView";
 import EstimandsLibrary from "./pages/EstimandsLibrary";
 import EstimandOverview from "./pages/EstimandOverview";
 import NetworkView from "./pages/NetworkView";
-import TerminalView from "./pages/TerminalView";
+import Playground from "./pages/Playground";
 import NotFound from "./pages/NotFound";
 import Navigation from "./components/Navigation";
 
@@ -39,8 +39,8 @@ const App = () => (
           <Route path="/estimands" element={<EstimandsLibrary />} />
           <Route path="/estimand-overview" element={<EstimandOverview />} />
           <Route path="/network" element={<NetworkView />} />
-          <Route path="/terminal" element={<TerminalView />} />
-          <Route path="/playground" element={<TerminalView />} />
+          <Route path="/terminal" element={<Playground />} />
+          <Route path="/playground" element={<Playground />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
