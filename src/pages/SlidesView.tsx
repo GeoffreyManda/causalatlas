@@ -22,12 +22,17 @@ const SlidesView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const estimandId = searchParams.get('id') || estimandsData[0].id;
+  
+  // Get parameters from URL
+  const urlEstimandId = searchParams.get('id') || searchParams.get('estimand');
+  const urlFamily = searchParams.get('family');
+  
+  const estimandId = urlEstimandId || estimandsData[0].id;
   const [slideIndex, setSlideIndex] = useState(0);
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
-  const [selectedFamily, setSelectedFamily] = useState<string>('all');
+  const [selectedFamily, setSelectedFamily] = useState<string>(urlFamily || 'all');
 
   // Get referrer from state or default to estimands page
   const referrer = (location.state as any)?.from || '/estimands';
@@ -59,6 +64,13 @@ const SlidesView = () => {
   useEffect(() => {
     setSlideIndex(0);
   }, [estimandId]);
+
+  // Update selected family when URL changes
+  useEffect(() => {
+    if (urlFamily) {
+      setSelectedFamily(urlFamily);
+    }
+  }, [urlFamily]);
 
   const goToNext = () => {
     if (slideIndex < totalSlides - 1) {

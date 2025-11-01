@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { estimandsData } from '@/data/estimands';
+import { estimandFamilies } from '@/data/estimandFamilies';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -217,16 +218,16 @@ const NetworkView = () => {
         const designId = designIds[d.data.name];
         if (designId) navigate(`/theory?id=${designId}`, { state: { from: '/network' } });
       } else if (d.data.type === 'family') {
-        // Navigate to family theory slide
-        const familyIds: Record<string, string> = {
-          'PopulationEffects': 'family-population-effects',
-          'InstrumentalLocal': 'family-instrumental-local',
-          'SurvivalTimeToEvent': 'family-survival-time-to-event',
-          'LongitudinalDynamic': 'family-longitudinal-dynamic',
-          'DeepRepresentation': 'family-deep-representation'
-        };
-        const familyId = familyIds[d.data.name];
-        if (familyId) navigate(`/theory?id=${familyId}`, { state: { from: '/network' } });
+        // Navigate to family theory slide or slides view
+        // Create dynamic mapping from family name to family id
+        const family = estimandFamilies.find(f => f.name === d.data.name);
+        if (family) {
+          // If family topic exists, navigate to theory slide
+          navigate(`/theory?id=family-${family.id}`, { state: { from: '/network' } });
+        } else {
+          // Otherwise navigate to slides view with family filter
+          navigate(`/slides?family=${d.data.name}`, { state: { from: '/network' } });
+        }
       }
     });
 
