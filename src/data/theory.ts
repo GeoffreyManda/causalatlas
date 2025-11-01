@@ -1359,5 +1359,770 @@ cat("After matching: improved balance\\n")`
       { authors: 'Austin PC', title: 'An Introduction to Propensity Score Methods for Reducing Confounding', year: 2011, doi: '10.1080/00273171.2011.568786' },
       { authors: 'Stuart EA', title: 'Matching methods for causal inference: A review', year: 2010, doi: '10.1214/09-STS313' }
     ]
+  },
+
+  // ========== FOUNDATIONAL TOPICS (Hernán & Robins Part I) ==========
+  {
+    id: 'randomized_experiments',
+    title: 'Randomized Experiments',
+    tier: 'Foundational',
+    description: 'The gold standard for causal inference - design, analysis, and interpretation of RCTs',
+    content: `*Content pending. This topic will cover: randomization principles, conditional randomization, standardization, and inverse probability weighting in experimental settings.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Understand why randomization enables causal inference',
+      'Distinguish unconditional and conditional randomization',
+      'Apply standardization and IPW in randomized experiments',
+      'Interpret intention-to-treat and per-protocol effects'
+    ],
+    keyDefinitions: [
+      { term: 'Randomization', definition: 'Random assignment of treatment to ensure exchangeability' },
+      { term: 'Conditional randomization', definition: 'Randomization within strata defined by covariates' },
+      { term: 'ITT effect', definition: 'Effect of treatment assignment regardless of compliance' }
+    ],
+    examples: {
+      python: `# Placeholder - RCT analysis example`,
+      r: `# Placeholder - RCT analysis example`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 2', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'observational_studies',
+    title: 'Observational Studies',
+    tier: 'Foundational',
+    description: 'Identifiability conditions for causal inference from observational data',
+    content: `*Content pending. This topic will cover: exchangeability, positivity, consistency, SUTVA, and the target trial framework.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'State the three core identifiability conditions',
+      'Understand exchangeability and its violations',
+      'Assess positivity violations and their implications',
+      'Apply the target trial framework'
+    ],
+    keyDefinitions: [
+      { term: 'Exchangeability', definition: '(Y¹,Y⁰) ⊥ A | X - no unmeasured confounding' },
+      { term: 'Positivity', definition: 'P(A=a|X=x) > 0 for all a,x with P(X=x) > 0' },
+      { term: 'Consistency', definition: 'If A=a, then Y=Yᵃ' }
+    ],
+    examples: {
+      python: `# Placeholder - observational study analysis`,
+      r: `# Placeholder - observational study analysis`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 3', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'effect_modification',
+    title: 'Effect Modification and Heterogeneity',
+    tier: 'Intermediate',
+    description: 'Heterogeneous treatment effects across subgroups and effect modification',
+    content: `*Content pending. This topic will cover: stratification, matching, CATE estimation, heterogeneous treatment effects, and meta-learners.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Define effect modification vs interaction',
+      'Identify effect modification via stratification',
+      'Estimate conditional average treatment effects (CATE)',
+      'Apply S-learner, T-learner, X-learner, R-learner'
+    ],
+    keyDefinitions: [
+      { term: 'Effect modification', definition: 'Treatment effect varies across levels of covariate V' },
+      { term: 'CATE', definition: 'E[Y¹-Y⁰|X=x] - conditional average treatment effect' },
+      { term: 'HTE', definition: 'Heterogeneous treatment effects - variation in individual effects' }
+    ],
+    examples: {
+      python: `# Placeholder - CATE estimation with meta-learners`,
+      r: `# Placeholder - CATE estimation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 4', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' },
+      { authors: 'Künzel SR et al', title: 'Metalearners for estimating heterogeneous treatment effects', year: 2019, doi: '10.1073/pnas.1804597116' }
+    ]
+  },
+
+  {
+    id: 'interaction',
+    title: 'Interaction and Sufficient Causes',
+    tier: 'Intermediate',
+    description: 'Causal interaction, sufficient causes, and mechanistic interaction',
+    content: `*Content pending. This topic will cover: joint interventions, sufficient cause interaction, counterfactual response types, and mechanistic frameworks.*`,
+    prerequisites: ['effect_modification'],
+    learningObjectives: [
+      'Distinguish effect modification from interaction',
+      'Understand sufficient cause framework',
+      'Identify synergism and antagonism',
+      'Apply counterfactual response type analysis'
+    ],
+    keyDefinitions: [
+      { term: 'Interaction', definition: 'Effect of joint intervention differs from sum of individual effects' },
+      { term: 'Sufficient cause', definition: 'Minimal set of conditions that inevitably produce outcome' },
+      { term: 'Synergism', definition: 'Positive interaction - combined effect exceeds additive' }
+    ],
+    examples: {
+      python: `# Placeholder - interaction analysis`,
+      r: `# Placeholder - interaction analysis`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 5', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'confounding',
+    title: 'Confounding and the Backdoor Criterion',
+    tier: 'Foundational',
+    description: 'Structure of confounding, backdoor criterion, and confounding adjustment',
+    content: `*Content pending. This topic will cover: confounding structure, backdoor criterion, single-world intervention graphs (SWIGs), and adjustment strategies.*`,
+    prerequisites: ['dags_basics'],
+    learningObjectives: [
+      'Identify confounding in DAGs',
+      'Apply backdoor criterion',
+      'Understand SWIGs',
+      'Choose valid adjustment sets'
+    ],
+    keyDefinitions: [
+      { term: 'Confounding', definition: 'Common cause of treatment and outcome creating spurious association' },
+      { term: 'Backdoor path', definition: 'Non-causal path from treatment to outcome' },
+      { term: 'Backdoor criterion', definition: 'Set Z blocks all backdoor paths and contains no descendants of A' }
+    ],
+    examples: {
+      python: `# Placeholder - confounding adjustment`,
+      r: `# Placeholder - confounding adjustment`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 7', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'selection_bias',
+    title: 'Selection Bias and Collider Stratification',
+    tier: 'Intermediate',
+    description: 'Selection bias, censoring, collider bias, and adjustment strategies',
+    content: `*Content pending. This topic will cover: selection bias structure, collider stratification bias, censoring mechanisms, and inverse probability of censoring weighting.*`,
+    prerequisites: ['dags_basics', 'confounding'],
+    learningObjectives: [
+      'Identify selection bias in DAGs',
+      'Understand collider stratification bias',
+      'Adjust for informative censoring',
+      'Apply inverse probability of selection weighting'
+    ],
+    keyDefinitions: [
+      { term: 'Selection bias', definition: 'Bias from conditioning on common effect of treatment and outcome' },
+      { term: 'Collider', definition: 'Variable caused by two other variables' },
+      { term: 'Collider stratification bias', definition: 'Spurious association created by conditioning on collider' }
+    ],
+    examples: {
+      python: `# Placeholder - selection bias correction`,
+      r: `# Placeholder - selection bias correction`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 8', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'measurement_bias',
+    title: 'Measurement Bias and Misclassification',
+    tier: 'Advanced',
+    description: 'Measurement error, misclassification, and their impact on causal inference',
+    content: `*Content pending. This topic will cover: measurement error structures, mismeasured confounders, noncausal diagrams, and correction methods.*`,
+    prerequisites: ['confounding', 'selection_bias'],
+    learningObjectives: [
+      'Understand measurement error impact on estimates',
+      'Identify mismeasured confounders in DAGs',
+      'Distinguish causal vs noncausal arrows',
+      'Apply measurement error correction techniques'
+    ],
+    keyDefinitions: [
+      { term: 'Measurement error', definition: 'Discrepancy between observed and true variable value' },
+      { term: 'Noncausal arrow', definition: 'Arrow representing measurement process, not causation' },
+      { term: 'Classical measurement error', definition: 'Random error independent of true value' }
+    ],
+    examples: {
+      python: `# Placeholder - measurement error correction`,
+      r: `# Placeholder - measurement error correction`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 9', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'random_variability',
+    title: 'Random Variability and Finite Sample Inference',
+    tier: 'Intermediate',
+    description: 'Identification vs estimation, sampling variability, and statistical inference',
+    content: `*Content pending. This topic will cover: identification vs estimation distinction, finite sample inference, conditionality principle, curse of dimensionality.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Distinguish identification from estimation',
+      'Quantify random variability in estimates',
+      'Apply conditionality principle',
+      'Understand curse of dimensionality'
+    ],
+    keyDefinitions: [
+      { term: 'Identification', definition: 'Expressing causal estimand as function of observable distribution' },
+      { term: 'Estimation', definition: 'Computing numerical value from finite sample' },
+      { term: 'Sampling variability', definition: 'Variation in estimates across repeated samples' }
+    ],
+    examples: {
+      python: `# Placeholder - bootstrap inference`,
+      r: `# Placeholder - bootstrap inference`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 10', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  // ========== PARAMETRIC & SEMIPARAMETRIC METHODS ==========
+  {
+    id: 'why_model',
+    title: 'Why Model? Parametric vs Nonparametric Estimation',
+    tier: 'Intermediate',
+    description: 'Role of models, bias-variance tradeoff, smoothing, and model selection',
+    content: `*Content pending. This topic will cover: parametric vs nonparametric estimation, conditional mean estimation, smoothing techniques, bias-variance tradeoff.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Understand role of statistical models',
+      'Compare parametric and nonparametric approaches',
+      'Apply bias-variance tradeoff',
+      'Choose appropriate model complexity'
+    ],
+    keyDefinitions: [
+      { term: 'Parametric model', definition: 'Model with finite-dimensional parameter' },
+      { term: 'Nonparametric', definition: 'Model allowing infinite-dimensional parameter space' },
+      { term: 'Bias-variance tradeoff', definition: 'Balance between model bias and estimation variance' }
+    ],
+    examples: {
+      python: `# Placeholder - model comparison`,
+      r: `# Placeholder - model comparison`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 11', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'marginal_structural_models',
+    title: 'IP Weighting and Marginal Structural Models',
+    tier: 'Intermediate',
+    description: 'Inverse probability weighting, marginal structural models, and stabilized weights',
+    content: `*Content pending. This topic will cover: IP weight estimation, stabilized weights, marginal structural models, effect modification in MSMs.*`,
+    prerequisites: ['unconfoundedness_propensity_score'],
+    learningObjectives: [
+      'Estimate inverse probability weights',
+      'Fit marginal structural models',
+      'Apply stabilized weights',
+      'Model effect modification in MSMs'
+    ],
+    keyDefinitions: [
+      { term: 'Marginal structural model', definition: 'Model for counterfactual outcome means marginalized over confounders' },
+      { term: 'Stabilized weights', definition: 'Weights with numerator to reduce variance' },
+      { term: 'IP weighting', definition: 'Weighting by inverse of treatment probability' }
+    ],
+    examples: {
+      python: `# Placeholder - MSM estimation`,
+      r: `# Placeholder - MSM estimation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 12', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'parametric_g_formula',
+    title: 'Standardization and the Parametric G-Formula',
+    tier: 'Intermediate',
+    description: 'G-formula for time-fixed treatments, standardization, and outcome modeling',
+    content: `*Content pending. This topic will cover: standardization method, parametric g-formula, outcome regression modeling, comparison with IPW.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Apply standardization to estimate causal effects',
+      'Implement parametric g-formula',
+      'Compare g-formula with IP weighting',
+      'Model outcome conditional distributions'
+    ],
+    keyDefinitions: [
+      { term: 'Standardization', definition: 'Averaging covariate-conditional effects over covariate distribution' },
+      { term: 'G-formula', definition: 'Formula expressing causal effect via standardization' },
+      { term: 'Outcome model', definition: 'Model for E[Y|A,X]' }
+    ],
+    examples: {
+      python: `# Placeholder - g-formula implementation`,
+      r: `# Placeholder - g-formula implementation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 13', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'structural_nested_models',
+    title: 'G-Estimation of Structural Nested Models',
+    tier: 'Advanced',
+    description: 'Structural nested models, g-estimation, and rank preservation',
+    content: `*Content pending. This topic will cover: structural nested mean models, g-estimation procedure, rank preservation, two-stage estimation.*`,
+    prerequisites: ['parametric_g_formula'],
+    learningObjectives: [
+      'Specify structural nested models',
+      'Apply g-estimation algorithm',
+      'Understand rank preservation',
+      'Implement multi-parameter g-estimation'
+    ],
+    keyDefinitions: [
+      { term: 'Structural nested model', definition: 'Model for individual treatment effect conditional on covariates' },
+      { term: 'G-estimation', definition: 'Estimation method using orthogonality conditions' },
+      { term: 'Rank preservation', definition: 'Assumption that treatment does not change outcome ranking' }
+    ],
+    examples: {
+      python: `# Placeholder - g-estimation`,
+      r: `# Placeholder - g-estimation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 14', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'augmented_ipw',
+    title: 'Augmented IPW and Doubly Robust Estimation',
+    tier: 'Advanced',
+    description: 'AIPW estimators, doubly robust property, and semiparametric efficiency',
+    content: `*Content pending. This topic will cover: augmented inverse probability weighting, doubly robust estimation, efficient influence function, one-step and TMLE estimators.*`,
+    prerequisites: ['marginal_structural_models', 'parametric_g_formula'],
+    learningObjectives: [
+      'Understand doubly robust property',
+      'Implement AIPW estimators',
+      'Apply targeted maximum likelihood estimation (TMLE)',
+      'Achieve semiparametric efficiency'
+    ],
+    keyDefinitions: [
+      { term: 'Doubly robust', definition: 'Consistent if either propensity or outcome model correct' },
+      { term: 'AIPW', definition: 'Augmented inverse probability weighted estimator' },
+      { term: 'Efficient influence function', definition: 'Canonical gradient determining efficiency bound' }
+    ],
+    examples: {
+      python: `# Placeholder - AIPW/TMLE implementation`,
+      r: `# Placeholder - AIPW/TMLE implementation`
+    },
+    references: [
+      { authors: 'Robins JM et al', title: 'Doubly robust estimation', year: 2007, doi: '10.1198/073500106000000533' },
+      { authors: 'van der Laan MJ, Rose S', title: 'Targeted Learning', year: 2011, doi: '10.1007/978-1-4419-9782-1' }
+    ]
+  },
+
+  {
+    id: 'instrumental_variables',
+    title: 'Instrumental Variables and LATE',
+    tier: 'Advanced',
+    description: 'IV estimation, local average treatment effects, and complier analysis',
+    content: `*Content pending. This topic will cover: three IV conditions, Wald estimator, LATE identification, monotonicity, principal stratification for IV.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'State three instrumental conditions',
+      'Estimate effects with instrumental variables',
+      'Interpret local average treatment effects',
+      'Apply complier average causal effect framework'
+    ],
+    keyDefinitions: [
+      { term: 'Instrument', definition: 'Variable affecting treatment but not outcome except through treatment' },
+      { term: 'LATE', definition: 'Local average treatment effect for compliers' },
+      { term: 'Complier', definition: 'Unit whose treatment responds to instrument' }
+    ],
+    examples: {
+      python: `# Placeholder - IV estimation`,
+      r: `# Placeholder - IV estimation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 16', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' },
+      { authors: 'Angrist JD et al', title: 'Identification of causal effects using instrumental variables', year: 1996, doi: '10.1080/01621459.1996.10476902' }
+    ]
+  },
+
+  {
+    id: 'survival_analysis',
+    title: 'Causal Survival Analysis',
+    tier: 'Advanced',
+    description: 'Survival outcomes, censoring, hazards, and time-to-event causal effects',
+    content: `*Content pending. This topic will cover: hazards vs risks, censoring adjustment, survival IP weighting, g-formula for survival, g-estimation with censoring.*`,
+    prerequisites: ['marginal_structural_models'],
+    learningObjectives: [
+      'Define causal effects for survival outcomes',
+      'Distinguish hazards and risks',
+      'Adjust for informative censoring',
+      'Apply survival-specific g-methods'
+    ],
+    keyDefinitions: [
+      { term: 'Hazard', definition: 'Instantaneous failure rate conditional on survival to time t' },
+      { term: 'Risk', definition: 'Cumulative probability of failure by time t' },
+      { term: 'Censoring', definition: 'Loss to follow-up before outcome occurs' }
+    ],
+    examples: {
+      python: `# Placeholder - causal survival analysis`,
+      r: `# Placeholder - causal survival analysis`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 17', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'variable_selection',
+    title: 'Variable Selection and High-Dimensional Data',
+    tier: 'Advanced',
+    description: 'Covariate selection, machine learning in causal inference, double/debiased ML',
+    content: `*Content pending. This topic will cover: goals of variable selection, bias-inducing variables, causal ML integration, doubly robust ML estimators.*`,
+    prerequisites: ['augmented_ipw'],
+    learningObjectives: [
+      'Identify variables that induce or amplify bias',
+      'Integrate machine learning in causal inference',
+      'Apply double/debiased machine learning',
+      'Navigate high-dimensional confounder spaces'
+    ],
+    keyDefinitions: [
+      { term: 'Double ML', definition: 'ML-based estimation with Neyman orthogonality and cross-fitting' },
+      { term: 'Bias amplification', definition: 'Adjusting for certain variables increases bias' },
+      { term: 'Cross-fitting', definition: 'Sample splitting to prevent overfitting bias' }
+    ],
+    examples: {
+      python: `# Placeholder - double ML`,
+      r: `# Placeholder - double ML`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 18', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' },
+      { authors: 'Chernozhukov V et al', title: 'Double/debiased machine learning', year: 2018, doi: '10.1111/ectj.12097' }
+    ]
+  },
+
+  // ========== TIME-VARYING TREATMENTS ==========
+  {
+    id: 'time_varying_treatments',
+    title: 'Time-Varying Treatments',
+    tier: 'Advanced',
+    description: 'Treatment strategies, sequential exchangeability, and time-varying confounding',
+    content: `*Content pending. This topic will cover: treatment strategies/regimes, sequentially randomized experiments, sequential exchangeability, time-varying confounding.*`,
+    prerequisites: ['marginal_structural_models'],
+    learningObjectives: [
+      'Define causal effects of treatment strategies',
+      'Understand sequential exchangeability',
+      'Identify time-varying confounding',
+      'Specify dynamic treatment regimes'
+    ],
+    keyDefinitions: [
+      { term: 'Treatment strategy', definition: 'Rule specifying treatment at each time based on history' },
+      { term: 'Sequential exchangeability', definition: 'Exchangeability at each time conditional on past' },
+      { term: 'Time-varying confounder', definition: 'Confounder affected by past treatment' }
+    ],
+    examples: {
+      python: `# Placeholder - time-varying treatment analysis`,
+      r: `# Placeholder - time-varying treatment analysis`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 19', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'treatment_confounder_feedback',
+    title: 'Treatment-Confounder Feedback',
+    tier: 'Advanced',
+    description: 'Time-dependent confounding affected by prior treatment and traditional methods failure',
+    content: `*Content pending. This topic will cover: treatment-confounder feedback, why traditional methods fail, necessity of g-methods.*`,
+    prerequisites: ['time_varying_treatments'],
+    learningObjectives: [
+      'Identify treatment-confounder feedback',
+      'Understand why traditional adjustment fails',
+      'Recognize when g-methods are needed',
+      'Apply appropriate longitudinal methods'
+    ],
+    keyDefinitions: [
+      { term: 'Treatment-confounder feedback', definition: 'Past treatment affects future confounders' },
+      { term: 'Time-dependent confounding', definition: 'Confounder at time t affected by treatment before t' },
+      { term: 'G-methods', definition: 'Methods handling time-dependent confounding' }
+    ],
+    examples: {
+      python: `# Placeholder - feedback demonstration`,
+      r: `# Placeholder - feedback demonstration`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 20', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'g_methods_longitudinal',
+    title: 'G-Methods for Time-Varying Treatments',
+    tier: 'Frontier',
+    description: 'G-formula, IP weighting, and g-estimation for longitudinal data',
+    content: `*Content pending. This topic will cover: longitudinal g-formula, time-varying IPW, doubly robust methods for longitudinal data, g-estimation for time-varying treatments.*`,
+    prerequisites: ['treatment_confounder_feedback'],
+    learningObjectives: [
+      'Apply g-formula to time-varying treatments',
+      'Implement time-varying IP weighting',
+      'Use doubly robust estimators longitudinally',
+      'Apply g-estimation in longitudinal settings'
+    ],
+    keyDefinitions: [
+      { term: 'Longitudinal g-formula', definition: 'Iterative application of g-formula over time' },
+      { term: 'Time-varying IPW', definition: 'Product of time-specific inverse probability weights' },
+      { term: 'Sequential doubly robust', definition: 'Doubly robust at each time point' }
+    ],
+    examples: {
+      python: `# Placeholder - g-methods longitudinal`,
+      r: `# Placeholder - g-methods longitudinal`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 21', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'target_trial_emulation',
+    title: 'Target Trial Emulation',
+    tier: 'Advanced',
+    description: 'Designing observational studies to emulate randomized trials',
+    content: `*Content pending. This topic will cover: target trial framework, protocol specification, time-zero alignment, sustained vs point treatment strategies.*`,
+    prerequisites: ['time_varying_treatments'],
+    learningObjectives: [
+      'Specify target trial protocol',
+      'Emulate trials with observational data',
+      'Avoid immortal time bias',
+      'Design time-zero properly'
+    ],
+    keyDefinitions: [
+      { term: 'Target trial', definition: 'Hypothetical RCT the observational study aims to emulate' },
+      { term: 'Time zero', definition: 'When treatment strategy eligibility begins' },
+      { term: 'Immortal time bias', definition: 'Bias from survival requirement in treatment group' }
+    ],
+    examples: {
+      python: `# Placeholder - target trial emulation`,
+      r: `# Placeholder - target trial emulation`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 22', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  {
+    id: 'causal_mediation',
+    title: 'Causal Mediation Analysis',
+    tier: 'Advanced',
+    description: 'Direct and indirect effects, mediation analysis, and interventionist approach',
+    content: `*Content pending. This topic will cover: natural direct/indirect effects, controlled direct effects, sequential ignorability, interventionist mediation theory.*`,
+    prerequisites: ['parametric_g_formula'],
+    learningObjectives: [
+      'Define direct and indirect effects',
+      'Understand sequential ignorability',
+      'Implement mediation estimators',
+      'Interpret mediation analysis results'
+    ],
+    keyDefinitions: [
+      { term: 'Natural direct effect', definition: 'Effect of treatment not mediated through M' },
+      { term: 'Natural indirect effect', definition: 'Effect of treatment operating through M' },
+      { term: 'Sequential ignorability', definition: 'Ignorability for treatment and mediator conditional on covariates' }
+    ],
+    examples: {
+      python: `# Placeholder - mediation analysis`,
+      r: `# Placeholder - mediation analysis`
+    },
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If - Chapter 23', year: 2020, doi: 'https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/' }
+    ]
+  },
+
+  // ========== ADDITIONAL ADVANCED TOPICS ==========
+  {
+    id: 'regression_discontinuity',
+    title: 'Regression Discontinuity Designs',
+    tier: 'Advanced',
+    description: 'Sharp and fuzzy RDD, identification at cutoffs, bandwidth selection',
+    content: `*Content pending. This topic will cover: sharp vs fuzzy RDD, local randomization, continuity assumptions, bandwidth selection, inference.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Identify RDD opportunities',
+      'Distinguish sharp and fuzzy designs',
+      'Apply local polynomial estimation',
+      'Conduct RDD diagnostics and sensitivity'
+    ],
+    keyDefinitions: [
+      { term: 'Sharp RDD', definition: 'Treatment deterministically assigned at cutoff' },
+      { term: 'Fuzzy RDD', definition: 'Treatment probability changes discontinuously at cutoff' },
+      { term: 'Bandwidth', definition: 'Window around cutoff used for estimation' }
+    ],
+    examples: {
+      python: `# Placeholder - RDD analysis`,
+      r: `# Placeholder - RDD analysis`
+    },
+    references: [
+      { authors: 'Lee DS, Lemieux T', title: 'Regression discontinuity designs in economics', year: 2010, doi: '10.1257/jel.48.2.281' }
+    ]
+  },
+
+  {
+    id: 'balancing_estimators',
+    title: 'Balancing Estimators and Synthetic Controls',
+    tier: 'Advanced',
+    description: 'Covariate balancing weights, entropy balancing, synthetic control methods',
+    content: `*Content pending. This topic will cover: covariate balancing propensity score, entropy balancing, calibration, synthetic controls, matrix completion.*`,
+    prerequisites: ['unconfoundedness_propensity_score'],
+    learningObjectives: [
+      'Apply covariate balancing methods',
+      'Implement entropy balancing',
+      'Use synthetic control methods',
+      'Compare balancing approaches'
+    ],
+    keyDefinitions: [
+      { term: 'Covariate balance', definition: 'Treatment groups have similar covariate distributions' },
+      { term: 'Entropy balancing', definition: 'Weights that exactly balance moments while minimizing entropy' },
+      { term: 'Synthetic control', definition: 'Weighted average of controls matching treated unit' }
+    ],
+    examples: {
+      python: `# Placeholder - balancing methods`,
+      r: `# Placeholder - balancing methods`
+    },
+    references: [
+      { authors: 'Hainmueller J', title: 'Entropy balancing', year: 2012, doi: '10.1093/pan/mpr025' },
+      { authors: 'Abadie A et al', title: 'Synthetic control methods', year: 2010, doi: '10.1198/jasa.2009.ap08746' }
+    ]
+  },
+
+  {
+    id: 'panel_data_methods',
+    title: 'Methods for Panel Data',
+    tier: 'Advanced',
+    description: 'Difference-in-differences, fixed effects, event studies, and panel methods',
+    content: `*Content pending. This topic will cover: difference-in-differences, two-way fixed effects, event studies, parallel trends, staggered adoption.*`,
+    prerequisites: ['intro_causal_inference'],
+    learningObjectives: [
+      'Apply difference-in-differences',
+      'Implement two-way fixed effects',
+      'Conduct event studies',
+      'Address violations of parallel trends'
+    ],
+    keyDefinitions: [
+      { term: 'DiD', definition: 'Difference-in-differences - comparing changes over time between groups' },
+      { term: 'Parallel trends', definition: 'Treated and control would have same trend absent treatment' },
+      { term: 'TWFE', definition: 'Two-way fixed effects - unit and time fixed effects' }
+    ],
+    examples: {
+      python: `# Placeholder - DiD analysis`,
+      r: `# Placeholder - DiD analysis`
+    },
+    references: [
+      { authors: 'Callaway B, Sant\'Anna PHC', title: 'Difference-in-differences with multiple time periods', year: 2021, doi: '10.1016/j.jeconom.2020.12.001' }
+    ]
+  },
+
+  {
+    id: 'policy_learning',
+    title: 'Policy Learning and Optimal Treatment Regimes',
+    tier: 'Frontier',
+    description: 'Learning optimal individualized treatment rules from data',
+    content: `*Content pending. This topic will cover: optimal treatment regimes, value functions, Q-learning, policy tree methods, doubly robust policy learning.*`,
+    prerequisites: ['effect_modification'],
+    learningObjectives: [
+      'Define optimal treatment regimes',
+      'Estimate value functions',
+      'Apply policy tree methods',
+      'Implement doubly robust policy learners'
+    ],
+    keyDefinitions: [
+      { term: 'Treatment regime', definition: 'Rule assigning treatment based on individual characteristics' },
+      { term: 'Value function', definition: 'Expected outcome under a treatment regime' },
+      { term: 'Policy tree', definition: 'Interpretable tree-based treatment rule' }
+    ],
+    examples: {
+      python: `# Placeholder - policy learning`,
+      r: `# Placeholder - policy learning`
+    },
+    references: [
+      { authors: 'Athey S, Wager S', title: 'Policy learning with observational data', year: 2021, doi: '10.3982/ECTA15732' }
+    ]
+  },
+
+  {
+    id: 'dynamic_policies',
+    title: 'Evaluating Dynamic Treatment Policies',
+    tier: 'Frontier',
+    description: 'Dynamic regimes, Q-learning, A-learning, and reinforcement learning for causal inference',
+    content: `*Content pending. This topic will cover: dynamic treatment regimes, Q-learning, A-learning, optimal regime estimation, contextual bandits.*`,
+    prerequisites: ['g_methods_longitudinal'],
+    learningObjectives: [
+      'Specify dynamic treatment regimes',
+      'Apply Q-learning and A-learning',
+      'Estimate optimal dynamic policies',
+      'Connect RL and causal inference'
+    ],
+    keyDefinitions: [
+      { term: 'Dynamic regime', definition: 'Time-varying treatment rule based on evolving history' },
+      { term: 'Q-learning', definition: 'Backward induction approach to estimating optimal regimes' },
+      { term: 'A-learning', definition: 'Advantage learning for optimal regime estimation' }
+    ],
+    examples: {
+      python: `# Placeholder - dynamic regime estimation`,
+      r: `# Placeholder - dynamic regime estimation`
+    },
+    references: [
+      { authors: 'Murphy SA', title: 'Optimal dynamic treatment regimes', year: 2003, doi: '10.1111/1467-9868.00389' }
+    ]
+  },
+
+  {
+    id: 'structural_equation_modeling',
+    title: 'Structural Equation Modeling',
+    tier: 'Advanced',
+    description: 'SEM for causal inference, path analysis, and latent variable models',
+    content: `*Content pending. This topic will cover: SEM framework, path analysis, measurement models, identification in SEMs, causal interpretation of SEM.*`,
+    prerequisites: ['framework_scm'],
+    learningObjectives: [
+      'Specify structural equation models',
+      'Conduct path analysis',
+      'Incorporate latent variables',
+      'Identify causal effects in SEMs'
+    ],
+    keyDefinitions: [
+      { term: 'SEM', definition: 'System of equations relating observed and latent variables' },
+      { term: 'Path analysis', definition: 'Decomposing effects through directed paths' },
+      { term: 'Latent variable', definition: 'Unobserved variable inferred from indicators' }
+    ],
+    examples: {
+      python: `# Placeholder - SEM estimation`,
+      r: `# Placeholder - SEM estimation`
+    },
+    references: [
+      { authors: 'Bollen KA', title: 'Structural Equations with Latent Variables', year: 1989, doi: '10.1002/9781118619179' }
+    ]
+  },
+
+  {
+    id: 'adaptive_experiments',
+    title: 'Adaptive Experiments and Sequential Testing',
+    tier: 'Frontier',
+    description: 'Adaptive randomization, sequential monitoring, and multi-armed bandits',
+    content: `*Content pending. This topic will cover: adaptive designs, response-adaptive randomization, group sequential designs, multi-armed bandits, Thompson sampling.*`,
+    prerequisites: ['randomized_experiments'],
+    learningObjectives: [
+      'Design adaptive experiments',
+      'Apply response-adaptive randomization',
+      'Implement group sequential methods',
+      'Use bandit algorithms for experiments'
+    ],
+    keyDefinitions: [
+      { term: 'Adaptive design', definition: 'Trial design allowing modifications based on accumulating data' },
+      { term: 'Multi-armed bandit', definition: 'Sequential decision problem balancing exploration and exploitation' },
+      { term: 'Thompson sampling', definition: 'Bayesian approach to adaptive allocation' }
+    ],
+    examples: {
+      python: `# Placeholder - adaptive experiment`,
+      r: `# Placeholder - adaptive experiment`
+    },
+    references: [
+      { authors: 'Villar SS et al', title: 'Multi-armed bandit models for clinical trials', year: 2015, doi: '10.1177/1740774515588375' }
+    ]
   }
 ];
