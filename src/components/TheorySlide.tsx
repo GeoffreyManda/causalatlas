@@ -66,17 +66,46 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
   const definitionChunks = chunkArray(topic.keyDefinitions, 3); // Max 3 definitions per slide
   const referenceChunks = chunkArray(topic.references, 3); // Max 3 references per slide
   
-  // New comprehensive sections (split into chunks if populated)
-  const backgroundChunks = topic.backgroundMotivation ? chunkArray(topic.backgroundMotivation.split('\n\n').filter(p => p.trim()), 3) : [];
-  const historicalChunks = topic.historicalContext ? chunkArray(topic.historicalContext.split('\n\n').filter(p => p.trim()), 3) : [];
-  const conditionsChunks = topic.conditionsAssumptions ? chunkArray(topic.conditionsAssumptions.split('\n\n').filter(p => p.trim()), 3) : [];
-  const dataStructureChunks = topic.dataStructureDesign ? chunkArray(topic.dataStructureDesign.split('\n\n').filter(p => p.trim()), 3) : [];
-  const targetParamChunks = topic.targetParameter ? chunkArray(topic.targetParameter.split('\n\n').filter(p => p.trim()), 3) : [];
-  const identificationChunks = topic.identificationStrategy ? chunkArray(topic.identificationStrategy.split('\n\n').filter(p => p.trim()), 3) : [];
-  const estimationChunks = topic.estimationPlan ? chunkArray(topic.estimationPlan.split('\n\n').filter(p => p.trim()), 3) : [];
-  const diagnosticsChunks = topic.diagnosticsValidation ? chunkArray(topic.diagnosticsValidation.split('\n\n').filter(p => p.trim()), 3) : [];
-  const sensitivityChunks = topic.sensitivityRobustness ? chunkArray(topic.sensitivityRobustness.split('\n\n').filter(p => p.trim()), 3) : [];
-  const ethicsChunks = topic.ethicsGovernance ? chunkArray(topic.ethicsGovernance.split('\n\n').filter(p => p.trim()), 3) : [];
+  // New comprehensive sections (split into chunks if populated, otherwise use placeholders)
+  const backgroundChunks = topic.backgroundMotivation 
+    ? chunkArray(topic.backgroundMotivation.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- What problem this topic addresses\n- Typical use cases and applications\n- Why it matters in real-world causal inference decisions\n- Core intuition and key contrasts (e.g., population vs conditional, path-specific vs total effect)']];
+    
+  const historicalChunks = topic.historicalContext 
+    ? chunkArray(topic.historicalContext.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Key milestones and foundational papers\n- Canonical debates in the field\n- Evolution of practice (e.g., randomized experiments → semiparametric → ML/orthogonal methods)\n- Position within the broader causal inference ecosystem (Potential Outcomes vs SCM vs Proximal/Bayesian)']];
+    
+  const conditionsChunks = topic.conditionsAssumptions 
+    ? chunkArray(topic.conditionsAssumptions.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Causal framework assumptions (SUTVA, consistency, ignorability)\n- Design-specific constraints (trial vs observational)\n- Positivity/overlap requirements\n- Time-origin choices and data support conditions']];
+    
+  const dataStructureChunks = topic.dataStructureDesign 
+    ? chunkArray(topic.dataStructureDesign.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Required variables and data structure\n- Time indices and longitudinal considerations\n- Mediators, instruments, or auxiliary variables needed\n- Compatible study designs (experimental, observational, sampling strategies)']];
+    
+  const targetParamChunks = topic.targetParameter 
+    ? chunkArray(topic.targetParameter.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Formal definition using potential outcomes and do-notation\n- Exact parameter specification\n- Contrast scale (risk difference, ratio, odds ratio, hazard)\n- Population vs subgroup vs dynamic target qualifiers']];
+    
+  const identificationChunks = topic.identificationStrategy 
+    ? chunkArray(topic.identificationStrategy.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Identification formula as functional of observed data distribution\n- Back-door/g-formula, front-door, or IV approaches\n- Assumptions required for identification\n- Bounds and sensitivity analysis when not point-identified']];
+    
+  const estimationChunks = topic.estimationPlan 
+    ? chunkArray(topic.estimationPlan.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Estimator families (nonparametric, semiparametric, parametric)\n- Machine learning and doubly robust methods (IPW, AIPW, TMLE, DoubleML)\n- Nuisance parameter estimation and cross-fitting\n- Variance estimation approaches (influence function, bootstrap)']];
+    
+  const diagnosticsChunks = topic.diagnosticsValidation 
+    ? chunkArray(topic.diagnosticsValidation.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Overlap/positivity checks and weight distributions\n- Propensity score calibration diagnostics\n- Misspecification tests and residual analysis\n- ML stability checks and cross-validation']];
+    
+  const sensitivityChunks = topic.sensitivityRobustness 
+    ? chunkArray(topic.sensitivityRobustness.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Hidden bias analysis (Rosenbaum Γ, E-values)\n- Missing data and measurement error sensitivity\n- Transport/external validity robustness\n- Tipping point analysis']];
+    
+  const ethicsChunks = topic.ethicsGovernance 
+    ? chunkArray(topic.ethicsGovernance.split('\n\n').filter(p => p.trim()), 3) 
+    : [['*Content pending. This section will cover:*\n\n- Target trial emulation protocol requirements\n- Consent, data provenance, and governance\n- Bias/harms registry and ethical considerations\n- Reproducibility standards (seeds, environments, audit logs)']];
 
   // Calculate slide positions
   let currentSlide = 0;
