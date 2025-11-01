@@ -80,7 +80,7 @@ const Index = () => {
       <section className="py-20">
         <div className="container">
           <h2 className="text-4xl font-bold text-center mb-12">Explore the Atlas</h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
             
             {/* Theory Hub */}
             <Link to="/theory">
@@ -97,6 +97,26 @@ const Index = () => {
                     <Badge variant="outline" className="text-xs">Foundational</Badge>
                     <Badge variant="outline" className="text-xs">Intermediate</Badge>
                     <Badge variant="outline" className="text-xs">Advanced</Badge>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+
+            {/* Theory Library */}
+            <Link to="/theory-library">
+              <Card className="p-8 cursor-pointer hover:scale-105 transition-all hover:shadow-2xl bg-gradient-to-br from-card to-blue-500/10 h-full">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="h-20 w-20 rounded-2xl bg-blue-500 flex items-center justify-center shadow-lg">
+                    <BookOpen className="h-10 w-10 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Theory Library</h3>
+                  <p className="text-muted-foreground">
+                    Browse all theory topics with interactive slides and navigate by complexity tier
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <Badge variant="outline" className="text-xs">Slides</Badge>
+                    <Badge variant="outline" className="text-xs">Math Foundations</Badge>
+                    <Badge variant="outline" className="text-xs">Interactive</Badge>
                   </div>
                 </div>
               </Card>

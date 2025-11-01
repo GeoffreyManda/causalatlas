@@ -33,6 +33,232 @@ export interface TheoryTopic {
 }
 
 export const causalTheory: TheoryTopic[] = [
+  // ========== MATHEMATICAL FOUNDATIONS ==========
+  {
+    id: 'probability_theory',
+    title: 'Probability Theory Foundations',
+    tier: 'Foundational',
+    description: 'Probability spaces, random variables, conditional probability, and independence',
+    content: `*Content pending. This topic will cover: probability spaces, random variables, distributions, conditional probability, independence, Bayes theorem.*`,
+    prerequisites: [],
+    learningObjectives: [
+      'Define probability spaces and events',
+      'Work with random variables and distributions',
+      'Apply conditional probability and Bayes theorem',
+      'Understand statistical independence'
+    ],
+    keyDefinitions: [
+      { term: 'Probability space', definition: 'Triple (Ω, F, P) of sample space, σ-algebra, and probability measure' },
+      { term: 'Random variable', definition: 'Measurable function from sample space to real numbers' },
+      { term: 'Conditional probability', definition: 'P(A|B) = P(A∩B)/P(B) when P(B) > 0' },
+      { term: 'Independence', definition: 'Events A,B independent if P(A∩B) = P(A)P(B)' }
+    ],
+    examples: {
+      python: `# Placeholder - probability foundations`,
+      r: `# Placeholder - probability foundations`
+    },
+    references: [
+      { authors: 'Billingsley P', title: 'Probability and Measure', year: 1995, doi: '10.1002/9780470316962' }
+    ]
+  },
+
+  {
+    id: 'expectation_theory',
+    title: 'Expectation and Moments',
+    tier: 'Foundational',
+    description: 'Expected values, variance, moments, conditional expectation, and Law of Iterated Expectations',
+    content: `*Content pending. This topic will cover: expectation definition, linearity, variance, covariance, conditional expectation, Law of Iterated Expectations.*`,
+    prerequisites: ['probability_theory'],
+    learningObjectives: [
+      'Compute expectations and moments',
+      'Apply linearity of expectation',
+      'Use Law of Iterated Expectations',
+      'Work with conditional expectations'
+    ],
+    keyDefinitions: [
+      { term: 'Expectation', definition: 'E[X] = ∫ x dP(x) or Σ x P(X=x)' },
+      { term: 'Variance', definition: 'Var(X) = E[(X - E[X])²]' },
+      { term: 'Conditional expectation', definition: 'E[Y|X] is random variable minimizing E[(Y - g(X))²]' },
+      { term: 'Law of Iterated Expectations', definition: 'E[E[Y|X]] = E[Y]' }
+    ],
+    examples: {
+      python: `# Placeholder - expectation examples`,
+      r: `# Placeholder - expectation examples`
+    },
+    references: [
+      { authors: 'Williams D', title: 'Probability with Martingales', year: 1991, doi: '10.1017/CBO9780511813658' }
+    ]
+  },
+
+  {
+    id: 'convergence_limit_theorems',
+    title: 'Convergence and Limit Theorems',
+    tier: 'Intermediate',
+    description: 'Modes of convergence, Law of Large Numbers, Central Limit Theorem, and Delta Method',
+    content: `*Content pending. This topic will cover: convergence in probability/distribution, weak/strong LLN, CLT, Delta method, continuous mapping theorem.*`,
+    prerequisites: ['expectation_theory'],
+    learningObjectives: [
+      'Distinguish modes of convergence',
+      'Apply Law of Large Numbers',
+      'Use Central Limit Theorem',
+      'Apply Delta Method for asymptotic distributions'
+    ],
+    keyDefinitions: [
+      { term: 'Convergence in probability', definition: 'X_n →p X if P(|X_n - X| > ε) → 0 for all ε > 0' },
+      { term: 'Convergence in distribution', definition: 'X_n →d X if F_n(x) → F(x) at continuity points' },
+      { term: 'Law of Large Numbers', definition: 'Sample mean converges to population mean' },
+      { term: 'Central Limit Theorem', definition: '√n(X̄_n - μ) →d N(0, σ²)' }
+    ],
+    examples: {
+      python: `# Placeholder - limit theorems`,
+      r: `# Placeholder - limit theorems`
+    },
+    references: [
+      { authors: 'van der Vaart AW', title: 'Asymptotic Statistics', year: 1998, doi: '10.1017/CBO9780511802256' }
+    ]
+  },
+
+  {
+    id: 'measure_theory',
+    title: 'Measure Theory for Statistics',
+    tier: 'Advanced',
+    description: 'Measurable spaces, integration, Radon-Nikodym theorem, and dominated convergence',
+    content: `*Content pending. This topic will cover: σ-algebras, measurable functions, Lebesgue integration, Radon-Nikodym theorem, dominated convergence.*`,
+    prerequisites: ['probability_theory'],
+    learningObjectives: [
+      'Work with σ-algebras and measurable spaces',
+      'Understand Lebesgue integration',
+      'Apply Radon-Nikodym theorem',
+      'Use dominated convergence theorem'
+    ],
+    keyDefinitions: [
+      { term: 'σ-algebra', definition: 'Collection of sets closed under complements and countable unions' },
+      { term: 'Measure', definition: 'Set function μ: F → [0,∞] that is countably additive' },
+      { term: 'Radon-Nikodym theorem', definition: 'Conditions for existence of density dP/dQ' },
+      { term: 'Dominated convergence', definition: 'Theorem allowing interchange of limit and integral' }
+    ],
+    examples: {
+      python: `# Placeholder - measure theory`,
+      r: `# Placeholder - measure theory`
+    },
+    references: [
+      { authors: 'Billingsley P', title: 'Probability and Measure', year: 1995, doi: '10.1002/9780470316962' }
+    ]
+  },
+
+  {
+    id: 'linear_algebra_statistics',
+    title: 'Linear Algebra for Statistics',
+    tier: 'Foundational',
+    description: 'Matrices, eigenvalues, projections, and matrix decompositions',
+    content: `*Content pending. This topic will cover: matrix operations, eigenvalues/eigenvectors, positive definiteness, projections, SVD, spectral decomposition.*`,
+    prerequisites: [],
+    learningObjectives: [
+      'Perform matrix operations efficiently',
+      'Compute eigenvalues and eigenvectors',
+      'Use matrix decompositions',
+      'Apply projection matrices'
+    ],
+    keyDefinitions: [
+      { term: 'Eigenvalue', definition: 'Scalar λ such that Av = λv for nonzero v' },
+      { term: 'Positive definite', definition: 'Matrix A where x^T A x > 0 for all nonzero x' },
+      { term: 'Projection matrix', definition: 'P where P² = P (idempotent)' },
+      { term: 'SVD', definition: 'A = UΣV^T decomposition for any matrix A' }
+    ],
+    examples: {
+      python: `# Placeholder - linear algebra`,
+      r: `# Placeholder - linear algebra`
+    },
+    references: [
+      { authors: 'Strang G', title: 'Introduction to Linear Algebra', year: 2016, doi: '10.1137/1.9780898719987' }
+    ]
+  },
+
+  {
+    id: 'optimization_methods',
+    title: 'Optimization Methods',
+    tier: 'Intermediate',
+    description: 'Convex optimization, gradient descent, Newton methods, and constrained optimization',
+    content: `*Content pending. This topic will cover: convex functions, gradient descent, Newton-Raphson, constrained optimization, Lagrange multipliers, KKT conditions.*`,
+    prerequisites: ['linear_algebra_statistics'],
+    learningObjectives: [
+      'Identify convex optimization problems',
+      'Apply gradient descent methods',
+      'Use Newton-Raphson algorithm',
+      'Solve constrained optimization with Lagrange multipliers'
+    ],
+    keyDefinitions: [
+      { term: 'Convex function', definition: 'f(λx + (1-λ)y) ≤ λf(x) + (1-λ)f(y) for λ ∈ [0,1]' },
+      { term: 'Gradient descent', definition: 'Iterative: x_{k+1} = x_k - α∇f(x_k)' },
+      { term: 'Newton method', definition: 'x_{k+1} = x_k - H^{-1}∇f(x_k) using Hessian H' },
+      { term: 'Lagrange multiplier', definition: 'Method to optimize with equality constraints' }
+    ],
+    examples: {
+      python: `# Placeholder - optimization`,
+      r: `# Placeholder - optimization`
+    },
+    references: [
+      { authors: 'Boyd S, Vandenberghe L', title: 'Convex Optimization', year: 2004, doi: '10.1017/CBO9780511804441' }
+    ]
+  },
+
+  {
+    id: 'empirical_processes',
+    title: 'Empirical Process Theory',
+    tier: 'Advanced',
+    description: 'Empirical processes, Glivenko-Cantelli, Donsker classes, and uniform convergence',
+    content: `*Content pending. This topic will cover: empirical process definition, Glivenko-Cantelli theorem, Donsker classes, maximal inequalities, uniform convergence.*`,
+    prerequisites: ['convergence_limit_theorems'],
+    learningObjectives: [
+      'Define empirical processes',
+      'Apply Glivenko-Cantelli theorem',
+      'Understand Donsker classes',
+      'Use uniform convergence results'
+    ],
+    keyDefinitions: [
+      { term: 'Empirical process', definition: 'ν_n(f) = √n(P_n - P)(f) where P_n is empirical measure' },
+      { term: 'Glivenko-Cantelli', definition: 'Class where sup |P_n(f) - P(f)| → 0 a.s.' },
+      { term: 'Donsker class', definition: 'Class where empirical process converges to Gaussian process' },
+      { term: 'VC dimension', definition: 'Measure of complexity for classes of functions' }
+    ],
+    examples: {
+      python: `# Placeholder - empirical processes`,
+      r: `# Placeholder - empirical processes`
+    },
+    references: [
+      { authors: 'van der Vaart AW, Wellner JA', title: 'Weak Convergence and Empirical Processes', year: 1996, doi: '10.1007/978-1-4757-2545-2' }
+    ]
+  },
+
+  {
+    id: 'semiparametric_theory',
+    title: 'Semiparametric Efficiency Theory',
+    tier: 'Frontier',
+    description: 'Influence functions, efficiency bounds, and semiparametric models',
+    content: `*Content pending. This topic will cover: tangent space, influence functions, efficient influence function, information bound, regular estimators.*`,
+    prerequisites: ['empirical_processes'],
+    learningObjectives: [
+      'Compute influence functions',
+      'Derive efficiency bounds',
+      'Understand semiparametric models',
+      'Apply efficient estimation theory'
+    ],
+    keyDefinitions: [
+      { term: 'Influence function', definition: 'Directional derivative of functional at empirical measure' },
+      { term: 'Efficient influence function', definition: 'Canonical gradient in tangent space orthogonal complement' },
+      { term: 'Information bound', definition: 'Variance lower bound for regular estimators' },
+      { term: 'Pathwise differentiable', definition: 'Functional with well-defined directional derivatives' }
+    ],
+    examples: {
+      python: `# Placeholder - semiparametric theory`,
+      r: `# Placeholder - semiparametric theory`
+    },
+    references: [
+      { authors: 'Tsiatis AA', title: 'Semiparametric Theory and Missing Data', year: 2006, doi: '10.1007/0-387-37345-4' },
+      { authors: 'van der Laan MJ, Robins JM', title: 'Unified Methods for Censored Longitudinal Data', year: 2003, doi: '10.1007/978-0-387-21700-0' }
+    ]
+  },
+
   // ========== FOUNDATIONAL ==========
   {
     id: 'intro_causal_inference',
