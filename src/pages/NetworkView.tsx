@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { estimandsData } from '@/data/estimands';
 import * as d3 from 'd3';
 
 const NetworkView = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -97,6 +99,14 @@ const NetworkView = () => {
       .attr('font-size', (d: any) => d.type === 'framework' ? '14px' : '11px')
       .attr('font-weight', (d: any) => d.type === 'framework' ? 'bold' : 'normal')
       .attr('fill', 'hsl(215 25% 15%)');
+
+    // Click to open slide
+    node.on('click', (event: any, d: any) => {
+      event.stopPropagation();
+      if (d.type === 'estimand') {
+        navigate(`/slides?id=${d.id}`);
+      }
+    });
 
     // Update positions
     simulation.on('tick', () => {

@@ -223,7 +223,7 @@ const Index = () => {
                 {selectedEstimand.examples && selectedEstimand.examples.python && (
                   <div>
                     <h4 className="font-semibold mb-2">Code Example</h4>
-                    <Link to="/terminal" state={{ code: selectedEstimand.examples.python, language: 'Python' }}>
+                    <Link to={`/terminal?code=${encodeURIComponent(selectedEstimand.examples.python)}&lang=python`}>
                       <Button className="w-full gap-2">
                         <TerminalIcon className="h-4 w-4" />
                         Run Python in Terminal
