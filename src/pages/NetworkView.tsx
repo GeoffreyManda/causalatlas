@@ -48,8 +48,8 @@ const NetworkView = () => {
     // Use the filtered estimands
     const filteredEstimands = currentFiltered;
 
-    // Build hierarchy: Framework → Design → Family → Estimands
-    const hierarchy: any = { name: 'Root', children: [] };
+    // Build hierarchy: Root → Framework → Design → Family → Estimands
+    const hierarchy: any = { name: 'Causal Inference', type: 'root', children: [] };
     const frameworkMap = new Map();
 
     filteredEstimands.forEach(est => {
@@ -119,10 +119,10 @@ const NetworkView = () => {
       })
       .attr('stroke-opacity', 0.6);
 
-    // Draw nodes
+    // Draw nodes (include root now)
     const node = svg.append('g')
       .selectAll('g')
-      .data(root.descendants().filter(d => d.depth > 0))
+      .data(root.descendants())
       .join('g')
       .attr('transform', (d: any) => `translate(${d.y + 200},${d.x + 50})`)
       .style('cursor', 'pointer');
@@ -130,12 +130,14 @@ const NetworkView = () => {
     // Node circles
     node.append('circle')
       .attr('r', (d: any) => {
+        if (d.data.type === 'root') return 16;
         if (d.data.type === 'framework') return 12;
         if (d.data.type === 'design') return 10;
         if (d.data.type === 'family') return 8;
         return 6;
       })
       .attr('fill', (d: any) => {
+        if (d.data.type === 'root') return 'hsl(280 85% 55%)';
         if (d.data.type === 'framework') return 'hsl(215 70% 50%)';
         if (d.data.type === 'design') return 'hsl(195 75% 40%)';
         if (d.data.type === 'family') return 'hsl(265 60% 45%)';
@@ -158,6 +160,7 @@ const NetworkView = () => {
       .attr('text-anchor', (d: any) => d.children ? 'end' : 'start')
       .text((d: any) => {
         const name = d.data.name;
+        if (d.data.type === 'root') return name;
         if (d.data.type === 'framework') return name.replace(/([A-Z])/g, ' $1').trim();
         if (d.data.type === 'design') return name.replace(/_/g, ' ');
         if (d.data.type === 'family') {
@@ -167,6 +170,7 @@ const NetworkView = () => {
         return name.length > 40 ? name.substring(0, 38) + '...' : name;
       })
       .attr('font-size', (d: any) => {
+        if (d.data.type === 'root') return '16px';
         if (d.data.type === 'framework') return '14px';
         if (d.data.type === 'design') return '12px';
         if (d.data.type === 'family') return '11px';
@@ -178,26 +182,49 @@ const NetworkView = () => {
     // Click handler - navigate to appropriate content
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
-      if (d.data.type === 'estimand') {
+      if (d.data.type === 'root') {
+        navigate('/theory?id=intro-causal-inference', { state: { from: '/network' } });
+      } else if (d.data.type === 'estimand') {
         navigate(`/slides?id=${d.data.id}`, { state: { from: '/network' } });
       } else if (d.data.type === 'framework') {
-        // Navigate to theory page for this framework or filter
+        // Navigate to framework theory slide
         const frameworkIds: Record<string, string> = {
-          'PotentialOutcomes': 'potential-outcomes',
-          'SCM': 'scm',
-          'PrincipalStratification': 'principal-stratification',
-          'ProximalNegativeControl': 'proximal-negative-control',
-          'BayesianDecision': 'bayesian-decision'
+          'PotentialOutcomes': 'framework-potential-outcomes',
+          'SCM': 'framework-scm',
+          'PrincipalStratification': 'framework-principal-stratification',
+          'ProximalNegativeControl': 'framework-proximal-negative-control',
+          'BayesianDecision': 'framework-bayesian-decision'
         };
         const fwId = frameworkIds[d.data.name];
         if (fwId) navigate(`/theory?id=${fwId}`, { state: { from: '/network' } });
       } else if (d.data.type === 'design') {
-        // Filter by design
-        setSelectedDesign(d.data.name);
-        setSelectedFamily('all');
+        // Navigate to design theory slide
+        const designIds: Record<string, string> = {
+          'RCT_Parallel': 'design-rct-parallel',
+          'Cohort': 'design-cohort',
+          'Cluster_RCT': 'design-cluster-rct',
+          'Regression_Discontinuity': 'design-regression-discontinuity',
+          'Stepped_Wedge': 'design-stepped-wedge',
+          'Encouragement': 'design-encouragement',
+          'Case_Control': 'design-case-control',
+          'Cross_Sectional': 'design-cross-sectional',
+          'Target_Trial_Emulation': 'design-target-trial-emulation',
+          'Transport_Frame': 'design-transport-frame',
+          'Survey_Multistage': 'design-survey-multistage'
+        };
+        const designId = designIds[d.data.name];
+        if (designId) navigate(`/theory?id=${designId}`, { state: { from: '/network' } });
       } else if (d.data.type === 'family') {
-        // Filter by family
-        setSelectedFamily(d.data.name);
+        // Navigate to family theory slide
+        const familyIds: Record<string, string> = {
+          'PopulationEffects': 'family-population-effects',
+          'InstrumentalLocal': 'family-instrumental-local',
+          'SurvivalTimeToEvent': 'family-survival-time-to-event',
+          'LongitudinalDynamic': 'family-longitudinal-dynamic',
+          'DeepRepresentation': 'family-deep-representation'
+        };
+        const familyId = familyIds[d.data.name];
+        if (familyId) navigate(`/theory?id=${familyId}`, { state: { from: '/network' } });
       }
     });
 
@@ -211,6 +238,7 @@ const NetworkView = () => {
     }).on('mouseleave', function(event: any, d: any) {
       const circle = d3.select(this).select('circle');
       let originalRadius = 6;
+      if (d.data.type === 'root') originalRadius = 16;
       if (d.data.type === 'framework') originalRadius = 12;
       if (d.data.type === 'design') originalRadius = 10;
       if (d.data.type === 'family') originalRadius = 8;
@@ -229,7 +257,7 @@ const NetworkView = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Causal Inference Tree Map</h1>
           <p className="text-muted-foreground max-w-3xl">
-            Hierarchical view: Framework → Study Design → Estimand Family → Individual Estimands. Click any node: frameworks open theory slides, designs/families filter, estimands open detailed slides.
+            Explore the complete hierarchy of causal inference. Click the root to start with Introduction to Causal Inference, then explore frameworks, study designs, estimand families, and individual estimands. Each node has its own dedicated content.
           </p>
         </div>
 
@@ -307,6 +335,10 @@ const NetworkView = () => {
         <Card className="mb-6 p-4">
           <h3 className="font-semibold mb-3">Tree Map Legend</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[hsl(280_85%_55%)]"></div>
+              <span className="text-sm">Root (Intro)</span>
+            </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[hsl(215_70%_50%)]"></div>
               <span className="text-sm">Framework</span>

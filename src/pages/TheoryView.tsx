@@ -3,6 +3,7 @@ import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import TheorySlide from '@/components/TheorySlide';
 import { causalTheory } from '@/data/theory';
+import { allTheoryTopics } from '@/data/allTheoryTopics';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, BookOpen, Download, ArrowLeft } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -10,18 +11,21 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { generateSlidesFromRenderer } from '@/lib/pdfGenerator';
 
+// Combine original theory topics with new ones
+const allTopics = [...allTheoryTopics, ...causalTheory];
+
 const TheoryView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const topicId = searchParams.get('id') || causalTheory[0].id;
+  const topicId = searchParams.get('id') || allTopics[0].id;
   const [slideIndex, setSlideIndex] = useState(0);
   const [selectedTier, setSelectedTier] = useState<string>('all');
 
   // Get referrer from state or default to learning hub
   const referrer = (location.state as any)?.from || '/learning';
 
-  const currentTopic = causalTheory.find(t => t.id === topicId) || causalTheory[0];
+  const currentTopic = allTopics.find(t => t.id === topicId) || allTopics[0];
   
   // Calculate total slides dynamically based on content
   const contentParagraphs = currentTopic.content.split('\n\n').filter(p => p.trim()).length;
@@ -32,7 +36,7 @@ const TheoryView = () => {
   const totalSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
 
   // Filter topics
-  const filteredTopics = causalTheory.filter(t => {
+  const filteredTopics = allTopics.filter(t => {
     if (selectedTier !== 'all' && t.tier !== selectedTier) return false;
     return true;
   });
@@ -49,9 +53,9 @@ const TheoryView = () => {
       setSlideIndex(slideIndex + 1);
     } else {
       // Move to next topic
-      const currentIdx = causalTheory.findIndex(t => t.id === topicId);
-      if (currentIdx < causalTheory.length - 1) {
-        setSearchParams({ id: causalTheory[currentIdx + 1].id });
+      const currentIdx = allTopics.findIndex(t => t.id === topicId);
+      if (currentIdx < allTopics.length - 1) {
+        setSearchParams({ id: allTopics[currentIdx + 1].id });
         setSlideIndex(0);
       }
     }
@@ -62,9 +66,9 @@ const TheoryView = () => {
       setSlideIndex(slideIndex - 1);
     } else {
       // Move to previous topic
-      const currentIdx = causalTheory.findIndex(t => t.id === topicId);
+      const currentIdx = allTopics.findIndex(t => t.id === topicId);
       if (currentIdx > 0) {
-        setSearchParams({ id: causalTheory[currentIdx - 1].id });
+        setSearchParams({ id: allTopics[currentIdx - 1].id });
         setSlideIndex(totalSlides - 1);
       }
     }
@@ -137,7 +141,7 @@ const TheoryView = () => {
             ))}
           </div>
           <p className="text-sm text-muted-foreground mt-2">
-            Showing {filteredTopics.length} of {causalTheory.length} topics
+            Showing {filteredTopics.length} of {allTopics.length} topics
           </p>
         </div>
 
@@ -176,7 +180,7 @@ const TheoryView = () => {
           <Button
             variant="outline"
             onClick={goToPrevious}
-            disabled={slideIndex === 0 && causalTheory.findIndex(t => t.id === topicId) === 0}
+            disabled={slideIndex === 0 && allTopics.findIndex(t => t.id === topicId) === 0}
             className="gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -201,7 +205,7 @@ const TheoryView = () => {
           <Button
             variant="outline"
             onClick={goToNext}
-            disabled={slideIndex === totalSlides - 1 && causalTheory.findIndex(t => t.id === topicId) === causalTheory.length - 1}
+            disabled={slideIndex === totalSlides - 1 && allTopics.findIndex(t => t.id === topicId) === allTopics.length - 1}
             className="gap-2"
           >
             Next
