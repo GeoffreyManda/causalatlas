@@ -1,6 +1,9 @@
 import { Estimand } from '@/data/estimands';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Presentation } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface EstimandCardProps {
   estimand: Estimand;
@@ -29,6 +32,14 @@ const getFrameworkColor = (framework: string) => {
 };
 
 const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
+  const navigate = useNavigate();
+  
+  const handleSlidesClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const index = estimand.id;
+    navigate(`/slides?id=${index}`);
+  };
+
   return (
     <Card 
       className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5"
@@ -64,6 +75,15 @@ const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
               EIF: {estimand.eif_status}
             </Badge>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full mt-3 gap-2"
+            onClick={handleSlidesClick}
+          >
+            <Presentation className="h-4 w-4" />
+            View Slides
+          </Button>
         </div>
       </CardContent>
     </Card>

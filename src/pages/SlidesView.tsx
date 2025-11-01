@@ -1,12 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { estimandsData } from '@/data/estimands';
 import EstimandSlide from '@/components/EstimandSlide';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const SlidesView = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isExpertMode, setIsExpertMode] = useState(false);
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) {
+      const index = estimandsData.findIndex(e => e.id === id);
+      if (index !== -1) {
+        setCurrentIndex(index);
+      }
+    }
+  }, [searchParams]);
 
   const currentEstimand = estimandsData[currentIndex];
 

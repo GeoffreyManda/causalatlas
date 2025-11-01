@@ -60,35 +60,35 @@ const Index = () => {
       {/* Features */}
       <section className="py-12 border-b">
         <div className="container">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center p-6 rounded-lg bg-gradient-card">
-              <div className="h-12 w-12 rounded-lg bg-tier-basic flex items-center justify-center mb-4">
-                <Book className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Structured Learning</h3>
-              <p className="text-sm text-muted-foreground">
-                From basic RCT concepts to frontier deep learning methods, organized by complexity tier
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+            <div className="h-12 w-12 rounded-lg bg-tier-basic flex items-center justify-center mb-4">
+              <Book className="h-6 w-6 text-white" />
             </div>
-            <div className="flex flex-col items-center text-center p-6 rounded-lg bg-gradient-card">
-              <div className="h-12 w-12 rounded-lg bg-tier-intermediate flex items-center justify-center mb-4">
-                <NetworkIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Interactive Network</h3>
-              <p className="text-sm text-muted-foreground">
-                Visualize relationships between frameworks, designs, and estimands
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center p-6 rounded-lg bg-gradient-card">
-              <div className="h-12 w-12 rounded-lg bg-tier-advanced flex items-center justify-center mb-4">
-                <TerminalIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Executable Code</h3>
-              <p className="text-sm text-muted-foreground">
-                Run Python and R examples directly in your browser with reproducible seeds
-              </p>
-            </div>
+            <h3 className="font-semibold text-base md:text-lg mb-2">Structured Learning</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              From basic RCT concepts to frontier deep learning methods
+            </p>
           </div>
+          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+            <div className="h-12 w-12 rounded-lg bg-tier-intermediate flex items-center justify-center mb-4">
+              <NetworkIcon className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-base md:text-lg mb-2">Interactive Network</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Visualize relationships between frameworks and estimands
+            </p>
+          </div>
+          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+            <div className="h-12 w-12 rounded-lg bg-tier-advanced flex items-center justify-center mb-4">
+              <TerminalIcon className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="font-semibold text-base md:text-lg mb-2">Executable Code</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Run Python and R examples in your browser
+            </p>
+          </div>
+        </div>
         </div>
       </section>
 
