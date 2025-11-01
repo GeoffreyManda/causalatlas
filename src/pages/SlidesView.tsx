@@ -266,41 +266,98 @@ const SlidesView = () => {
         </div>
 
         {/* Navigation controls */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={goToPrevious}
-            disabled={slideIndex === 0 && estimandsData.findIndex(e => e.id === estimandId) === 0}
-            className="gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={goToPrevious}
+              disabled={slideIndex === 0 && estimandsData.findIndex(e => e.id === estimandId) === 0}
+              className="gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
 
-          <div className="flex gap-2">
-            {Array.from({ length: totalSlides }).map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSlideIndex(idx)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  idx === slideIndex 
-                    ? 'bg-primary w-8' 
-                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
+            <div className="flex gap-2">
+              {Array.from({ length: totalSlides }).map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSlideIndex(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    idx === slideIndex 
+                      ? 'bg-primary w-8' 
+                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={goToNext}
+              disabled={slideIndex === totalSlides - 1 && estimandsData.findIndex(e => e.id === estimandId) === estimandsData.length - 1}
+              className="gap-2"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={goToNext}
-            disabled={slideIndex === totalSlides - 1 && estimandsData.findIndex(e => e.id === estimandId) === estimandsData.length - 1}
-            className="gap-2"
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {/* Navigation Menu at Bottom */}
+          <div className="flex justify-center">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Presentation className="h-4 w-4" />
+                  Navigate To
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuLabel>Slide Navigation</DropdownMenuLabel>
+                <DropdownMenuItem 
+                  onClick={goToPrevious}
+                  disabled={slideIndex === 0 && estimandsData.findIndex(e => e.id === estimandId) === 0}
+                  className="gap-2 cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous Slide
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={goToNext}
+                  disabled={slideIndex === totalSlides - 1 && estimandsData.findIndex(e => e.id === estimandId) === estimandsData.length - 1}
+                  className="gap-2 cursor-pointer"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  Next Slide
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Main Sections</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigate('/')} className="gap-2 cursor-pointer">
+                  <Home className="h-4 w-4" />
+                  Home
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/learning')} className="gap-2 cursor-pointer">
+                  <GraduationCap className="h-4 w-4" />
+                  Learning Hub
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/network')} className="gap-2 cursor-pointer">
+                  <Network className="h-4 w-4" />
+                  Network View
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Related Content</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigate('/estimands')} className="gap-2 cursor-pointer">
+                  <Target className="h-4 w-4" />
+                  Estimands Library
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/theory')} className="gap-2 cursor-pointer">
+                  <BookOpen className="h-4 w-4" />
+                  Theory Slides
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </div>
