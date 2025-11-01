@@ -1,69 +1,87 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { estimandsData } from '@/data/estimands';
-import EstimandSlide from '@/components/EstimandSlide';
+import EstimandSlideStandalone from '@/components/EstimandSlideStandalone';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Presentation } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SlidesView = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isExpertMode, setIsExpertMode] = useState(false);
+  const estimandId = searchParams.get('id') || estimandsData[0].id;
+  const [slideIndex, setSlideIndex] = useState(0);
 
-  useEffect(() => {
-    const id = searchParams.get('id');
-    if (id) {
-      const index = estimandsData.findIndex(e => e.id === id);
-      if (index !== -1) {
-        setCurrentIndex(index);
-      }
-    }
-  }, [searchParams]);
-
-  const currentEstimand = estimandsData[currentIndex];
+  const currentEstimand = estimandsData.find(e => e.id === estimandId) || estimandsData[0];
+  const totalSlides = 7; // title + definition + assumptions + estimators + python + r + references
 
   const goToNext = () => {
-    if (currentIndex < estimandsData.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+    if (slideIndex < totalSlides - 1) {
+      setSlideIndex(slideIndex + 1);
+    } else {
+      // Move to next estimand
+      const currentIdx = estimandsData.findIndex(e => e.id === estimandId);
+      if (currentIdx < estimandsData.length - 1) {
+        setSearchParams({ id: estimandsData[currentIdx + 1].id });
+        setSlideIndex(0);
+      }
     }
   };
 
   const goToPrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+    if (slideIndex > 0) {
+      setSlideIndex(slideIndex - 1);
+    } else {
+      // Move to previous estimand
+      const currentIdx = estimandsData.findIndex(e => e.id === estimandId);
+      if (currentIdx > 0) {
+        setSearchParams({ id: estimandsData[currentIdx - 1].id });
+        setSlideIndex(totalSlides - 1);
+      }
     }
+  };
+
+  const handleEstimandChange = (newEstimandId: string) => {
+    setSearchParams({ id: newEstimandId });
+    setSlideIndex(0);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container mx-auto px-4 py-8">
-        {/* Header with mode toggle */}
+        {/* Header with estimand selector */}
         <div className="flex items-center justify-between mb-6">
-          <div className="text-sm text-muted-foreground">
-            Slide {currentIndex + 1} of {estimandsData.length}
+          <div className="flex items-center gap-4">
+            <Presentation className="h-6 w-6 text-primary" />
+            <Select value={estimandId} onValueChange={handleEstimandChange}>
+              <SelectTrigger className="w-[500px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[400px]">
+                {estimandsData.map(e => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.short_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <Button
-            variant={isExpertMode ? "default" : "outline"}
-            onClick={() => setIsExpertMode(!isExpertMode)}
-            className="font-semibold"
-          >
-            {isExpertMode ? '🎓 Expert Mode' : '📘 Basic Mode'}
-          </Button>
+          <div className="text-sm text-muted-foreground">
+            Slide {slideIndex + 1} of {totalSlides}
+          </div>
         </div>
 
-        {/* Main slide content */}
-        <EstimandSlide 
-          estimand={currentEstimand} 
-          isExpertMode={isExpertMode}
-        />
+        {/* Slide (16:9 PowerPoint ratio) */}
+        <div className="flex items-center justify-center mb-8">
+          <EstimandSlideStandalone estimand={currentEstimand} slideIndex={slideIndex} />
+        </div>
 
         {/* Navigation controls */}
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center justify-between">
           <Button
             variant="outline"
             onClick={goToPrevious}
-            disabled={currentIndex === 0}
+            disabled={slideIndex === 0 && estimandsData.findIndex(e => e.id === estimandId) === 0}
             className="gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -71,12 +89,12 @@ const SlidesView = () => {
           </Button>
 
           <div className="flex gap-2">
-            {estimandsData.map((_, idx) => (
+            {Array.from({ length: totalSlides }).map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrentIndex(idx)}
+                onClick={() => setSlideIndex(idx)}
                 className={`w-2 h-2 rounded-full transition-all ${
-                  idx === currentIndex 
+                  idx === slideIndex 
                     ? 'bg-primary w-8' 
                     : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                 }`}
@@ -88,7 +106,7 @@ const SlidesView = () => {
           <Button
             variant="outline"
             onClick={goToNext}
-            disabled={currentIndex === estimandsData.length - 1}
+            disabled={slideIndex === totalSlides - 1 && estimandsData.findIndex(e => e.id === estimandId) === estimandsData.length - 1}
             className="gap-2"
           >
             Next
