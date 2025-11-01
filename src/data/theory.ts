@@ -1,12 +1,25 @@
 export interface TheoryTopic {
   id: string;
   title: string;
-  tier: 'Foundational' | 'Intermediate' | 'Advanced';
+  tier: 'Foundational' | 'Intermediate' | 'Advanced' | 'Frontier';
   description: string;
   content: string;
   prerequisites: string[];
   learningObjectives: string[];
   keyDefinitions: { term: string; definition: string }[];
+  
+  // New comprehensive sections (to be populated)
+  backgroundMotivation?: string;
+  historicalContext?: string;
+  conditionsAssumptions?: string;
+  dataStructureDesign?: string;
+  targetParameter?: string;
+  identificationStrategy?: string;
+  estimationPlan?: string;
+  diagnosticsValidation?: string;
+  sensitivityRobustness?: string;
+  ethicsGovernance?: string;
+  
   examples: {
     python: string;
     r: string;

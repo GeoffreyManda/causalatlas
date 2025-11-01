@@ -41,6 +41,7 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
     Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
     Intermediate: allTheoryTopics.filter(t => t.tier === 'Intermediate'),
     Advanced: allTheoryTopics.filter(t => t.tier === 'Advanced'),
+    Frontier: allTheoryTopics.filter(t => t.tier === 'Frontier'),
   };
 
   const estimandsByTier = {
@@ -64,6 +65,18 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
   const objectiveChunks = chunkArray(topic.learningObjectives, 3); // Max 3 objectives per slide
   const definitionChunks = chunkArray(topic.keyDefinitions, 3); // Max 3 definitions per slide
   const referenceChunks = chunkArray(topic.references, 3); // Max 3 references per slide
+  
+  // New comprehensive sections (split into chunks if populated)
+  const backgroundChunks = topic.backgroundMotivation ? chunkArray(topic.backgroundMotivation.split('\n\n').filter(p => p.trim()), 3) : [];
+  const historicalChunks = topic.historicalContext ? chunkArray(topic.historicalContext.split('\n\n').filter(p => p.trim()), 3) : [];
+  const conditionsChunks = topic.conditionsAssumptions ? chunkArray(topic.conditionsAssumptions.split('\n\n').filter(p => p.trim()), 3) : [];
+  const dataStructureChunks = topic.dataStructureDesign ? chunkArray(topic.dataStructureDesign.split('\n\n').filter(p => p.trim()), 3) : [];
+  const targetParamChunks = topic.targetParameter ? chunkArray(topic.targetParameter.split('\n\n').filter(p => p.trim()), 3) : [];
+  const identificationChunks = topic.identificationStrategy ? chunkArray(topic.identificationStrategy.split('\n\n').filter(p => p.trim()), 3) : [];
+  const estimationChunks = topic.estimationPlan ? chunkArray(topic.estimationPlan.split('\n\n').filter(p => p.trim()), 3) : [];
+  const diagnosticsChunks = topic.diagnosticsValidation ? chunkArray(topic.diagnosticsValidation.split('\n\n').filter(p => p.trim()), 3) : [];
+  const sensitivityChunks = topic.sensitivityRobustness ? chunkArray(topic.sensitivityRobustness.split('\n\n').filter(p => p.trim()), 3) : [];
+  const ethicsChunks = topic.ethicsGovernance ? chunkArray(topic.ethicsGovernance.split('\n\n').filter(p => p.trim()), 3) : [];
 
   // Calculate slide positions
   let currentSlide = 0;
@@ -90,6 +103,50 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
         </div>
       </div>
     );
+  }
+
+  // Slides for Background & Motivation
+  for (let i = 0; i < backgroundChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <Lightbulb className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Background & Motivation
+              {backgroundChunks.length > 1 && ` (${i + 1}/${backgroundChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {backgroundChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Historical Context
+  for (let i = 0; i < historicalChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Historical Context
+              {historicalChunks.length > 1 && ` (${i + 1}/${historicalChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {historicalChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
   }
 
   // Slides for Learning Objectives (1 slide per chunk)
@@ -123,6 +180,28 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
     }
   }
 
+  // Slides for Conditions & Assumptions
+  for (let i = 0; i < conditionsChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Conditions & Assumptions
+              {conditionsChunks.length > 1 && ` (${i + 1}/${conditionsChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {conditionsChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
   // Slides for Key Definitions (1 slide per chunk)
   for (let i = 0; i < definitionChunks.length; i++) {
     if (slideIndex === currentSlide++) {
@@ -143,6 +222,160 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
                   <ReactMarkdown>{def.definition}</ReactMarkdown>
                 </div>
               </Card>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Data Structure & Design
+  for (let i = 0; i < dataStructureChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Data Structure & Study Design
+              {dataStructureChunks.length > 1 && ` (${i + 1}/${dataStructureChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {dataStructureChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Target Parameter (Estimand)
+  for (let i = 0; i < targetParamChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <Target className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Target Parameter (Estimand)
+              {targetParamChunks.length > 1 && ` (${i + 1}/${targetParamChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {targetParamChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Identification Strategy
+  for (let i = 0; i < identificationChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Identification Strategy
+              {identificationChunks.length > 1 && ` (${i + 1}/${identificationChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {identificationChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Estimation Plan
+  for (let i = 0; i < estimationChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Estimation Plan
+              {estimationChunks.length > 1 && ` (${i + 1}/${estimationChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {estimationChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Diagnostics & Validation
+  for (let i = 0; i < diagnosticsChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Diagnostics & Validation
+              {diagnosticsChunks.length > 1 && ` (${i + 1}/${diagnosticsChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {diagnosticsChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Sensitivity & Robustness
+  for (let i = 0; i < sensitivityChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Sensitivity & Robustness
+              {sensitivityChunks.length > 1 && ` (${i + 1}/${sensitivityChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {sensitivityChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
+            ))}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Slides for Ethics & Governance
+  for (let i = 0; i < ethicsChunks.length; i++) {
+    if (slideIndex === currentSlide++) {
+      return (
+        <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="h-10 w-10 text-primary" />
+            <h2 className="text-4xl font-bold">
+              Ethics, Governance & Reporting
+              {ethicsChunks.length > 1 && ` (${i + 1}/${ethicsChunks.length})`}
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+            {ethicsChunks[i].map((para, idx) => (
+              <ReactMarkdown key={idx}>{para}</ReactMarkdown>
             ))}
           </div>
         </div>

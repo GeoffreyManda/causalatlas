@@ -55,13 +55,14 @@ const TheoryView = () => {
     return true;
   });
 
-  const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced'];
+  const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced', 'Frontier'];
 
   // Group topics and estimands by tier for nested menus
   const theoryByTier = {
     Foundational: allTopics.filter(t => t.tier === 'Foundational'),
     Intermediate: allTopics.filter(t => t.tier === 'Intermediate'),
     Advanced: allTopics.filter(t => t.tier === 'Advanced'),
+    Frontier: allTopics.filter(t => t.tier === 'Frontier'),
   };
 
   const estimandsByTier = {
