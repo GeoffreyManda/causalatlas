@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,32 +7,35 @@ import { Play, Trash2, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TerminalView = () => {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [pythonCode, setPythonCode] = useState('');
   const [rCode, setRCode] = useState('');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const [activeTab, setActiveTab] = useState('python');
+  const [currentTab, setCurrentTab] = useState('python');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (location.state?.code && location.state?.language) {
-      const { code, language } = location.state;
-      if (language === 'Python') {
-        setPythonCode(code);
-        setActiveTab('python');
-      } else if (language === 'R') {
-        setRCode(code);
-        setActiveTab('r');
+    const code = searchParams.get('code');
+    const lang = searchParams.get('lang');
+    
+    if (code) {
+      const decodedCode = decodeURIComponent(code);
+      if (lang === 'python') {
+        setPythonCode(decodedCode);
+        setCurrentTab('python');
+      } else if (lang === 'r') {
+        setRCode(decodedCode);
+        setCurrentTab('r');
       }
     }
-  }, [location.state]);
+  }, [searchParams]);
 
   const runCode = async () => {
     setIsRunning(true);
     setOutput('');
     
-    const code = activeTab === 'python' ? pythonCode : rCode;
+    const code = currentTab === 'python' ? pythonCode : rCode;
     
     if (!code.trim()) {
       toast.error('Please enter some code to run');
@@ -43,7 +46,7 @@ const TerminalView = () => {
     // Simulate code execution
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    setOutput(`=== Executing ${activeTab.toUpperCase()} Code ===\n\n` +
+    setOutput(`=== Executing ${currentTab.toUpperCase()} Code ===\n\n` +
       `Note: Full Python/R execution requires Pyodide/WebR integration.\n` +
       `This demo shows the interface structure.\n\n` +
       `Code preview:\n${code.split('\n').slice(0, 3).join('\n')}${code.split('\n').length > 3 ? '\n...' : ''}\n\n` +
@@ -59,7 +62,7 @@ const TerminalView = () => {
   };
 
   const copyCode = async () => {
-    const code = activeTab === 'python' ? pythonCode : rCode;
+    const code = currentTab === 'python' ? pythonCode : rCode;
     await navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -169,7 +172,7 @@ print(coef(msm))`;
               </div>
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={currentTab} onValueChange={setCurrentTab}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="python">Python</TabsTrigger>
                 <TabsTrigger value="r">R</TabsTrigger>

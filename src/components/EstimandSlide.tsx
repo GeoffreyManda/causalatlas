@@ -2,6 +2,10 @@ import { Estimand } from '@/data/estimands';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Play, Copy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 
@@ -32,6 +36,17 @@ const getFrameworkColor = (framework: string) => {
 };
 
 const BasicModeContent = ({ estimand }: { estimand: Estimand }) => {
+  const navigate = useNavigate();
+  
+  const handleRunCode = (code: string, language: 'python' | 'r') => {
+    navigate(`/terminal?code=${encodeURIComponent(code)}&lang=${language}`);
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code copied to clipboard');
+  };
+
   const getBasicDescription = () => {
     if (estimand.estimand_family === 'PopulationEffects') {
       return 'This estimand measures the average treatment effect in the population - the difference in outcomes if everyone received treatment versus if no one did.';
@@ -80,11 +95,29 @@ const BasicModeContent = ({ estimand }: { estimand: Estimand }) => {
         </div>
       </div>
 
-      {estimand.examples && estimand.examples.length > 0 && (
+      {estimand.examples && estimand.examples.python && (
         <div className="bg-card border border-border p-6 rounded-lg">
-          <h3 className="font-semibold text-lg mb-3">Code Example ({estimand.examples[0].language})</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-lg">Try It Out (Python)</h3>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCopyCode(estimand.examples.python)}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => handleRunCode(estimand.examples.python, 'python')}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Run in Terminal
+              </Button>
+            </div>
+          </div>
           <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-            <code>{estimand.examples[0].code.split('\n').slice(0, 10).join('\n')}...</code>
+            <code>{estimand.examples.python.split('\n').slice(0, 10).join('\n')}...</code>
           </pre>
         </div>
       )}
@@ -93,6 +126,17 @@ const BasicModeContent = ({ estimand }: { estimand: Estimand }) => {
 };
 
 const ExpertModeContent = ({ estimand }: { estimand: Estimand }) => {
+  const navigate = useNavigate();
+
+  const handleRunCode = (code: string, language: 'python' | 'r') => {
+    navigate(`/terminal?code=${encodeURIComponent(code)}&lang=${language}`);
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code copied to clipboard');
+  };
+
   return (
     <div className="space-y-6">
       {/* Formal Definition */}
@@ -180,7 +224,11 @@ const ExpertModeContent = ({ estimand }: { estimand: Estimand }) => {
           <ul className="space-y-2">
             {estimand.references.map((ref, idx) => (
               <li key={idx} className="text-sm">
-                <span className="text-muted-foreground">[{idx + 1}]</span> {ref}
+                <div className="font-medium">{ref.authors} ({ref.year})</div>
+                <div className="text-muted-foreground">{ref.title}</div>
+                {ref.doi && (
+                  <div className="text-xs text-primary mt-1">DOI: {ref.doi}</div>
+                )}
               </li>
             ))}
           </ul>
@@ -188,23 +236,64 @@ const ExpertModeContent = ({ estimand }: { estimand: Estimand }) => {
       </Card>
 
       {/* Full Code Examples */}
-      {estimand.examples && estimand.examples.length > 0 && (
+      {estimand.examples && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Implementation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {estimand.examples.map((example, idx) => (
-              <div key={idx}>
+            {estimand.examples.python && (
+              <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Badge>{example.language}</Badge>
-                  <span className="text-xs text-muted-foreground">Seed: {example.seed}</span>
+                  <Badge>Python</Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCopyCode(estimand.examples.python)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleRunCode(estimand.examples.python, 'python')}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Run
+                    </Button>
+                  </div>
                 </div>
                 <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
-                  <code>{example.code}</code>
+                  <code>{estimand.examples.python}</code>
                 </pre>
               </div>
-            ))}
+            )}
+            {estimand.examples.r && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Badge>R</Badge>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCopyCode(estimand.examples.r)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleRunCode(estimand.examples.r, 'r')}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Run
+                    </Button>
+                  </div>
+                </div>
+                <pre className="text-xs bg-muted p-4 rounded overflow-x-auto">
+                  <code>{estimand.examples.r}</code>
+                </pre>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

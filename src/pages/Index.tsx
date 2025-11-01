@@ -213,18 +213,20 @@ const Index = () => {
                   <h4 className="font-semibold mb-2">References</h4>
                   <ul className="list-disc list-inside space-y-1">
                     {selectedEstimand.references.map((ref, idx) => (
-                      <li key={idx} className="text-sm text-muted-foreground">{ref}</li>
+                      <li key={idx} className="text-sm text-muted-foreground">
+                        {ref.authors} ({ref.year}). {ref.title}
+                      </li>
                     ))}
                   </ul>
                 </div>
 
-                {selectedEstimand.examples && selectedEstimand.examples.length > 0 && (
+                {selectedEstimand.examples && selectedEstimand.examples.python && (
                   <div>
                     <h4 className="font-semibold mb-2">Code Example</h4>
-                    <Link to="/terminal" state={{ code: selectedEstimand.examples[0].code, language: selectedEstimand.examples[0].language }}>
+                    <Link to="/terminal" state={{ code: selectedEstimand.examples.python, language: 'Python' }}>
                       <Button className="w-full gap-2">
                         <TerminalIcon className="h-4 w-4" />
-                        Run in Terminal
+                        Run Python in Terminal
                       </Button>
                     </Link>
                   </div>
