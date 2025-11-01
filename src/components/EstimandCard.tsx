@@ -34,10 +34,9 @@ const getFrameworkColor = (framework: string) => {
 const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
   const navigate = useNavigate();
   
-  const handleSlidesClick = (e: React.MouseEvent) => {
+  const handleOverviewClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Pass navigation state so slides view knows where we came from
-    navigate(`/slides?id=${estimand.id}`, { state: { from: '/estimands' } });
+    navigate(`/estimand-overview?id=${estimand.id}`);
   };
 
   return (
@@ -79,10 +78,10 @@ const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
             variant="outline"
             size="sm"
             className="w-full mt-3 gap-2"
-            onClick={handleSlidesClick}
+            onClick={handleOverviewClick}
           >
             <Presentation className="h-4 w-4" />
-            View Slides
+            View Learning Path
           </Button>
         </div>
       </CardContent>

@@ -10,6 +10,7 @@ import TheoryLibrary from "./pages/TheoryLibrary";
 import TheoryTopicOverview from "./pages/TheoryTopicOverview";
 import SlidesView from "./pages/SlidesView";
 import EstimandsLibrary from "./pages/EstimandsLibrary";
+import EstimandOverview from "./pages/EstimandOverview";
 import NetworkView from "./pages/NetworkView";
 import TerminalView from "./pages/TerminalView";
 import NotFound from "./pages/NotFound";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/theory-overview" element={<TheoryTopicOverview />} />
           <Route path="/slides" element={<SlidesView />} />
           <Route path="/estimands" element={<EstimandsLibrary />} />
+          <Route path="/estimand-overview" element={<EstimandOverview />} />
           <Route path="/network" element={<NetworkView />} />
           <Route path="/terminal" element={<TerminalView />} />
           <Route path="/playground" element={<TerminalView />} />
