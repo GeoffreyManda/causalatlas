@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from '@/components/ui/badge';
 import { Search, Book, Network as NetworkIcon, Terminal as TerminalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [frameworkFilter, setFrameworkFilter] = useState<string>('all');
@@ -61,7 +62,10 @@ const Index = () => {
       <section className="py-12 border-b">
         <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+          <div 
+            onClick={() => navigate('/slides')}
+            className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card cursor-pointer hover:scale-105 transition-transform"
+          >
             <div className="h-12 w-12 rounded-lg bg-tier-basic flex items-center justify-center mb-4">
               <Book className="h-6 w-6 text-white" />
             </div>
@@ -70,7 +74,10 @@ const Index = () => {
               From basic RCT concepts to frontier deep learning methods
             </p>
           </div>
-          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+          <div 
+            onClick={() => navigate('/network')}
+            className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card cursor-pointer hover:scale-105 transition-transform"
+          >
             <div className="h-12 w-12 rounded-lg bg-tier-intermediate flex items-center justify-center mb-4">
               <NetworkIcon className="h-6 w-6 text-white" />
             </div>
@@ -79,7 +86,10 @@ const Index = () => {
               Visualize relationships between frameworks and estimands
             </p>
           </div>
-          <div className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card">
+          <div 
+            onClick={() => navigate('/terminal')}
+            className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card cursor-pointer hover:scale-105 transition-transform"
+          >
             <div className="h-12 w-12 rounded-lg bg-tier-advanced flex items-center justify-center mb-4">
               <TerminalIcon className="h-6 w-6 text-white" />
             </div>
