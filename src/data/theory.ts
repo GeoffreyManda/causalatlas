@@ -25,124 +25,78 @@ export const causalTheory: TheoryTopic[] = [
     id: 'intro_causal_inference',
     title: 'Introduction to Causal Inference',
     tier: 'Foundational',
-    description: 'Understanding Estimands, Estimators, and Estimates',
-    content: `Causal inference is built on three fundamental concepts:
+    description: 'From causality fundamentals to estimands, estimators, and estimates',
+    content: `## What is Causality?
+
+Causality answers "what if" questions about interventions. Unlike statistical association (correlation), causality describes what happens when we actively change a variable.
+
+**Key Distinction:**
+- **Association**: X and Y occur together → P(Y|X)
+- **Causation**: Changing X causes Y to change → P(Y|do(X))
+
+The **do-operator** represents an intervention that sets X to a value, breaking all incoming arrows to X in a causal graph.
+
+**Example: Confounding**
+Ice cream sales and drowning deaths are correlated, but ice cream doesn't cause drowning. Both are caused by hot weather (the confounder). The association is spurious.
+
+---
+
+## The Causal Inference Framework
+
+Causal inference is built on three fundamental concepts:
 
 **1. Estimand** - The target quantity we want to know
 - A well-defined causal parameter (e.g., average treatment effect)
 - Represents the "truth" we seek in the population
 - Independent of any particular study or data
+- Example: E[Y¹ - Y⁰] = average causal effect of treatment
 
 **2. Estimator** - The method/formula to compute an estimate
 - A statistical procedure or algorithm
-- Examples: regression adjustment, inverse probability weighting, TMLE
+- Examples: regression adjustment, inverse probability weighting, AIPW, TMLE
 - Different estimators can target the same estimand
+- Quality: bias, variance, robustness
 
 **3. Estimate** - The numerical answer from applying an estimator to data
 - A specific number (e.g., ATE = 2.3 units)
 - Subject to sampling variability and bias
 - Quality depends on both the estimator and the data
 
-**The Causal Inference Pipeline:**
-Define Estimand → Choose valid Estimator → Obtain Estimate → Quantify Uncertainty
+---
+
+## The Causal Inference Pipeline
+
+**Define Estimand → Choose Valid Estimator → Obtain Estimate → Quantify Uncertainty**
 
 **Why This Matters:**
-- Clarity in defining what we're trying to learn (estimand)
-- Transparency in how we compute it (estimator)
-- Honesty about what the data tells us (estimate)`,
+- **Clarity** in defining what we're trying to learn (estimand)
+- **Transparency** in how we compute it (estimator)
+- **Honesty** about what the data tells us (estimate)
+- **Reproducibility** through explicit formalization`,
     prerequisites: [],
     learningObjectives: [
+      'Distinguish causation from association',
+      'Understand the do-operator and confounding',
       'Distinguish estimands, estimators, and estimates',
-      'Understand the causal inference workflow',
-      'Recognize importance of well-defined targets'
+      'Understand the causal inference workflow'
     ],
     keyDefinitions: [
+      { term: 'Intervention', definition: 'An external action that sets a variable to a specific value' },
+      { term: 'do-operator', definition: 'do(X=x) represents intervention, written P(Y|do(X=x))' },
+      { term: 'Confounding', definition: 'A common cause of treatment and outcome that creates spurious association' },
       { term: 'Estimand', definition: 'The causal parameter of interest (the target)' },
       { term: 'Estimator', definition: 'The statistical method to estimate the estimand' },
       { term: 'Estimate', definition: 'The numerical result from applying an estimator to data' }
     ],
     examples: {
       python: `import numpy as np
-
-# Example: Average Treatment Effect (ATE)
-np.random.seed(42)
-n = 1000
-
-# ESTIMAND: True ATE in population (unknown in practice)
-true_ATE = 2.0  # This is what we want to know
-
-# Data generation (simulating reality)
-A = np.random.binomial(1, 0.5, n)  # Treatment
-Y = true_ATE * A + np.random.normal(0, 1, n)  # Outcome
-
-# ESTIMATOR 1: Difference in means
-estimator1 = Y[A==1].mean() - Y[A==0].mean()
-
-# ESTIMATOR 2: Regression
 from sklearn.linear_model import LinearRegression
-estimator2 = LinearRegression().fit(A.reshape(-1,1), Y).coef_[0]
 
-# ESTIMATES: What we observe
-print(f"True estimand (ATE): {true_ATE}")
-print(f"Estimate 1 (diff-in-means): {estimator1:.3f}")
-print(f"Estimate 2 (regression): {estimator2:.3f}")
-print("→ Different estimators, same estimand, similar estimates")`,
-      r: `set.seed(42)
-n <- 1000
-
-# ESTIMAND: True ATE
-true_ATE <- 2.0
-
-# Data
-A <- rbinom(n, 1, 0.5)
-Y <- true_ATE * A + rnorm(n)
-
-# ESTIMATOR 1: Difference in means
-est1 <- mean(Y[A==1]) - mean(Y[A==0])
-
-# ESTIMATOR 2: Regression
-est2 <- coef(lm(Y ~ A))[2]
-
-cat("True estimand:", true_ATE, "\\n")
-cat("Estimate 1:", round(est1, 3), "\\n")
-cat("Estimate 2:", round(est2, 3), "\\n")`
-    },
-    references: [
-      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If', year: 2020, doi: '10.1201/9781420013542' },
-      { authors: 'Lundberg I et al', title: 'What is your estimand?', year: 2021, doi: '10.1177/0081175021101969' }
-    ]
-  },
-  
-  {
-    id: 'what_is_causality',
-    title: 'What is Causality?',
-    tier: 'Foundational',
-    description: 'Introduction to causal reasoning vs statistical association',
-    content: `Causality answers "what if" questions about interventions. Unlike statistical association (correlation), causality describes what happens when we actively change a variable.
-
-**Key Distinction:**
-- Association: X and Y occur together (P(Y|X))
-- Causation: Changing X causes Y to change (P(Y|do(X)))
-
-The do-operator represents an intervention that sets X to a value, breaking all incoming arrows to X in a causal graph.`,
-    prerequisites: [],
-    learningObjectives: [
-      'Distinguish causation from association',
-      'Understand the do-operator',
-      'Recognize confounding'
-    ],
-    keyDefinitions: [
-      { term: 'Intervention', definition: 'An external action that sets a variable to a specific value' },
-      { term: 'do-operator', definition: 'do(X=x) represents intervention, written P(Y|do(X=x))' },
-      { term: 'Confounding', definition: 'A common cause of treatment and outcome that creates spurious association' }
-    ],
-    examples: {
-      python: `import numpy as np
-import matplotlib.pyplot as plt
-
-# Demonstrate confounding: Z causes both X and Y
 np.random.seed(42)
 n = 1000
+
+# ========== PART 1: Confounding ==========
+print("=== CONFOUNDING EXAMPLE ===")
 
 # Confounder Z (e.g., age)
 Z = np.random.normal(50, 15, n)
@@ -152,19 +106,44 @@ X = (Z > 50).astype(int) + np.random.binomial(1, 0.1, n)
 X = np.clip(X, 0, 1)
 
 # Outcome Y depends on Z, NOT on X
-Y = 2 * Z + np.random.normal(0, 10, n)
+Y_conf = 2 * Z + np.random.normal(0, 10, n)
 
-# Naive association
-print(f"Association E[Y|X=1] - E[Y|X=0]: {Y[X==1].mean() - Y[X==0].mean():.2f}")
-print("^ Shows strong 'effect' but X doesn't cause Y!")
+# Naive association (WRONG!)
+assoc = Y_conf[X==1].mean() - Y_conf[X==0].mean()
+print(f"Naive association: {assoc:.2f}")
+print("^ Shows 'effect' but X doesn't cause Y!")
 
-# Controlling for Z reveals no causal effect
-from sklearn.linear_model import LinearRegression
-model = LinearRegression().fit(np.c_[X, Z], Y)
-print(f"\\nCausal effect (controlling Z): {model.coef_[0]:.2f}")
-print("^ Close to 0, revealing no causal relationship")`,
+# Causal effect (controlling for Z)
+model = LinearRegression().fit(np.c_[X, Z], Y_conf)
+print(f"Causal effect (controlling Z): {model.coef_[0]:.2f}")
+print("^ Close to 0: no causal relationship\\n")
+
+# ========== PART 2: Estimand/Estimator/Estimate ==========
+print("=== ESTIMAND/ESTIMATOR/ESTIMATE ===")
+
+# ESTIMAND: True ATE in population
+true_ATE = 2.0
+print(f"TRUE ESTIMAND (ATE): {true_ATE}")
+
+# Generate data with true causal effect
+A = np.random.binomial(1, 0.5, n)
+Y = true_ATE * A + np.random.normal(0, 1, n)
+
+# ESTIMATOR 1: Difference in means
+est1 = Y[A==1].mean() - Y[A==0].mean()
+
+# ESTIMATOR 2: Regression
+est2 = LinearRegression().fit(A.reshape(-1,1), Y).coef_[0]
+
+# ESTIMATES: What we observe
+print(f"Estimate 1 (diff-in-means): {est1:.3f}")
+print(f"Estimate 2 (regression): {est2:.3f}")
+print("→ Different estimators, same estimand, similar estimates")`,
       r: `set.seed(42)
 n <- 1000
+
+# ========== PART 1: Confounding ==========
+cat("=== CONFOUNDING EXAMPLE ===\\n")
 
 # Confounder Z
 Z <- rnorm(n, 50, 15)
@@ -174,17 +153,39 @@ X <- as.integer(Z > 50) + rbinom(n, 1, 0.1)
 X <- pmin(X, 1)
 
 # Outcome Y depends on Z, NOT on X
-Y <- 2 * Z + rnorm(n, 0, 10)
+Y_conf <- 2 * Z + rnorm(n, 0, 10)
 
 # Naive association
-cat("Association:", mean(Y[X==1]) - mean(Y[X==0]), "\\n")
+cat("Naive association:", round(mean(Y_conf[X==1]) - mean(Y_conf[X==0]), 2), "\\n")
 
-# Controlling for Z
-model <- lm(Y ~ X + Z)
-cat("Causal effect (controlling Z):", coef(model)[2], "\\n")`
+# Causal effect (controlling Z)
+model <- lm(Y_conf ~ X + Z)
+cat("Causal effect (controlling Z):", round(coef(model)[2], 2), "\\n\\n")
+
+# ========== PART 2: Estimand/Estimator/Estimate ==========
+cat("=== ESTIMAND/ESTIMATOR/ESTIMATE ===\\n")
+
+# ESTIMAND: True ATE
+true_ATE <- 2.0
+cat("TRUE ESTIMAND (ATE):", true_ATE, "\\n")
+
+# Generate data
+A <- rbinom(n, 1, 0.5)
+Y <- true_ATE * A + rnorm(n)
+
+# ESTIMATOR 1: Difference in means
+est1 <- mean(Y[A==1]) - mean(Y[A==0])
+
+# ESTIMATOR 2: Regression
+est2 <- coef(lm(Y ~ A))[2]
+
+cat("Estimate 1 (diff-in-means):", round(est1, 3), "\\n")
+cat("Estimate 2 (regression):", round(est2, 3), "\\n")`
     },
     references: [
-      { authors: 'Pearl J', title: 'Causality: Models, Reasoning, and Inference', year: 2009, doi: '10.1017/CBO9780511803161' }
+      { authors: 'Pearl J', title: 'Causality: Models, Reasoning, and Inference', year: 2009, doi: '10.1017/CBO9780511803161' },
+      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If', year: 2020, doi: '10.1201/9781420013542' },
+      { authors: 'Lundberg I et al', title: 'What is your estimand?', year: 2021, doi: '10.1177/0081175021101969' }
     ]
   },
 
@@ -205,7 +206,7 @@ cat("Causal effect (controlling Z):", coef(model)[2], "\\n")`
 
 **Structural Equations:**
 Each node has equation: V := f_V(Parents_V, U_V) where U_V is noise.`,
-    prerequisites: ['what_is_causality'],
+    prerequisites: ['intro_causal_inference'],
     learningObjectives: [
       'Draw DAGs for causal scenarios',
       'Identify chains, forks, colliders',
