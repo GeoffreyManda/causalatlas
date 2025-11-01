@@ -1,5 +1,5 @@
 import Navigation from '@/components/Navigation';
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useLayoutEffect } from 'react';
 import * as d3 from 'd3';
 import { estimandsData } from '@/data/estimands';
 import { allTheoryTopics } from '@/data/allTheoryTopics';
@@ -10,12 +10,21 @@ import { Card } from '@/components/ui/card';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const NetworkView = () => {
+  console.log('NetworkView component rendering');
   const estimandsSvgRef = useRef<SVGSVGElement>(null);
   const theorySvgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const highlightNodeId = searchParams.get('node');
   const [activeTab, setActiveTab] = useState<string>('estimands');
+  const [mounted, setMounted] = useState(false);
+  
+  console.log('Active tab:', activeTab, 'mounted:', mounted);
+  
+  // Force re-render after mount
+  useLayoutEffect(() => {
+    setMounted(true);
+  }, []);
   
   // State for estimands filters
   const [selectedTier, setSelectedTier] = useState<string>('all');
@@ -44,7 +53,10 @@ const NetworkView = () => {
 
   // Estimands Network Effect
   useEffect(() => {
-    if (!estimandsSvgRef.current || activeTab !== 'estimands') return;
+    console.log('Estimands effect triggered, ref exists:', !!estimandsSvgRef.current, 'activeTab:', activeTab, 'mounted:', mounted);
+    if (!estimandsSvgRef.current || activeTab !== 'estimands' || !mounted) return;
+
+    console.log('Rendering estimands network...');
 
     const filteredEstimands = estimandsData.filter(e => {
       if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
@@ -220,11 +232,14 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate]);
+  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate, mounted]);
 
   // Theory Network Effect
   useEffect(() => {
-    if (!theorySvgRef.current || activeTab !== 'theory') return;
+    console.log('Theory effect triggered, ref exists:', !!theorySvgRef.current, 'activeTab:', activeTab, 'mounted:', mounted);
+    if (!theorySvgRef.current || activeTab !== 'theory' || !mounted) return;
+
+    console.log('Rendering theory network...');
 
     const filteredTopics = allTheoryTopics.filter(topic => {
       if (selectedTheoryTier !== 'all' && topic.tier !== selectedTheoryTier) return false;
@@ -391,7 +406,7 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTheoryTier, activeTab, navigate]);
+  }, [selectedTheoryTier, activeTab, navigate, mounted]);
 
   return (
     <div className="min-h-screen bg-background">
