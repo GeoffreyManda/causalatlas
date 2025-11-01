@@ -1964,6 +1964,34 @@ cat("After matching: improved balance\\n")`
   },
 
   {
+    id: 'finite_sample_rdd',
+    title: 'Finite Sample Inference in Regression Discontinuity Designs',
+    tier: 'Advanced',
+    description: 'Robust inference, permutation tests, and finite sample corrections for RDD',
+    content: `*Content pending. This topic will cover: finite sample inference in RDD, permutation tests, robust variance estimation, coverage properties, and sensitivity to bandwidth choice.*`,
+    prerequisites: ['regression_discontinuity'],
+    learningObjectives: [
+      'Apply finite sample inference methods in RDD',
+      'Implement permutation and randomization tests',
+      'Conduct robust variance estimation',
+      'Assess sensitivity to bandwidth selection'
+    ],
+    keyDefinitions: [
+      { term: 'Finite sample inference', definition: 'Inference methods valid for small sample sizes' },
+      { term: 'Permutation test', definition: 'Randomization-based inference without asymptotic approximations' },
+      { term: 'Coverage probability', definition: 'Actual frequency confidence intervals contain true parameter' }
+    ],
+    examples: {
+      python: `# Placeholder - finite sample RDD inference`,
+      r: `# Placeholder - finite sample RDD inference`
+    },
+    references: [
+      { authors: 'Cattaneo MD et al', title: 'A practical introduction to RD designs', year: 2020, doi: '10.1017/9781108684606' },
+      { authors: 'Canay IA, Kamat V', title: 'Approximate permutation tests', year: 2018, doi: '10.1093/restud/rdx062' }
+    ]
+  },
+
+  {
     id: 'balancing_estimators',
     title: 'Balancing Estimators and Synthetic Controls',
     tier: 'Advanced',
