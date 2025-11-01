@@ -149,10 +149,10 @@ const SlidesView = () => {
           <div className="flex items-center gap-4">
             <Presentation className="h-6 w-6 text-primary" />
             <Select value={estimandId} onValueChange={handleEstimandChange}>
-              <SelectTrigger className="w-full max-w-[500px] bg-popover">
+              <SelectTrigger className="w-full max-w-[500px] bg-card">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="max-h-[400px] bg-popover z-50">
+              <SelectContent className="max-h-[400px]">
                 {filteredEstimands.map(e => (
                   <SelectItem key={e.id} value={e.id}>
                     <div className="flex items-center gap-2">

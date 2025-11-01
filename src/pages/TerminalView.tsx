@@ -266,10 +266,10 @@ OUT_VAL = _buf.getvalue()
             <div className="flex-1 w-full">
               <label className="text-sm font-medium mb-2 block">Select Estimand</label>
               <Select value={selectedEstimand} onValueChange={setSelectedEstimand}>
-                <SelectTrigger className="w-full bg-popover">
+                <SelectTrigger className="w-full bg-card">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-[400px] bg-popover z-50">
+                <SelectContent className="max-h-[400px]">
                   {filteredEstimands.map(e => (
                     <SelectItem key={e.id} value={e.id}>
                       <div className="flex items-center gap-2">

@@ -265,24 +265,91 @@ const NetworkView = () => {
         </div>
 
         <Card className="mb-6 p-4">
-          <h3 className="font-semibold mb-3">Legend (Click to Highlight)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-            {[
-              { type: 'theory', color: 'hsl(280 65% 60%)', label: 'Theory' },
-              { type: 'framework', color: 'hsl(215 70% 50%)', label: 'Framework' },
-              { type: 'Basic', color: null, label: 'Basic' },
-              { type: 'Intermediate', color: null, label: 'Intermediate' },
-              { type: 'Advanced', color: null, label: 'Advanced' },
-              { type: 'Frontier', color: null, label: 'Frontier' }
-            ].map(item => (
-              <button key={item.type}
-                onClick={() => setHighlightedType(highlightedType === item.type ? null : item.type)}
-                className={`flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors ${highlightedType === item.type ? 'bg-muted' : ''}`}>
-                <div className={`h-6 w-6 rounded-full ${item.color ? '' : `bg-tier-${item.type.toLowerCase()}`}`} 
-                  style={item.color ? { background: item.color } : undefined}></div>
-                <span className="text-sm">{item.label}</span>
-              </button>
-            ))}
+          <h3 className="font-semibold mb-3">Legend (Click to Filter)</h3>
+          <div className="space-y-4">
+            {/* Node Types */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Node Types</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setHighlightedType(highlightedType === 'theory' ? null : 'theory')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                    highlightedType === 'theory' 
+                      ? 'bg-[hsl(280_65%_60%)] text-white border-[hsl(280_65%_60%)] shadow-md' 
+                      : 'bg-background border-border hover:border-[hsl(280_65%_60%)] hover:bg-[hsl(280_65%_60%)]/10'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-full bg-[hsl(280_65%_60%)] inline-block mr-1.5"></div>
+                  Theory
+                </button>
+                <button
+                  onClick={() => setHighlightedType(highlightedType === 'framework' ? null : 'framework')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                    highlightedType === 'framework' 
+                      ? 'bg-[hsl(215_70%_50%)] text-white border-[hsl(215_70%_50%)] shadow-md' 
+                      : 'bg-background border-border hover:border-[hsl(215_70%_50%)] hover:bg-[hsl(215_70%_50%)]/10'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-full bg-[hsl(215_70%_50%)] inline-block mr-1.5"></div>
+                  Frameworks
+                </button>
+                <button
+                  onClick={() => setHighlightedType(highlightedType === 'estimand' ? null : 'estimand')}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                    highlightedType === 'estimand' 
+                      ? 'bg-primary text-primary-foreground border-primary shadow-md' 
+                      : 'bg-background border-border hover:border-primary hover:bg-primary/10'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-md bg-primary inline-block mr-1.5"></div>
+                  Estimands
+                </button>
+              </div>
+            </div>
+
+            {/* Tiers */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Complexity Tiers</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { name: 'Basic', color: 'tier-basic', hsl: 'hsl(142 70% 45%)' },
+                  { name: 'Intermediate', color: 'tier-intermediate', hsl: 'hsl(215 85% 55%)' },
+                  { name: 'Advanced', color: 'tier-advanced', hsl: 'hsl(265 75% 58%)' },
+                  { name: 'Frontier', color: 'tier-frontier', hsl: 'hsl(25 90% 55%)' }
+                ].map(tier => (
+                  <button
+                    key={tier.name}
+                    onClick={() => setHighlightedType(highlightedType === tier.name ? null : tier.name)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
+                      highlightedType === tier.name
+                        ? `text-white border-[${tier.hsl}] shadow-md`
+                        : `bg-background border-border hover:border-[${tier.hsl}] hover:bg-[${tier.hsl}]/10`
+                    }`}
+                    style={highlightedType === tier.name ? { backgroundColor: tier.hsl, borderColor: tier.hsl } : {}}
+                  >
+                    <div className={`w-3 h-3 rounded-full bg-${tier.color} inline-block mr-1.5`}></div>
+                    {tier.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Edge Types */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Relationships</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-12 h-0.5 bg-foreground"></div>
+                  <span>Theory → Framework</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <svg width="48" height="2" className="inline-block">
+                    <line x1="0" y1="1" x2="48" y2="1" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                  <span>Framework → Estimand</span>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
 

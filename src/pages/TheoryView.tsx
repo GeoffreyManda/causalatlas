@@ -128,10 +128,10 @@ const TheoryView = () => {
           <div className="flex items-center gap-4">
             <BookOpen className="h-6 w-6 text-primary" />
             <Select value={topicId} onValueChange={handleTopicChange}>
-              <SelectTrigger className="w-full max-w-[400px] bg-popover">
+              <SelectTrigger className="w-full max-w-[400px] bg-card">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="max-h-[400px] bg-popover z-50">
+              <SelectContent className="max-h-[400px] z-[100]">
                 {filteredTopics.map(topic => (
                   <SelectItem key={topic.id} value={topic.id}>
                     <div className="flex items-center gap-2">
