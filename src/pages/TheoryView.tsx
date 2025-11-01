@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, BookOpen, Download, ArrowLeft } from 'lucide
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { generateSlidesFromRenderer } from '@/lib/pdfGenerator';
 
 const TheoryView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -74,8 +75,25 @@ const TheoryView = () => {
     setSlideIndex(0);
   };
 
-  const downloadSlides = () => {
-    toast.info('Theory slide download coming soon (paywall feature)');
+  const downloadSlides = async () => {
+    const loadingToast = toast.loading('Generating PDF...');
+    
+    try {
+      await generateSlidesFromRenderer(
+        (index) => setSlideIndex(index),
+        totalSlides,
+        'theory-slide-container',
+        `${currentTopic.title.replace(/[^a-z0-9]/gi, '_')}_theory.pdf`,
+        (current, total) => {
+          toast.loading(`Generating PDF... ${current}/${total}`, { id: loadingToast });
+        }
+      );
+      
+      toast.success('PDF downloaded successfully!', { id: loadingToast });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF', { id: loadingToast });
+    }
   };
 
   return (
@@ -99,7 +117,7 @@ const TheoryView = () => {
             className="gap-2"
           >
             <Download className="h-4 w-4" />
-            Download Slides (Premium)
+            Download Slides as PDF
           </Button>
         </div>
 
@@ -149,7 +167,7 @@ const TheoryView = () => {
         </div>
 
         {/* Slide */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-8" id="theory-slide-container">
           <TheorySlide topic={currentTopic} slideIndex={slideIndex} />
         </div>
 

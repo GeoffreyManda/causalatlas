@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Presentation, Download, ArrowLeft } from 'lu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { generateSlidesFromRenderer } from '@/lib/pdfGenerator';
 
 const SlidesView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,9 +76,25 @@ const SlidesView = () => {
     setSlideIndex(0);
   };
 
-  const downloadSlides = () => {
-    toast.info('Slide download feature coming soon (paywall feature)');
-    // Future: Generate PDF of all slides for this estimand
+  const downloadSlides = async () => {
+    const loadingToast = toast.loading('Generating PDF...');
+    
+    try {
+      await generateSlidesFromRenderer(
+        (index) => setSlideIndex(index),
+        totalSlides,
+        'slide-container',
+        `${currentEstimand.short_name.replace(/[^a-z0-9]/gi, '_')}_slides.pdf`,
+        (current, total) => {
+          toast.loading(`Generating PDF... ${current}/${total}`, { id: loadingToast });
+        }
+      );
+      
+      toast.success('PDF downloaded successfully!', { id: loadingToast });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF', { id: loadingToast });
+    }
   };
 
   return (
@@ -101,7 +118,7 @@ const SlidesView = () => {
             className="gap-2"
           >
             <Download className="h-4 w-4" />
-            Download Slides (Premium)
+            Download Slides as PDF
           </Button>
         </div>
 
@@ -170,7 +187,7 @@ const SlidesView = () => {
         </div>
 
         {/* Slide (16:9 PowerPoint ratio) */}
-        <div className="flex items-center justify-center mb-8">
+        <div className="flex items-center justify-center mb-8" id="slide-container">
           <EstimandSlideStandalone estimand={currentEstimand} slideIndex={slideIndex} />
         </div>
 
