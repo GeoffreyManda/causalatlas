@@ -28,7 +28,7 @@ const Index = () => {
               Publication-Grade Causal Inference
             </Badge>
             <h1 className="text-6xl font-bold text-primary-foreground mb-6 leading-tight">
-              Causal Estimand Atlas
+              Causal Inference Atlas
             </h1>
             <p className="text-2xl text-primary-foreground/90 mb-8 leading-relaxed">
               Navigate the complete landscape of causal inference from foundational theory to frontier methods, 

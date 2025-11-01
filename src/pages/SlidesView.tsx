@@ -43,7 +43,15 @@ const SlidesView = () => {
   const assumptionSlides = Math.max(1, Math.ceil(currentEstimand.assumptions.length / 4));
   const estimatorSlides = Math.ceil(currentEstimand.estimators.length / 6);
   const referenceSlides = Math.ceil(currentEstimand.references.length / 3);
-  const totalContentSlides = 1 + 1 + assumptionSlides + estimatorSlides + 2 + referenceSlides; // title + definition + assumptions + estimators + 2 code + references
+  const totalContentSlides = 1 
+    + 2 /* background + historical */
+    + 1 /* definition */
+    + assumptionSlides 
+    + 1 /* data structure */
+    + estimatorSlides 
+    + 3 /* diagnostics + sensitivity + ethics */
+    + 2 /* code */
+    + referenceSlides; // content slides only
   const totalSlides = totalContentSlides + 1; // +1 for navigation slide
 
   // Filter estimands

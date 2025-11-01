@@ -20,7 +20,7 @@ const Navigation = () => {
             <span className="text-lg font-bold text-primary-foreground">CE</span>
           </div>
           <div className="flex flex-col">
-            <h1 className="text-sm font-bold leading-tight">Causal Estimand Atlas</h1>
+            <h1 className="text-sm font-bold leading-tight">Causal Inference Atlas</h1>
             <span className="text-xs text-muted-foreground">v2025-11.11</span>
           </div>
         </Link>

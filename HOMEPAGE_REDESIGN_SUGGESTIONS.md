@@ -91,7 +91,7 @@ The current homepage is minimal with just a hero section, "Get Started" and "Exp
 ┌─────────────────────────────────────┐
 │   Hero: Animated Network Snippet    │
 │   (Mini network with key concepts)   │
-│   "Causal Estimand Atlas"            │
+│   "Causal Inference Atlas"            │
 └─────────────────────────────────────┘
          ↓
 ┌─────────────────────────────────────┐

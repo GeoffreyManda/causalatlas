@@ -2,7 +2,7 @@ import { Estimand, estimandsData } from '@/data/estimands';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, BookOpen, Code, FileText, Target, Home, Network, GraduationCap, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Activity, BookOpen, Code, FileText, Target, Home, Network, GraduationCap, ChevronLeft, ChevronRight, Download, Lightbulb } from 'lucide-react';
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 import {
@@ -40,6 +40,7 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
     Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
     Intermediate: allTheoryTopics.filter(t => t.tier === 'Intermediate'),
     Advanced: allTheoryTopics.filter(t => t.tier === 'Advanced'),
+    Frontier: allTheoryTopics.filter(t => t.tier === 'Frontier'),
   };
 
   const estimandsByTier = {
@@ -89,6 +90,38 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
             {' • '}
             EIF: {estimand.eif_status}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Slides: Background & Motivation
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <Lightbulb className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Background & Motivation</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: problems addressed, typical use cases, and why it matters in real-world decisions.*</p>
+          <p>We will also summarize the core intuition and key contrasts (e.g., population vs conditional, path-specific vs total effect; local vs global; dynamic vs static).</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Slides: Historical Context
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <BookOpen className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Historical Context</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: key milestones, canonical debates, and evolution of practice (randomized → semiparametric → ML/orthogonal → deep rep).* </p>
+          <p>We will also position this estimand within the ecosystem (Potential Outcomes vs SCM vs Proximal vs Bayesian).</p>
         </div>
       </div>
     );
@@ -152,6 +185,21 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
     }
   }
 
+  // Slides for Data Structure & Study Design (placeholder)
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <FileText className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Data Structure & Study Design</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: required variables, time indices, mediators/instruments/negative controls, and compatible designs (parallel/cluster/observational/RD/target trial/survey).* </p>
+        </div>
+      </div>
+    );
+  }
+
   // Slides for Estimators (1 slide per chunk)
   for (let i = 0; i < estimatorChunks.length; i++) {
     if (slideIndex === currentSlide++) {
@@ -186,6 +234,51 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
         </div>
       );
     }
+  }
+
+  // Slides: Diagnostics & Validation (placeholder)
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <Activity className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Diagnostics & Validation</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: overlap/positivity checks, weight distributions, misspecification tests, IF residual diagnostics, and ML stability.*</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Slides: Sensitivity & Robustness (placeholder)
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <Activity className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Sensitivity & Robustness</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: hidden bias (Rosenbaum Γ, E-values), MNAR/measurement error, transport robustness, and tipping-point curves.*</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Slides: Ethics, Governance & Reporting (placeholder)
+  if (slideIndex === currentSlide++) {
+    return (
+      <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
+        <div className="flex items-center gap-3 mb-6">
+          <BookOpen className="h-10 w-10 text-primary" />
+          <h2 className="text-4xl font-bold">Ethics, Governance & Reporting</h2>
+        </div>
+        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
+          <p>*Content pending. This section will cover: target trial emulation protocol fields, consent/provenance, bias/harms registry, and reproducibility (seeds, env hashes, audit logs).*</p>
+        </div>
+      </div>
+    );
   }
 
   // Slide: Python Code
