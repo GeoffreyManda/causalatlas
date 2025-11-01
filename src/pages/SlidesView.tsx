@@ -272,6 +272,7 @@ const SlidesView = () => {
             onNavigate={navigate}
             onSlideChange={setSlideIndex}
             estimandId={estimandId}
+            onDownload={downloadSlides}
           />
         </div>
 

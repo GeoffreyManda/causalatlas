@@ -328,6 +328,7 @@ const TheoryView = () => {
             onNavigate={navigate}
             onSlideChange={setSlideIndex}
             topicId={topicId}
+            onDownload={downloadSlides}
           />
         </div>
 

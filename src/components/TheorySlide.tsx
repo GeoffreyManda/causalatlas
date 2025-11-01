@@ -2,7 +2,7 @@ import { TheoryTopic } from '@/data/theory';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Target, Lightbulb, Home, Network, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookOpen, Target, Lightbulb, Home, Network, GraduationCap, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import 'katex/dist/katex.min.css';
 import {
@@ -28,9 +28,10 @@ interface TheorySlideProps {
   onNavigate?: (path: string) => void;
   onSlideChange?: (index: number) => void;
   topicId?: string;
+  onDownload?: () => void;
 }
 
-const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, topicId }: TheorySlideProps) => {
+const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, topicId, onDownload }: TheorySlideProps) => {
   // Group topics and estimands by tier
   const theoryByTier = {
     Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
@@ -237,6 +238,21 @@ const TheorySlide = ({ topic, slideIndex, totalContentSlides, totalSlides, onNav
             You've reached the last slide. Where would you like to go next?
           </p>
           
+          {/* Download PDF Button */}
+          {onDownload && (
+            <div className="mb-4">
+              <Button 
+                onClick={onDownload}
+                variant="default"
+                size="lg"
+                className="gap-2 h-16 px-8 text-lg"
+              >
+                <Download className="h-5 w-5" />
+                Download Slides as PDF
+              </Button>
+            </div>
+          )}
+
           <div className="grid grid-cols-4 gap-3 w-full max-w-5xl mb-6">
             {/* Slide Navigation */}
             <Button 
