@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { estimandsData } from '@/data/estimands';
+import { getRequirements } from '@/data/requirements';
 
 const TerminalView = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,27 @@ const TerminalView = () => {
   const [currentTab, setCurrentTab] = useState('python');
   const [copied, setCopied] = useState(false);
   const [packagesInstalled, setPackagesInstalled] = useState(false);
+  const [frameworkFilter, setFrameworkFilter] = useState<string>('all');
+  const [tierFilter, setTierFilter] = useState<string>('all');
+  const [pyodideInstance, setPyodideInstance] = useState<any>(null);
+
+  // Ensure Pyodide is loaded only once
+  const ensurePyodide = async () => {
+    if (pyodideInstance) return pyodideInstance;
+    // Load script if not already present
+    if (!(window as any).loadPyodide) {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Pyodide'));
+        document.head.appendChild(script);
+      });
+    }
+    const pyodide = await (window as any).loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/' });
+    setPyodideInstance(pyodide);
+    return pyodide;
+  };
 
   // Auto-load code from URL
   useEffect(() => {
@@ -54,22 +76,37 @@ const TerminalView = () => {
   }, [selectedEstimand]);
 
   const installPackages = async () => {
-    setOutput('📦 Installing required packages...\n\n');
-    setIsRunning(true);
-    
-    const requirements = currentTab === 'python' 
-      ? ['numpy', 'scipy', 'scikit-learn', 'pandas']
-      : ['survival', 'glmnet', 'randomForest', 'ppcor'];
-    
-    for (const pkg of requirements) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setOutput(prev => prev + `✓ ${pkg}\n`);
+    const lang = currentTab;
+    if (lang === 'r') {
+      toast.warning('R execution will be enabled with WebR shortly. Python is fully executable now.');
+      return;
     }
-    
-    setOutput(prev => prev + '\n✅ All packages installed successfully!\n');
-    setPackagesInstalled(true);
-    setIsRunning(false);
-    toast.success('Packages installed');
+    setIsRunning(true);
+    setOutput('📦 Resolving Python packages via Pyodide...\n\n');
+    try {
+      const pyodide = await ensurePyodide();
+      const req = getRequirements(selectedEstimand).python;
+      // Always ensure micropip and core scientific stack
+      const toLoad = Array.from(new Set(['micropip', ...req]));
+      for (const pkg of toLoad) {
+        setOutput(prev => prev + `→ Loading ${pkg}...\n`);
+        await pyodide.loadPackage(pkg).catch(async () => {
+          // Try pip install pure-python wheels if not a pyodide pkg
+          if (pkg !== 'micropip') {
+            await pyodide.runPythonAsync(`import micropip; await micropip.install('${pkg}')`);
+          }
+        });
+        setOutput(prev => prev + `✓ ${pkg} loaded\n`);
+      }
+      setOutput(prev => prev + '\n✅ Packages ready.');
+      setPackagesInstalled(true);
+    } catch (e: any) {
+      console.error(e);
+      setOutput(prev => prev + `\n❌ Package setup failed: ${e.message || e}`);
+      setPackagesInstalled(false);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const runCode = async () => {
@@ -77,29 +114,48 @@ const TerminalView = () => {
       toast.error('Please install packages first');
       return;
     }
-    
-    setIsRunning(true);
+
     const code = currentTab === 'python' ? pythonCode : rCode;
-    
     if (!code.trim()) {
       toast.error('No code to run');
-      setIsRunning(false);
       return;
     }
 
+    setIsRunning(true);
     setOutput(prev => prev + `\n\n=== Running ${currentTab.toUpperCase()} ===\n\n`);
-    
-    // Simulate execution
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setOutput(prev => prev + 
-      `[Simulated output - integrate Pyodide/WebR for real execution]\n\n` +
-      `Code length: ${code.split('\n').length} lines\n` +
-      `Estimated runtime: ~1.2s\n\n` +
-      `✓ Execution complete`);
-    
-    setIsRunning(false);
-    toast.success('Code executed');
+
+    try {
+      if (currentTab === 'python') {
+        const pyodide = await ensurePyodide();
+        // Redirect stdout/stderr to buffer and exec provided code via JS bridge
+        pyodide.globals.set('PY_CODE', code);
+        await pyodide.runPythonAsync(`
+import sys, io
+_buf = io.StringIO()
+_stdout, _stderr = sys.stdout, sys.stderr
+sys.stdout = _buf
+sys.stderr = _buf
+try:
+  exec(PY_CODE, globals())
+except Exception as e:
+  import traceback
+  traceback.print_exc()
+finally:
+  sys.stdout = _stdout
+  sys.stderr = _stderr
+OUT_VAL = _buf.getvalue()
+`);
+        const out = pyodide.globals.get('OUT_VAL') as string;
+        setOutput(prev => prev + (out || '(no output)'));
+      } else {
+        toast.warning('R execution via WebR is being enabled. For now, use Python.');
+      }
+    } catch (e: any) {
+      console.error(e);
+      setOutput(prev => prev + `\n❌ Runtime error: ${e.message || e}`);
+    } finally {
+      setIsRunning(false);
+    }
   };
 
   const clearOutput = () => {
@@ -255,13 +311,13 @@ const TerminalView = () => {
             <div className="p-4 rounded-lg border bg-muted/50">
               <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Auto-Requirements
+                Requirements for {currentEstimand?.short_name}
               </h3>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p><strong>Python:</strong> numpy, scipy, scikit-learn, pandas</p>
-                <p><strong>R:</strong> survival, glmnet, randomForest, ppcor</p>
+                <p><strong>Python:</strong> {getRequirements(selectedEstimand).python.join(', ')}</p>
+                <p><strong>R:</strong> {getRequirements(selectedEstimand).r.join(', ')}</p>
                 <p className="mt-2 pt-2 border-t">
-                  Full execution requires Pyodide/WebR integration. This interface demonstrates structured playground with auto-package management.
+                  Python runs locally via Pyodide (real execution). R via WebR is being enabled next.
                 </p>
               </div>
             </div>

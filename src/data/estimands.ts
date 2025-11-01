@@ -33,38 +33,6 @@ export interface Estimand {
 }
 
 export const estimandsData: Estimand[] = [
-  {
-    id: 'intro_causality',
-    short_name: 'Introduction to Causal Inference',
-    framework: 'PotentialOutcomes',
-    design: 'RCT_Parallel',
-    estimand_family: 'PopulationEffects',
-    tier: 'Basic',
-    definition_tex: '\\text{Counterfactual: } Y^a \\text{ vs } Y^{a\'}',
-    assumptions: ['Counterfactual existence', 'Well-defined interventions'],
-    identification_formula_tex: 'E[Y^a] - E[Y^{a\'}]',
-    estimators: ['Difference in means'],
-    discovery_status: 'identifiable',
-    eif_status: 'available',
-    references: [
-      { authors: 'Hernán MA, Robins JM', title: 'Causal Inference: What If', year: 2020, doi: '10.1201/9781420013542' }
-    ],
-    examples: {
-      python: `import numpy as np
-np.random.seed(20251111)
-n = 1000
-A = np.random.binomial(1, 0.5, n)
-Y = 2*A + np.random.normal(0, 1, n)
-ATE = Y[A==1].mean() - Y[A==0].mean()
-print(f"ATE from RCT: {ATE:.3f}")`,
-      r: `set.seed(20251111)
-n <- 1000
-A <- rbinom(n, 1, 0.5)
-Y <- 2*A + rnorm(n)
-ATE <- mean(Y[A==1]) - mean(Y[A==0])
-cat("ATE:", round(ATE, 3), "\\n")`
-    }
-  },
   
   {
     id: 'ate',

@@ -47,10 +47,10 @@ const Index = () => {
                   Explore Network
                 </Button>
               </Link>
-              <Link to="/terminal">
+              <Link to="/playground">
                 <Button size="lg" variant="outline" className="gap-2 bg-white/10 hover:bg-white/20 text-white border-white/20">
                   <TerminalIcon className="h-5 w-5" />
-                  Try Terminal
+                  Open Playground
                 </Button>
               </Link>
             </div>
@@ -87,15 +87,15 @@ const Index = () => {
             </p>
           </div>
           <div 
-            onClick={() => navigate('/terminal')}
+            onClick={() => navigate('/playground')}
             className="flex flex-col items-center text-center p-4 md:p-6 rounded-lg bg-gradient-card cursor-pointer hover:scale-105 transition-transform"
           >
             <div className="h-12 w-12 rounded-lg bg-tier-advanced flex items-center justify-center mb-4">
               <TerminalIcon className="h-6 w-6 text-white" />
             </div>
-            <h3 className="font-semibold text-base md:text-lg mb-2">Executable Code</h3>
+            <h3 className="font-semibold text-base md:text-lg mb-2">Executable Playground</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Run Python and R examples in your browser
+              Run Python examples in your browser
             </p>
           </div>
         </div>

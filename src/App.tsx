@@ -26,6 +26,7 @@ const App = () => (
           <Route path="/slides" element={<SlidesView />} />
           <Route path="/network" element={<NetworkView />} />
           <Route path="/terminal" element={<TerminalView />} />
+          <Route path="/playground" element={<TerminalView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
