@@ -24,6 +24,7 @@ const TerminalView = () => {
   const [packagesInstalled, setPackagesInstalled] = useState(false);
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
+  const [selectedDesign, setSelectedDesign] = useState<string>('all');
   const [pyodideInstance, setPyodideInstance] = useState<any>(null);
 
   // Get referrer from state or default to playground
@@ -33,11 +34,13 @@ const TerminalView = () => {
   const filteredEstimands = estimandsData.filter(e => {
     if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
     if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+    if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
     return true;
   });
 
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
   const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
+  const designs = ['all', ...Array.from(new Set(estimandsData.map(e => e.design))).sort()];
 
   // Ensure Pyodide is loaded only once
   const ensurePyodide = async () => {
@@ -223,7 +226,7 @@ OUT_VAL = _buf.getvalue()
 
         {/* Filters */}
         <div className="mb-6 p-4 rounded-lg border bg-card">
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Filter by Tier</label>
               <div className="flex flex-wrap gap-2">
@@ -250,6 +253,21 @@ OUT_VAL = _buf.getvalue()
                     onClick={() => setSelectedFramework(fw)}
                   >
                     {fw === 'all' ? 'All' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filter by Study Design</label>
+              <div className="flex flex-wrap gap-2">
+                {designs.map(design => (
+                  <Badge
+                    key={design}
+                    variant={selectedDesign === design ? 'default' : 'outline'}
+                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                    onClick={() => setSelectedDesign(design)}
+                  >
+                    {design === 'all' ? 'All' : design.replace(/_/g, ' ')}
                   </Badge>
                 ))}
               </div>
