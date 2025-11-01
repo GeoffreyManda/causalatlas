@@ -15,10 +15,23 @@ const NetworkView = () => {
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
   const [selectedFamily, setSelectedFamily] = useState<string>('all');
 
+  // Calculate available filter options based on current selections
+  const getFilteredData = () => {
+    return estimandsData.filter(e => {
+      if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
+      if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+      if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
+      if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
+      return true;
+    });
+  };
+
+  const currentFiltered = getFilteredData();
+  
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
-  const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
-  const designs = ['all', ...Array.from(new Set(estimandsData.map(e => e.design))).sort()];
-  const families = ['all', ...Array.from(new Set(estimandsData.map(e => e.estimand_family))).sort()];
+  const frameworks = ['all', ...Array.from(new Set(currentFiltered.map(e => e.framework)))];
+  const designs = ['all', ...Array.from(new Set(currentFiltered.map(e => e.design))).sort()];
+  const families = ['all', ...Array.from(new Set(currentFiltered.map(e => e.estimand_family))).sort()];
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -32,14 +45,8 @@ const NetworkView = () => {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    // Filter estimands
-    const filteredEstimands = estimandsData.filter(e => {
-      if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
-      if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
-      if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
-      if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
-      return true;
-    });
+    // Use the filtered estimands
+    const filteredEstimands = currentFiltered;
 
     // Build hierarchy: Framework → Design → Family → Estimands
     const hierarchy: any = { name: 'Root', children: [] };
@@ -118,7 +125,7 @@ const NetworkView = () => {
       .data(root.descendants().filter(d => d.depth > 0))
       .join('g')
       .attr('transform', (d: any) => `translate(${d.y + 200},${d.x + 50})`)
-      .style('cursor', (d: any) => d.data.type === 'estimand' ? 'pointer' : 'default');
+      .style('cursor', 'pointer');
 
     // Node circles
     node.append('circle')
@@ -168,29 +175,39 @@ const NetworkView = () => {
       .attr('font-weight', (d: any) => d.data.type === 'estimand' ? 'normal' : 'bold')
       .attr('fill', 'hsl(215 25% 15%)');
 
-    // Click handler
+    // Click handler - all nodes are now clickable
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
       if (d.data.type === 'estimand') {
         navigate(`/slides?id=${d.data.id}`, { state: { from: '/network' } });
+      } else if (d.data.type === 'framework') {
+        setSelectedFramework(d.data.name);
+        setSelectedDesign('all');
+        setSelectedFamily('all');
+      } else if (d.data.type === 'design') {
+        setSelectedDesign(d.data.name);
+        setSelectedFamily('all');
+      } else if (d.data.type === 'family') {
+        setSelectedFamily(d.data.name);
       }
     });
 
-    // Hover effects
+    // Hover effects - all nodes now have hover effects
     node.on('mouseenter', function(event: any, d: any) {
-      if (d.data.type === 'estimand') {
-        d3.select(this).select('circle')
-          .transition().duration(200)
-          .attr('r', 8)
-          .attr('stroke-width', 3);
-      }
+      const circle = d3.select(this).select('circle');
+      const currentRadius = parseFloat(circle.attr('r'));
+      circle.transition().duration(200)
+        .attr('r', currentRadius + 2)
+        .attr('stroke-width', 3);
     }).on('mouseleave', function(event: any, d: any) {
-      if (d.data.type === 'estimand') {
-        d3.select(this).select('circle')
-          .transition().duration(200)
-          .attr('r', 6)
-          .attr('stroke-width', 2);
-      }
+      const circle = d3.select(this).select('circle');
+      let originalRadius = 6;
+      if (d.data.type === 'framework') originalRadius = 12;
+      if (d.data.type === 'design') originalRadius = 10;
+      if (d.data.type === 'family') originalRadius = 8;
+      circle.transition().duration(200)
+        .attr('r', originalRadius)
+        .attr('stroke-width', 2);
     });
 
   }, [navigate, selectedTier, selectedFramework, selectedDesign, selectedFamily]);
