@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Network, Terminal, Presentation } from 'lucide-react';
+import { BookOpen, Network, Terminal, Presentation, GraduationCap } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   
   const navItems = [
     { path: '/', label: 'Home', icon: BookOpen },
+    { path: '/theory', label: 'Causal Theory', icon: GraduationCap },
+    { path: '/slides', label: 'Estimands', icon: Presentation },
   ];
 
   return (
