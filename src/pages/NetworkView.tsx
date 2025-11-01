@@ -238,15 +238,31 @@ const NetworkView = () => {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    // Build hierarchy: Root → Tier → Topics
+    // Categorize topics into Math vs Causal
+    const mathTopicIds = [
+      'probability_theory', 'expectation_and_moments', 'convergence_and_limit_theorems',
+      'measure_theory_for_statistics', 'linear_algebra_for_statistics', 'optimization_methods',
+      'empirical_process_theory', 'semiparametric_efficiency_theory'
+    ];
+
+    // Build hierarchy: Root → Category (Math/Causal) → Tier → Topics
     const hierarchy: any = { name: 'Theory Topics', type: 'root', children: [] };
-    const tierMap = new Map();
+    
+    const mathCategory = { name: 'Mathematical Foundations', type: 'category', children: [] };
+    const causalCategory = { name: 'Causal Inference', type: 'category', children: [] };
+    
+    const mathTierMap = new Map();
+    const causalTierMap = new Map();
 
     filteredTopics.forEach(topic => {
+      const isMath = mathTopicIds.includes(topic.id);
+      const tierMap = isMath ? mathTierMap : causalTierMap;
+      const category = isMath ? mathCategory : causalCategory;
+      
       if (!tierMap.has(topic.tier)) {
         const tierNode = { name: topic.tier, type: 'tier', children: [] };
         tierMap.set(topic.tier, tierNode);
-        hierarchy.children.push(tierNode);
+        category.children.push(tierNode);
       }
       const tierNode = tierMap.get(topic.tier);
       
@@ -258,6 +274,9 @@ const NetworkView = () => {
         size: 1
       });
     });
+
+    if (mathCategory.children.length > 0) hierarchy.children.push(mathCategory);
+    if (causalCategory.children.length > 0) hierarchy.children.push(causalCategory);
 
     const root = d3.hierarchy(hierarchy)
       .sum((d: any) => d.size || 0)
@@ -279,10 +298,12 @@ const NetworkView = () => {
         .y((d: any) => d.x + 50))
       .attr('fill', 'none')
       .attr('stroke', (d: any) => {
+        if (d.target.data.type === 'category') return 'hsl(280 70% 50%)';
         if (d.target.data.type === 'tier') return 'hsl(215 70% 50%)';
         return 'hsl(215 15% 60%)';
       })
       .attr('stroke-width', (d: any) => {
+        if (d.target.data.type === 'category') return 3.5;
         if (d.target.data.type === 'tier') return 3;
         return 1.5;
       })
@@ -299,11 +320,13 @@ const NetworkView = () => {
     node.append('circle')
       .attr('r', (d: any) => {
         if (d.data.type === 'root') return 16;
+        if (d.data.type === 'category') return 14;
         if (d.data.type === 'tier') return 12;
         return 6;
       })
       .attr('fill', (d: any) => {
         if (d.data.type === 'root') return 'hsl(280 85% 55%)';
+        if (d.data.type === 'category') return 'hsl(265 75% 58%)';
         if (d.data.type === 'tier') return 'hsl(215 70% 50%)';
         switch (d.data.tier) {
           case 'Foundational': return 'hsl(215 85% 55%)';
@@ -326,6 +349,7 @@ const NetworkView = () => {
       })
       .attr('font-size', (d: any) => {
         if (d.data.type === 'root') return '16px';
+        if (d.data.type === 'category') return '15px';
         if (d.data.type === 'tier') return '14px';
         return '11px';
       })
@@ -353,6 +377,7 @@ const NetworkView = () => {
       const circle = d3.select(this).select('circle');
       let originalRadius = 6;
       if (d.data.type === 'root') originalRadius = 16;
+      if (d.data.type === 'category') originalRadius = 14;
       if (d.data.type === 'tier') originalRadius = 12;
       
       circle.transition().duration(200)
@@ -518,22 +543,22 @@ const NetworkView = () => {
               {/* Theory Legend */}
               <Card className="mb-6 p-4">
                 <h3 className="font-semibold mb-3">Legend</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-[#3b82f6]"></div>
-                    <span className="text-sm">Foundational</span>
+                    <div className="w-3 h-3 rounded-full bg-[hsl(280_85%_55%)]"></div>
+                    <span className="text-sm">Root</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-[#10b981]"></div>
-                    <span className="text-sm">Intermediate</span>
+                    <div className="w-3 h-3 rounded-full bg-[hsl(265_75%_58%)]"></div>
+                    <span className="text-sm">Category</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-[#f59e0b]"></div>
-                    <span className="text-sm">Advanced</span>
+                    <div className="w-3 h-3 rounded-full bg-[hsl(215_70%_50%)]"></div>
+                    <span className="text-sm">Tier</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-[#a855f7]"></div>
-                    <span className="text-sm">Frontier</span>
+                    <div className="w-3 h-3 rounded-full bg-[hsl(215_85%_55%)]"></div>
+                    <span className="text-sm">Topic</span>
                   </div>
                 </div>
               </Card>
