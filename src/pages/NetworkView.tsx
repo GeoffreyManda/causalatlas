@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { estimandsData } from '@/data/estimands';
-import { causalTheory } from '@/data/theory';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -11,21 +10,21 @@ import * as d3 from 'd3';
 const NetworkView = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
-  const [layoutMode, setLayoutMode] = useState<'static' | 'dynamic'>('static');
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
-  const [highlightedType, setHighlightedType] = useState<string | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<string>('all');
 
   const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
   const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
   const designs = ['all', ...Array.from(new Set(estimandsData.map(e => e.design))).sort()];
+  const families = ['all', ...Array.from(new Set(estimandsData.map(e => e.estimand_family))).sort()];
 
   useEffect(() => {
     if (!svgRef.current) return;
 
-    const width = 1600;
-    const height = 1000;
+    const width = 1800;
+    const height = 1200;
 
     d3.select(svgRef.current).selectAll('*').remove();
 
@@ -33,122 +32,108 @@ const NetworkView = () => {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    const nodes: any[] = [];
-    const links: any[] = [];
-
-    const foundationalTheory = causalTheory.filter(t => t.tier === 'Foundational').slice(0, 4);
-    foundationalTheory.forEach((theory, i) => {
-      nodes.push({
-        id: `theory_${theory.id}`,
-        label: theory.title,
-        type: 'theory',
-        tier: theory.tier,
-        originalId: theory.id,
-        x: 200 + i * 350,
-        y: 80,
-        fx: layoutMode === 'static' ? 200 + i * 350 : null,
-        fy: layoutMode === 'static' ? 80 : null
-      });
-    });
-
-    const allFrameworks = Array.from(new Set(estimandsData.map(e => e.framework)));
-    const filteredFrameworksSet = new Set(
-      estimandsData
-        .filter(e => selectedTier === 'all' || e.tier === selectedTier)
-        .map(e => e.framework)
-    );
-    const frameworksToShow = selectedFramework === 'all' 
-      ? allFrameworks.filter(fw => filteredFrameworksSet.has(fw))
-      : allFrameworks.filter(fw => fw === selectedFramework);
-    
-    frameworksToShow.forEach((fw, i) => {
-      nodes.push({
-        id: `fw_${fw}`,
-        label: fw.replace(/([A-Z])/g, ' $1').trim(),
-        type: 'framework',
-        framework: fw,
-        x: 150 + i * 300,
-        y: 280,
-        fx: layoutMode === 'static' ? 150 + i * 300 : null,
-        fy: layoutMode === 'static' ? 280 : null
-      });
-    });
-
-    const tierY = { Basic: 500, Intermediate: 650, Advanced: 800, Frontier: 920 };
-    const tierXOffset: any = {};
-    
-    frameworksToShow.forEach(fw => {
-      tierXOffset[fw] = { Basic: 0, Intermediate: 0, Advanced: 0, Frontier: 0 };
-    });
-
+    // Filter estimands
     const filteredEstimands = estimandsData.filter(e => {
       if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
       if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
       if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
+      if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
       return true;
     });
 
-    filteredEstimands.forEach((estimand) => {
-      const fwIndex = frameworksToShow.indexOf(estimand.framework);
-      if (fwIndex === -1) return;
-      
-      const offset = tierXOffset[estimand.framework][estimand.tier];
-      
-      nodes.push({
-        id: estimand.id,
-        label: estimand.short_name.length > 30 ? estimand.short_name.substring(0, 28) + '...' : estimand.short_name,
+    // Build hierarchy: Framework → Design → Family → Estimands
+    const hierarchy: any = { name: 'Root', children: [] };
+    const frameworkMap = new Map();
+
+    filteredEstimands.forEach(est => {
+      // Get or create framework
+      if (!frameworkMap.has(est.framework)) {
+        const fwNode = { name: est.framework, type: 'framework', children: [] };
+        frameworkMap.set(est.framework, fwNode);
+        hierarchy.children.push(fwNode);
+      }
+      const fwNode = frameworkMap.get(est.framework);
+
+      // Get or create design
+      let designNode = fwNode.children.find((d: any) => d.name === est.design);
+      if (!designNode) {
+        designNode = { name: est.design, type: 'design', children: [] };
+        fwNode.children.push(designNode);
+      }
+
+      // Get or create family
+      let familyNode = designNode.children.find((f: any) => f.name === est.estimand_family);
+      if (!familyNode) {
+        familyNode = { name: est.estimand_family, type: 'family', children: [] };
+        designNode.children.push(familyNode);
+      }
+
+      // Add estimand
+      familyNode.children.push({
+        name: est.short_name,
         type: 'estimand',
-        tier: estimand.tier,
-        framework: estimand.framework,
-        x: 150 + fwIndex * 300 + (offset % 2) * 80 - 40,
-        y: tierY[estimand.tier as keyof typeof tierY] + Math.floor(offset / 2) * 15,
-        fx: layoutMode === 'static' ? 150 + fwIndex * 300 + (offset % 2) * 80 - 40 : null,
-        fy: layoutMode === 'static' ? tierY[estimand.tier as keyof typeof tierY] + Math.floor(offset / 2) * 15 : null
-      });
-      
-      tierXOffset[estimand.framework][estimand.tier]++;
-      
-      links.push({
-        source: `fw_${estimand.framework}`,
-        target: estimand.id,
-        type: 'belongs_to'
+        tier: est.tier,
+        id: est.id,
+        size: 1
       });
     });
 
-    const simulation = d3.forceSimulation(nodes)
-      .force('x', d3.forceX((d: any) => d.x).strength(layoutMode === 'static' ? 1 : 0.2))
-      .force('y', d3.forceY((d: any) => d.y).strength(layoutMode === 'static' ? 1 : 0.2))
-      .force('collision', d3.forceCollide().radius(35))
-      .force('charge', d3.forceManyBody().strength(layoutMode === 'dynamic' ? -300 : -50))
-      .force('link', d3.forceLink(links)
-        .id((d: any) => d.id)
-        .distance(100)
-        .strength(layoutMode === 'dynamic' ? 0.4 : 0.1));
+    // Create tree layout
+    const root = d3.hierarchy(hierarchy)
+      .sum((d: any) => d.size || 0)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const link = svg.append('g')
-      .selectAll('line')
-      .data(links)
-      .join('line')
-      .attr('stroke', '#cbd5e1')
-      .attr('stroke-width', 1.5)
-      .attr('stroke-opacity', 0.4);
+    const treeLayout = d3.tree<any>()
+      .size([height - 100, width - 400])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
 
+    treeLayout(root);
+
+    // Draw links
+    svg.append('g')
+      .selectAll('path')
+      .data(root.links())
+      .join('path')
+      .attr('d', d3.linkHorizontal()
+        .x((d: any) => d.y + 200)
+        .y((d: any) => d.x + 50))
+      .attr('fill', 'none')
+      .attr('stroke', (d: any) => {
+        if (d.target.data.type === 'framework') return 'hsl(215 70% 50%)';
+        if (d.target.data.type === 'design') return 'hsl(195 75% 40%)';
+        if (d.target.data.type === 'family') return 'hsl(265 60% 45%)';
+        return 'hsl(215 15% 60%)';
+      })
+      .attr('stroke-width', (d: any) => {
+        if (d.target.data.type === 'framework') return 3;
+        if (d.target.data.type === 'design') return 2.5;
+        if (d.target.data.type === 'family') return 2;
+        return 1.5;
+      })
+      .attr('stroke-opacity', 0.6);
+
+    // Draw nodes
     const node = svg.append('g')
       .selectAll('g')
-      .data(nodes)
+      .data(root.descendants().filter(d => d.depth > 0))
       .join('g')
-      .style('cursor', 'pointer')
-      .call(d3.drag<any, any>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended));
+      .attr('transform', (d: any) => `translate(${d.y + 200},${d.x + 50})`)
+      .style('cursor', (d: any) => d.data.type === 'estimand' ? 'pointer' : 'default');
 
+    // Node circles
     node.append('circle')
-      .attr('r', (d: any) => d.type === 'theory' ? 35 : d.type === 'framework' ? 28 : 18)
+      .attr('r', (d: any) => {
+        if (d.data.type === 'framework') return 12;
+        if (d.data.type === 'design') return 10;
+        if (d.data.type === 'family') return 8;
+        return 6;
+      })
       .attr('fill', (d: any) => {
-        if (d.type === 'theory') return 'hsl(280 65% 60%)';
-        if (d.type === 'framework') return 'hsl(215 70% 50%)';
-        switch (d.tier) {
+        if (d.data.type === 'framework') return 'hsl(215 70% 50%)';
+        if (d.data.type === 'design') return 'hsl(195 75% 40%)';
+        if (d.data.type === 'family') return 'hsl(265 60% 45%)';
+        // Tier colors for estimands
+        switch (d.data.tier) {
           case 'Basic': return 'hsl(142 70% 45%)';
           case 'Intermediate': return 'hsl(215 85% 55%)';
           case 'Advanced': return 'hsl(265 75% 58%)';
@@ -156,70 +141,59 @@ const NetworkView = () => {
           default: return 'hsl(215 15% 60%)';
         }
       })
-      .attr('opacity', (d: any) => {
-        if (!highlightedType) return 1;
-        if (d.type === highlightedType || d.tier === highlightedType) return 1;
-        return 0.2;
-      })
       .attr('stroke', 'white')
-      .attr('stroke-width', 2.5)
-      .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
+      .attr('stroke-width', 2);
 
+    // Node labels
     node.append('text')
-      .text((d: any) => d.label)
-      .attr('text-anchor', 'middle')
-      .attr('dy', (d: any) => d.type === 'theory' ? 52 : d.type === 'framework' ? 45 : 32)
-      .attr('font-size', (d: any) => d.type === 'theory' ? '13px' : d.type === 'framework' ? '12px' : '10px')
-      .attr('font-weight', (d: any) => d.type !== 'estimand' ? 'bold' : 'normal')
-      .attr('fill', 'hsl(215 25% 15%)')
-      .style('pointer-events', 'none');
+      .attr('dy', '0.31em')
+      .attr('x', (d: any) => d.children ? -20 : 20)
+      .attr('text-anchor', (d: any) => d.children ? 'end' : 'start')
+      .text((d: any) => {
+        const name = d.data.name;
+        if (d.data.type === 'framework') return name.replace(/([A-Z])/g, ' $1').trim();
+        if (d.data.type === 'design') return name.replace(/_/g, ' ');
+        if (d.data.type === 'family') {
+          if (name === 'SurvivalTimeToEvent') return 'Survival/Time-to-Event';
+          return name.replace(/([A-Z])/g, ' $1').trim();
+        }
+        return name.length > 40 ? name.substring(0, 38) + '...' : name;
+      })
+      .attr('font-size', (d: any) => {
+        if (d.data.type === 'framework') return '14px';
+        if (d.data.type === 'design') return '12px';
+        if (d.data.type === 'family') return '11px';
+        return '10px';
+      })
+      .attr('font-weight', (d: any) => d.data.type === 'estimand' ? 'normal' : 'bold')
+      .attr('fill', 'hsl(215 25% 15%)');
 
+    // Click handler
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
-      if (d.type === 'estimand') {
-        navigate(`/slides?id=${d.id}`, { state: { from: '/network' } });
-      } else if (d.type === 'theory') {
-        navigate(`/theory?id=${d.originalId}`, { state: { from: '/network' } });
-      } else if (d.type === 'framework') {
-        setSelectedFramework(d.framework);
+      if (d.data.type === 'estimand') {
+        navigate(`/slides?id=${d.data.id}`, { state: { from: '/network' } });
       }
     });
 
-    node.on('mouseenter', function() {
-      d3.select(this).select('circle').transition().duration(200)
-        .attr('r', (d: any) => d.type === 'theory' ? 40 : d.type === 'framework' ? 32 : 22);
-    }).on('mouseleave', function() {
-      d3.select(this).select('circle').transition().duration(200)
-        .attr('r', (d: any) => d.type === 'theory' ? 35 : d.type === 'framework' ? 28 : 18);
-    });
-
-    simulation.on('tick', () => {
-      link.attr('x1', (d: any) => d.source.x).attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x).attr('y2', (d: any) => d.target.y);
-      node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
-    });
-
-    function dragstarted(event: any) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event: any) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event: any) {
-      if (!event.active) simulation.alphaTarget(0);
-      if (layoutMode === 'dynamic') {
-        event.subject.fx = null;
-        event.subject.fy = null;
+    // Hover effects
+    node.on('mouseenter', function(event: any, d: any) {
+      if (d.data.type === 'estimand') {
+        d3.select(this).select('circle')
+          .transition().duration(200)
+          .attr('r', 8)
+          .attr('stroke-width', 3);
       }
-    }
+    }).on('mouseleave', function(event: any, d: any) {
+      if (d.data.type === 'estimand') {
+        d3.select(this).select('circle')
+          .transition().duration(200)
+          .attr('r', 6)
+          .attr('stroke-width', 2);
+      }
+    });
 
-    return () => simulation.stop();
-  }, [layoutMode, navigate, selectedTier, selectedFramework, selectedDesign, highlightedType]);
+  }, [navigate, selectedTier, selectedFramework, selectedDesign, selectedFamily]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -227,149 +201,119 @@ const NetworkView = () => {
       
       <div className="container py-8">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Causal Inference Network</h1>
+          <h1 className="text-3xl font-bold mb-2">Causal Inference Tree Map</h1>
           <p className="text-muted-foreground max-w-3xl">
-            Three-tier hierarchical view: Theory → Frameworks → Estimands. Click nodes to navigate or use filters.
+            Hierarchical view: Framework → Study Design → Estimand Family → Individual Estimands. Click estimand nodes to view slides.
           </p>
         </div>
 
-        <div className="mb-6 flex justify-end gap-2">
-          <Button variant={layoutMode === 'static' ? 'default' : 'outline'} onClick={() => setLayoutMode('static')} size="sm">Static</Button>
-          <Button variant={layoutMode === 'dynamic' ? 'default' : 'outline'} onClick={() => setLayoutMode('dynamic')} size="sm">Dynamic</Button>
-        </div>
-
+        {/* Filters */}
         <div className="mb-6 p-4 rounded-lg border bg-card">
-          <div className="grid md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter Tier</label>
-              <div className="flex flex-wrap gap-2">
-                {tiers.map(tier => (
-                  <Badge key={tier} variant={selectedTier === tier ? 'default' : 'outline'}
-                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
-                    onClick={() => setSelectedTier(tier)}>
-                    {tier === 'all' ? 'All' : tier}
-                  </Badge>
-                ))}
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Tier</label>
+                <div className="flex flex-wrap gap-2">
+                  {tiers.map(tier => (
+                    <Badge 
+                      key={tier} 
+                      variant={selectedTier === tier ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedTier(tier)}
+                    >
+                      {tier === 'all' ? 'All' : tier}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Type</label>
+                <div className="flex flex-wrap gap-2">
+                  {families.map(family => (
+                    <Badge 
+                      key={family} 
+                      variant={selectedFamily === family ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFamily(family)}
+                    >
+                      {family === 'all' ? 'All Types' : family === 'SurvivalTimeToEvent' ? 'Survival' : family.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter Framework</label>
-              <div className="flex flex-wrap gap-2">
-                {frameworks.map(fw => (
-                  <Badge key={fw} variant={selectedFramework === fw ? 'default' : 'outline'}
-                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
-                    onClick={() => setSelectedFramework(fw)}>
-                    {fw === 'all' ? 'All' : fw.replace(/([A-Z])/g, ' $1').trim()}
-                  </Badge>
-                ))}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Framework</label>
+                <div className="flex flex-wrap gap-2">
+                  {frameworks.map(fw => (
+                    <Badge 
+                      key={fw} 
+                      variant={selectedFramework === fw ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedFramework(fw)}
+                    >
+                      {fw === 'all' ? 'All' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Filter Study Design</label>
-              <div className="flex flex-wrap gap-2">
-                {designs.map(design => (
-                  <Badge key={design} variant={selectedDesign === design ? 'default' : 'outline'}
-                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
-                    onClick={() => setSelectedDesign(design)}>
-                    {design === 'all' ? 'All' : design.replace(/_/g, ' ')}
-                  </Badge>
-                ))}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filter by Study Design</label>
+                <div className="flex flex-wrap gap-2">
+                  {designs.map(design => (
+                    <Badge 
+                      key={design} 
+                      variant={selectedDesign === design ? 'default' : 'outline'}
+                      className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                      onClick={() => setSelectedDesign(design)}
+                    >
+                      {design === 'all' ? 'All' : design.replace(/_/g, ' ')}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Legend */}
         <Card className="mb-6 p-4">
-          <h3 className="font-semibold mb-3">Legend (Click to Filter)</h3>
-          <div className="space-y-4">
-            {/* Node Types */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Node Types</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setHighlightedType(highlightedType === 'theory' ? null : 'theory')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                    highlightedType === 'theory' 
-                      ? 'bg-[hsl(280_65%_60%)] text-white border-[hsl(280_65%_60%)] shadow-md' 
-                      : 'bg-background border-border hover:border-[hsl(280_65%_60%)] hover:bg-[hsl(280_65%_60%)]/10'
-                  }`}
-                >
-                  <div className="w-3 h-3 rounded-full bg-[hsl(280_65%_60%)] inline-block mr-1.5"></div>
-                  Theory
-                </button>
-                <button
-                  onClick={() => setHighlightedType(highlightedType === 'framework' ? null : 'framework')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                    highlightedType === 'framework' 
-                      ? 'bg-[hsl(215_70%_50%)] text-white border-[hsl(215_70%_50%)] shadow-md' 
-                      : 'bg-background border-border hover:border-[hsl(215_70%_50%)] hover:bg-[hsl(215_70%_50%)]/10'
-                  }`}
-                >
-                  <div className="w-3 h-3 rounded-full bg-[hsl(215_70%_50%)] inline-block mr-1.5"></div>
-                  Frameworks
-                </button>
-                <button
-                  onClick={() => setHighlightedType(highlightedType === 'estimand' ? null : 'estimand')}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                    highlightedType === 'estimand' 
-                      ? 'bg-primary text-primary-foreground border-primary shadow-md' 
-                      : 'bg-background border-border hover:border-primary hover:bg-primary/10'
-                  }`}
-                >
-                  <div className="w-3 h-3 rounded-md bg-primary inline-block mr-1.5"></div>
-                  Estimands
-                </button>
-              </div>
+          <h3 className="font-semibold mb-3">Tree Map Legend</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[hsl(215_70%_50%)]"></div>
+              <span className="text-sm">Framework</span>
             </div>
-
-            {/* Tiers */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Complexity Tiers</p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { name: 'Basic', color: 'tier-basic', hsl: 'hsl(142 70% 45%)' },
-                  { name: 'Intermediate', color: 'tier-intermediate', hsl: 'hsl(215 85% 55%)' },
-                  { name: 'Advanced', color: 'tier-advanced', hsl: 'hsl(265 75% 58%)' },
-                  { name: 'Frontier', color: 'tier-frontier', hsl: 'hsl(25 90% 55%)' }
-                ].map(tier => (
-                  <button
-                    key={tier.name}
-                    onClick={() => setHighlightedType(highlightedType === tier.name ? null : tier.name)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${
-                      highlightedType === tier.name
-                        ? `text-white border-[${tier.hsl}] shadow-md`
-                        : `bg-background border-border hover:border-[${tier.hsl}] hover:bg-[${tier.hsl}]/10`
-                    }`}
-                    style={highlightedType === tier.name ? { backgroundColor: tier.hsl, borderColor: tier.hsl } : {}}
-                  >
-                    <div className={`w-3 h-3 rounded-full bg-${tier.color} inline-block mr-1.5`}></div>
-                    {tier.name}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[hsl(195_75%_40%)]"></div>
+              <span className="text-sm">Study Design</span>
             </div>
-
-            {/* Edge Types */}
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Relationships</p>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs">
-                  <div className="w-12 h-0.5 bg-foreground"></div>
-                  <span>Theory → Framework</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                  <svg width="48" height="2" className="inline-block">
-                    <line x1="0" y1="1" x2="48" y2="1" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
-                  <span>Framework → Estimand</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[hsl(265_60%_45%)]"></div>
+              <span className="text-sm">Estimand Family</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-tier-basic"></div>
+              <span className="text-sm">Basic Estimand</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-tier-intermediate"></div>
+              <span className="text-sm">Intermediate</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-tier-advanced"></div>
+              <span className="text-sm">Advanced</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-tier-frontier"></div>
+              <span className="text-sm">Frontier</span>
             </div>
           </div>
         </Card>
 
-        <div className="border rounded-lg bg-card p-4 shadow-sm">
-          <svg ref={svgRef} className="w-full" style={{ height: '900px' }}></svg>
+        <div className="border rounded-lg bg-card p-4 shadow-sm overflow-auto">
+          <svg ref={svgRef} className="w-full" style={{ height: '1000px' }}></svg>
         </div>
       </div>
     </div>
