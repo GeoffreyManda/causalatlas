@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { estimandsData } from '@/data/estimands';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import * as d3 from 'd3';
 const NetworkView = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightNodeId = searchParams.get('node'); // Get node to highlight from URL
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [selectedDesign, setSelectedDesign] = useState<string>('all');
@@ -242,12 +244,60 @@ const NetworkView = () => {
       if (d.data.type === 'framework') originalRadius = 12;
       if (d.data.type === 'design') originalRadius = 10;
       if (d.data.type === 'family') originalRadius = 8;
-      circle.transition().duration(200)
-        .attr('r', originalRadius)
-        .attr('stroke-width', 2);
+      
+      // Don't shrink if this is the highlighted node
+      const isHighlighted = (d.data.type === 'estimand' && d.data.id === highlightNodeId) ||
+                           (d.data.type === 'framework' && `framework-${d.data.name.toLowerCase()}` === highlightNodeId) ||
+                           (d.data.type === 'design' && `design-${d.data.name.toLowerCase().replace(/_/g, '-')}` === highlightNodeId) ||
+                           (d.data.type === 'family' && `family-${d.data.name.toLowerCase().replace(/([A-Z])/g, '-$1').slice(1)}` === highlightNodeId);
+      
+      if (!isHighlighted) {
+        circle.transition().duration(200)
+          .attr('r', originalRadius)
+          .attr('stroke-width', 2);
+      }
     });
 
-  }, [navigate, selectedTier, selectedFramework, selectedDesign, selectedFamily]);
+    // Highlight the node from URL parameter
+    if (highlightNodeId) {
+      node.each(function(d: any) {
+        const isMatch = (d.data.type === 'estimand' && d.data.id === highlightNodeId) ||
+                       (d.data.type === 'root' && highlightNodeId === 'intro-causal-inference') ||
+                       (d.data.type === 'framework' && highlightNodeId.startsWith('framework-')) ||
+                       (d.data.type === 'design' && highlightNodeId.startsWith('design-')) ||
+                       (d.data.type === 'family' && highlightNodeId.startsWith('family-'));
+        
+        if (isMatch) {
+          const circle = d3.select(this).select('circle');
+          const text = d3.select(this).select('text');
+          
+          // Pulse animation
+          circle
+            .attr('stroke', 'hsl(45 100% 50%)')
+            .attr('stroke-width', 4)
+            .transition()
+            .duration(800)
+            .attr('r', parseFloat(circle.attr('r')) + 4)
+            .transition()
+            .duration(800)
+            .attr('r', parseFloat(circle.attr('r')))
+            .on('end', function repeat() {
+              d3.select(this)
+                .transition()
+                .duration(800)
+                .attr('r', parseFloat(d3.select(this).attr('r')) + 2)
+                .transition()
+                .duration(800)
+                .attr('r', parseFloat(d3.select(this).attr('r')) - 2)
+                .on('end', repeat);
+            });
+          
+          text.attr('font-weight', 'bold').attr('fill', 'hsl(45 100% 30%)');
+        }
+      });
+    }
+
+  }, [navigate, selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId]);
 
   return (
     <div className="min-h-screen bg-background">

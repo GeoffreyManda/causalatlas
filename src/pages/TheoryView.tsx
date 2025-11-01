@@ -132,9 +132,9 @@ const TheoryView = () => {
                 <GraduationCap className="h-4 w-4" />
                 Learning Hub
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/network')} className="gap-2 cursor-pointer">
+              <DropdownMenuItem onClick={() => navigate(`/network?node=${topicId}`)} className="gap-2 cursor-pointer">
                 <Network className="h-4 w-4" />
-                Network View
+                Network View (Return to Node)
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Related Content</DropdownMenuLabel>
