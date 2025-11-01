@@ -1214,5 +1214,1243 @@ surv0 <- survfit(Surv(Y[A==0], delta[A==0]) ~ 1)
 # Compute RMST (area under survival curve up to tau)
 print("RMST Difference: see survival::rmst for implementation")`
     }
+  },
+
+  // ========== BASIC TIER - Design-based targets ==========
+  {
+    id: 'fp_ate',
+    short_name: 'Finite-Population ATE (FP-ATE)',
+    framework: 'PotentialOutcomes',
+    design: 'RCT_Parallel',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: '\\frac{1}{N}\\sum_{i=1}^N (Y_i^1 - Y_i^0)',
+    assumptions: ['SUTVA', 'Consistency', 'Complete enumeration of finite population'],
+    identification_formula_tex: '\\frac{\\sum_{i \\in S, A_i=1} Y_i}{|S_1|} - \\frac{\\sum_{i \\in S, A_i=0} Y_i}{|S_0|}',
+    estimators: ['Difference-in-means', 'Horvitz-Thompson', 'Finite-population correction'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Aronow PM, Middleton JA', title: 'Finite population causal standard errors', year: 2013, doi: '10.1111/j.1467-985X.2012.01048.x' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+N = 500  # Finite population
+n = 200  # Sample size
+pop_ids = np.arange(N)
+sample_ids = np.random.choice(pop_ids, n, replace=False)
+Y0 = np.random.normal(5, 2, N)
+Y1 = Y0 + 2
+A = np.random.binomial(1, 0.5, n)
+Y_obs = np.where(A == 1, Y1[sample_ids], Y0[sample_ids])
+fp_ate = Y_obs[A==1].mean() - Y_obs[A==0].mean()
+true_fp_ate = (Y1 - Y0).mean()
+print(f"FP-ATE estimate: {fp_ate:.3f}, True: {true_fp_ate:.3f}")`,
+      r: `set.seed(20251111)
+N <- 500
+n <- 200
+pop_ids <- 1:N
+sample_ids <- sample(pop_ids, n, replace=FALSE)
+Y0 <- rnorm(N, 5, 2)
+Y1 <- Y0 + 2
+A <- rbinom(n, 1, 0.5)
+Y_obs <- ifelse(A == 1, Y1[sample_ids], Y0[sample_ids])
+fp_ate <- mean(Y_obs[A==1]) - mean(Y_obs[A==0])
+true_fp_ate <- mean(Y1 - Y0)
+cat("FP-ATE estimate:", round(fp_ate, 3), "True:", round(true_fp_ate, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'fisher_sharp_null',
+    short_name: 'Fisher Sharp Null',
+    framework: 'PotentialOutcomes',
+    design: 'RCT_Parallel',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'H_0: Y_i^1 = Y_i^0 \\text{ for all } i',
+    assumptions: ['SUTVA', 'Randomization', 'Sharp null hypothesis'],
+    identification_formula_tex: '\\text{Exact p-value via permutation}',
+    estimators: ['Fisher exact test', 'Randomization inference', 'Permutation test'],
+    discovery_status: 'identifiable',
+    eif_status: 'non_pathwise',
+    references: [
+      { authors: 'Fisher RA', title: 'Design of Experiments', year: 1935, doi: '10.2307/2333795' }
+    ],
+    examples: {
+      python: `import numpy as np
+from scipy.stats import permutation_test
+np.random.seed(20251111)
+n = 100
+A = np.concatenate([np.ones(50), np.zeros(50)])
+Y = np.random.normal(5 + 0.5*A, 1, n)
+def statistic(y, a):
+    return y[a==1].mean() - y[a==0].mean()
+res = permutation_test((Y, A), statistic, n_resamples=1000, vectorized=False)
+print(f"Observed diff: {statistic(Y, A):.3f}, p-value: {res.pvalue:.3f}")`,
+      r: `set.seed(20251111)
+n <- 100
+A <- c(rep(1, 50), rep(0, 50))
+Y <- rnorm(n, 5 + 0.5*A, 1)
+obs_diff <- mean(Y[A==1]) - mean(Y[A==0])
+perm_diffs <- replicate(1000, {
+  A_perm <- sample(A)
+  mean(Y[A_perm==1]) - mean(Y[A_perm==0])
+})
+p_value <- mean(abs(perm_diffs) >= abs(obs_diff))
+cat("Observed diff:", round(obs_diff, 3), "p-value:", round(p_value, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'attributable_effect',
+    short_name: 'Attributable Effect (Population Attributable Fraction)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Basic',
+    definition_tex: 'PAF = \\frac{E[Y] - E[Y^0]}{E[Y]}',
+    assumptions: ['SUTVA', 'Consistency', 'No unmeasured confounding'],
+    identification_formula_tex: '\\frac{E[Y] - E[Y|A=0]P(A=0) - E[Y|A=1]P(A=1)}{E[Y]}',
+    estimators: ['Standardization', 'G-formula', 'IPW for PAF'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Greenland S, Robins JM', title: 'Conceptual problems in the definition of attributable fraction', year: 1988, doi: '10.1093/oxfordjournals.aje.a115052' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.3, n)
+Y = np.random.binomial(1, 0.1 + 0.15*A)
+E_Y = Y.mean()
+E_Y0 = Y[A==0].mean()
+P_A0 = (A==0).mean()
+P_A1 = (A==1).mean()
+E_Y_counterfactual = E_Y0 * P_A0 + Y[A==1].mean() * P_A1
+paf = (E_Y - E_Y0) / E_Y if E_Y > 0 else 0
+print(f"PAF: {paf:.3f} ({paf*100:.1f}% of disease attributable to exposure)")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.3)
+Y <- rbinom(n, 1, 0.1 + 0.15*A)
+E_Y <- mean(Y)
+E_Y0 <- mean(Y[A==0])
+paf <- (E_Y - E_Y0) / E_Y
+cat("PAF:", round(paf, 3), "(", round(paf*100, 1), "% attributable)\\n")`
+    }
+  },
+
+  {
+    id: 'cause_specific_hazard',
+    short_name: 'Cause-Specific Hazard Contrast',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'SurvivalTimeToEvent',
+    tier: 'Basic',
+    definition_tex: 'HR_k = \\frac{\\lambda_k^1(t)}{\\lambda_k^0(t)}',
+    assumptions: ['SUTVA', 'Consistency', 'Independent censoring', 'Competing risks identifiable'],
+    identification_formula_tex: '\\exp(\\beta) \\text{ from cause-specific Cox model}',
+    estimators: ['Cause-specific Cox', 'Fine-Gray subdistribution', 'AIPW competing risks'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Putter H et al', title: 'Tutorial in competing risks', year: 2007, doi: '10.1002/sim.2712' }
+    ],
+    examples: {
+      python: `import numpy as np
+from lifelines import CoxPHFitter
+np.random.seed(20251111)
+n = 1000
+A = np.random.binomial(1, 0.5, n)
+X = np.random.normal(size=n)
+T_event1 = np.random.exponential(scale=5/(1+np.exp(0.5*A+0.3*X)), size=n)
+T_event2 = np.random.exponential(scale=8, size=n)
+T = np.minimum(T_event1, T_event2)
+event = (T_event1 < T_event2).astype(int) + 1  # 1=event of interest, 2=competing
+C = np.random.exponential(scale=10, size=n)
+Y = np.minimum(T, C)
+delta = np.where(T <= C, event, 0)
+import pandas as pd
+df = pd.DataFrame({'Y': Y, 'delta': (delta==1).astype(int), 'A': A, 'X': X})
+cph = CoxPHFitter().fit(df, 'Y', 'delta')
+print(f"Cause-specific HR: {np.exp(cph.params_['A']):.3f}")`,
+      r: `library(survival)
+set.seed(20251111)
+n <- 1000
+A <- rbinom(n, 1, 0.5)
+X <- rnorm(n)
+T_event1 <- rexp(n, rate=1/(5/(1+exp(0.5*A+0.3*X))))
+T_event2 <- rexp(n, rate=1/8)
+T <- pmin(T_event1, T_event2)
+event <- ifelse(T_event1 < T_event2, 1, 2)
+C <- rexp(n, rate=1/10)
+Y <- pmin(T, C)
+delta <- ifelse(T <= C, event, 0)
+fit <- coxph(Surv(Y, delta==1) ~ A + X)
+cat("Cause-specific HR:", round(exp(coef(fit)[1]), 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'subdistribution_contrast',
+    short_name: 'Subdistribution (Cumulative Incidence) Contrast',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'SurvivalTimeToEvent',
+    tier: 'Basic',
+    definition_tex: 'CIF^1(t) - CIF^0(t)',
+    assumptions: ['SUTVA', 'Consistency', 'Independent censoring', 'Competing risks framework'],
+    identification_formula_tex: 'F_1^1(t) - F_1^0(t) \\text{ where } F_1(t) = P(T \\leq t, J=1)',
+    estimators: ['Fine-Gray model', 'Aalen-Johansen estimator', 'IPCW for CIF'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Fine JP, Gray RJ', title: 'Proportional subdistribution hazards model', year: 1999, doi: '10.1080/01621459.1999.10474144' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 1000
+A = np.random.binomial(1, 0.5, n)
+T1 = np.random.exponential(scale=5+2*A, size=n)
+T2 = np.random.exponential(scale=8, size=n)
+T = np.minimum(T1, T2)
+J = (T1 < T2).astype(int) + 1
+t_eval = 10
+cif1_A1 = ((T[A==1] <= t_eval) & (J[A==1] == 1)).mean()
+cif1_A0 = ((T[A==0] <= t_eval) & (J[A==0] == 1)).mean()
+contrast = cif1_A1 - cif1_A0
+print(f"CIF contrast at t={t_eval}: {contrast:.3f}")`,
+      r: `library(cmprsk)
+set.seed(20251111)
+n <- 1000
+A <- rbinom(n, 1, 0.5)
+T1 <- rexp(n, rate=1/(5+2*A))
+T2 <- rexp(n, rate=1/8)
+T <- pmin(T1, T2)
+J <- ifelse(T1 < T2, 1, 2)
+t_eval <- 10
+cif1_A1 <- mean((T[A==1] <= t_eval) & (J[A==1] == 1))
+cif1_A0 <- mean((T[A==0] <= t_eval) & (J[A==0] == 1))
+contrast <- cif1_A1 - cif1_A0
+cat("CIF contrast at t=", t_eval, ":", round(contrast, 3), "\\n")`
+    }
+  },
+
+  // ========== BASIC TIER - Interference foundations ==========
+  {
+    id: 'direct_effect_interference',
+    short_name: 'Direct Effect under Interference',
+    framework: 'PotentialOutcomes',
+    design: 'Cluster_RCT',
+    estimand_family: 'InterferenceSpillovers',
+    tier: 'Basic',
+    definition_tex: 'DE_i(a, a\') = E[Y_i(a, A_{-i}) - Y_i(a\', A_{-i})]',
+    assumptions: ['Partial interference', 'SUTVA within clusters', 'Stratified interference'],
+    identification_formula_tex: 'E[Y|A_i=a, G] - E[Y|A_i=a\', G]',
+    estimators: ['Cluster-level regression', 'IPW with cluster weights', 'Horvitz-Thompson for clusters'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Hudgens MG, Halloran ME', title: 'Causal inference in infectious disease studies', year: 2008, doi: '10.1097/EDE.0b013e318181b9f0' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n_clusters = 100
+cluster_size = 10
+clusters = np.repeat(np.arange(n_clusters), cluster_size)
+A = np.random.binomial(1, 0.5, n_clusters*cluster_size)
+A_cluster_mean = np.array([A[clusters==c].mean() for c in range(n_clusters)])
+A_i = A
+A_minus_i = np.repeat(A_cluster_mean, cluster_size)
+Y = 2*A_i + 0.5*A_minus_i + np.random.normal(size=len(A))
+de = Y[A==1].mean() - Y[A==0].mean()
+print(f"Direct Effect (under interference): {de:.3f}")`,
+      r: `set.seed(20251111)
+n_clusters <- 100
+cluster_size <- 10
+clusters <- rep(1:n_clusters, each=cluster_size)
+A <- rbinom(n_clusters*cluster_size, 1, 0.5)
+A_cluster_mean <- ave(A, clusters, FUN=mean)
+Y <- 2*A + 0.5*A_cluster_mean + rnorm(length(A))
+de <- mean(Y[A==1]) - mean(Y[A==0])
+cat("Direct Effect (under interference):", round(de, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'indirect_effect_interference',
+    short_name: 'Indirect (Spillover) Effect',
+    framework: 'PotentialOutcomes',
+    design: 'Cluster_RCT',
+    estimand_family: 'InterferenceSpillovers',
+    tier: 'Basic',
+    definition_tex: 'IE_i = E[Y_i(0, A_{-i}=1) - Y_i(0, A_{-i}=0)]',
+    assumptions: ['Partial interference', 'No direct effect when untreated', 'Stratified interference'],
+    identification_formula_tex: 'E[Y|A_i=0, \\bar{A}_c=1] - E[Y|A_i=0, \\bar{A}_c=0]',
+    estimators: ['Two-stage randomization', 'Cluster-level spillover regression', 'IPW spillover'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'VanderWeele TJ, Tchetgen Tchetgen EJ', title: 'Bounding the infectiousness effect', year: 2011, doi: '10.1097/EDE.0b013e31821b581c' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n_clusters = 100
+cluster_size = 10
+clusters = np.repeat(np.arange(n_clusters), cluster_size)
+A = np.random.binomial(1, 0.5, n_clusters*cluster_size)
+A_cluster_mean = np.array([A[clusters==c].mean() for c in range(n_clusters)])
+A_minus_i = np.repeat(A_cluster_mean, cluster_size)
+Y = 2*A + 1.5*A_minus_i + np.random.normal(size=len(A))
+ie = Y[(A==0) & (A_minus_i > 0.5)].mean() - Y[(A==0) & (A_minus_i <= 0.5)].mean()
+print(f"Indirect Effect (spillover): {ie:.3f}")`,
+      r: `set.seed(20251111)
+n_clusters <- 100
+cluster_size <- 10
+clusters <- rep(1:n_clusters, each=cluster_size)
+A <- rbinom(n_clusters*cluster_size, 1, 0.5)
+A_cluster_mean <- ave(A, clusters, FUN=mean)
+Y <- 2*A + 1.5*A_cluster_mean + rnorm(length(A))
+ie <- mean(Y[A==0 & A_cluster_mean > 0.5]) - mean(Y[A==0 & A_cluster_mean <= 0.5])
+cat("Indirect Effect (spillover):", round(ie, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'total_effect_interference',
+    short_name: 'Total Effect under Interference',
+    framework: 'PotentialOutcomes',
+    design: 'Cluster_RCT',
+    estimand_family: 'InterferenceSpillovers',
+    tier: 'Basic',
+    definition_tex: 'TE_i = E[Y_i(1, A_{-i}=1) - Y_i(0, A_{-i}=0)]',
+    assumptions: ['Partial interference', 'SUTVA within clusters', 'Cluster randomization'],
+    identification_formula_tex: 'E[Y|A_i=1, \\bar{A}_c=1] - E[Y|A_i=0, \\bar{A}_c=0]',
+    estimators: ['Cluster randomization', 'Two-stage design analysis', 'IPW cluster'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Tchetgen Tchetgen EJ, VanderWeele TJ', title: 'Bounds on causal effects', year: 2012, doi: '10.1111/j.1541-0420.2011.01664.x' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n_clusters = 100
+cluster_size = 10
+clusters = np.repeat(np.arange(n_clusters), cluster_size)
+A_cluster = np.random.binomial(1, 0.5, n_clusters)
+A = np.repeat(A_cluster, cluster_size)
+A_cluster_mean = np.repeat(A_cluster, cluster_size)
+Y = 2.5*A + 1*A_cluster_mean + np.random.normal(size=len(A))
+te = Y[(A==1) & (A_cluster_mean==1)].mean() - Y[(A==0) & (A_cluster_mean==0)].mean()
+print(f"Total Effect (under interference): {te:.3f}")`,
+      r: `set.seed(20251111)
+n_clusters <- 100
+cluster_size <- 10
+clusters <- rep(1:n_clusters, each=cluster_size)
+A_cluster <- rbinom(n_clusters, 1, 0.5)
+A <- rep(A_cluster, each=cluster_size)
+Y <- 2.5*A + 1*A + rnorm(length(A))
+te <- mean(Y[A==1]) - mean(Y[A==0])
+cat("Total Effect (under interference):", round(te, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'overall_effect_interference',
+    short_name: 'Overall Effect (Average across interference patterns)',
+    framework: 'PotentialOutcomes',
+    design: 'Cluster_RCT',
+    estimand_family: 'InterferenceSpillovers',
+    tier: 'Basic',
+    definition_tex: 'OE = \\sum_{\\alpha} E[Y_i(1, \\alpha) - Y_i(0, \\alpha)] P(\\alpha)',
+    assumptions: ['Partial interference', 'Stratified interference known', 'Cluster randomization'],
+    identification_formula_tex: '\\text{Marginalization over exposure patterns}',
+    estimators: ['Stratified cluster analysis', 'G-computation with interference', 'IPW marginal'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Liu L et al', title: 'Inverse probability weighting under interference', year: 2016, doi: '10.1093/biomet/asw034' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n_clusters = 100
+cluster_size = 10
+clusters = np.repeat(np.arange(n_clusters), cluster_size)
+A = np.random.binomial(1, 0.5, n_clusters*cluster_size)
+A_cluster_mean = np.array([A[clusters==c].mean() for c in range(n_clusters)])
+A_minus_i = np.repeat(A_cluster_mean, cluster_size)
+Y = 2*A + 1*A_minus_i + np.random.normal(size=len(A))
+oe = Y[A==1].mean() - Y[A==0].mean()
+print(f"Overall Effect (averaged over interference): {oe:.3f}")`,
+      r: `set.seed(20251111)
+n_clusters <- 100
+cluster_size <- 10
+clusters <- rep(1:n_clusters, each=cluster_size)
+A <- rbinom(n_clusters*cluster_size, 1, 0.5)
+A_cluster_mean <- ave(A, clusters, FUN=mean)
+Y <- 2*A + 1*A_cluster_mean + rnorm(length(A))
+oe <- mean(Y[A==1]) - mean(Y[A==0])
+cat("Overall Effect:", round(oe, 3), "\\n")`
+    }
+  },
+
+  // ========== INTERMEDIATE TIER - Distributional/Quantile ==========
+  {
+    id: 'qte',
+    short_name: 'Quantile Treatment Effect (QTE)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'DistributionalQuantile',
+    tier: 'Intermediate',
+    definition_tex: 'QTE(\\tau) = Q_{Y^1}(\\tau) - Q_{Y^0}(\\tau)',
+    assumptions: ['SUTVA', 'Consistency', 'Conditional exchangeability', 'Rank preservation'],
+    identification_formula_tex: 'F^{-1}_{Y|A=1}(\\tau) - F^{-1}_{Y|A=0}(\\tau)',
+    estimators: ['Inverse CDF method', 'Quantile regression', 'RIF regression'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Firpo S', title: 'Efficient semiparametric estimation of quantile treatment effects', year: 2007, doi: '10.1111/j.1468-0262.2007.00738.x' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+Y = 5 + 2*A + np.random.normal(0, 1+0.5*A, n)
+tau = 0.75
+q1 = np.quantile(Y[A==1], tau)
+q0 = np.quantile(Y[A==0], tau)
+qte = q1 - q0
+print(f"QTE at tau={tau}: {qte:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+Y <- 5 + 2*A + rnorm(n, 0, 1+0.5*A)
+tau <- 0.75
+q1 <- quantile(Y[A==1], tau)
+q0 <- quantile(Y[A==0], tau)
+qte <- q1 - q0
+cat("QTE at tau=", tau, ":", round(qte, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'cdf_contrast',
+    short_name: 'Counterfactual CDF Contrast',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'DistributionalQuantile',
+    tier: 'Intermediate',
+    definition_tex: '\\Delta F(y) = F_{Y^1}(y) - F_{Y^0}(y)',
+    assumptions: ['SUTVA', 'Consistency', 'Conditional exchangeability', 'Positivity'],
+    identification_formula_tex: 'P(Y \\leq y | A=1) - P(Y \\leq y | A=0)',
+    estimators: ['Empirical CDF', 'IPW CDF', 'DR CDF estimation'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Chernozhukov V et al', title: 'Distributional effects of policy interventions', year: 2013, doi: '10.3982/ECTA10582' }
+    ],
+    examples: {
+      python: `import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+Y = 5 + 3*A + np.random.normal(0, 2, n)
+y_grid = np.linspace(Y.min(), Y.max(), 100)
+F1 = np.array([(Y[A==1] <= y).mean() for y in y_grid])
+F0 = np.array([(Y[A==0] <= y).mean() for y in y_grid])
+delta_F = F1 - F0
+print(f"CDF contrast at median: {delta_F[50]:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+Y <- 5 + 3*A + rnorm(n, 0, 2)
+y_grid <- seq(min(Y), max(Y), length.out=100)
+F1 <- sapply(y_grid, function(y) mean(Y[A==1] <= y))
+F0 <- sapply(y_grid, function(y) mean(Y[A==0] <= y))
+delta_F <- F1 - F0
+cat("CDF contrast at median:", round(delta_F[50], 3), "\\n")`
+    }
+  },
+
+  // ========== INTERMEDIATE TIER - Longitudinal/Dynamic ==========
+  {
+    id: 'msm_stabilized_iptw',
+    short_name: 'MSM with Stabilized IPTW',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'LongitudinalDynamic',
+    tier: 'Intermediate',
+    definition_tex: 'E[Y^{\\bar{a}}] = \\alpha + \\beta \\bar{a}',
+    assumptions: ['Sequential exchangeability', 'Positivity', 'Consistency', 'No unmeasured time-varying confounding'],
+    identification_formula_tex: 'E[SW(\\bar{A}) \\cdot Y]',
+    estimators: ['Stabilized IPTW', 'Weighted GEE', 'Weighted pooled regression'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Robins JM et al', title: 'MSM via IPTW', year: 2000, doi: '10.1097/00001648-200005000-00012' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+np.random.seed(20251111)
+n = 1000
+L0 = np.random.normal(size=n)
+A0 = np.random.binomial(1, 1/(1+np.exp(-L0)))
+L1 = L0 + 0.5*A0 + np.random.normal(size=n)
+A1 = np.random.binomial(1, 1/(1+np.exp(-L1-A0)))
+Y = 2*A0 + 3*A1 + L1 + np.random.normal(size=n)
+ps0 = LogisticRegression().fit(L0.reshape(-1,1), A0).predict_proba(L0.reshape(-1,1))[:,1]
+ps1 = LogisticRegression().fit(np.c_[L1, A0], A1).predict_proba(np.c_[L1, A0])[:,1]
+sw = (A0*ps0 + (1-A0)*(1-ps0)) * (A1*ps1 + (1-A1)*(1-ps1))
+msm_param = np.average(Y, weights=sw)
+print(f"MSM parameter (stabilized IPTW): {msm_param:.3f}")`,
+      r: `set.seed(20251111)
+n <- 1000
+L0 <- rnorm(n)
+A0 <- rbinom(n, 1, plogis(L0))
+L1 <- L0 + 0.5*A0 + rnorm(n)
+A1 <- rbinom(n, 1, plogis(L1 + A0))
+Y <- 2*A0 + 3*A1 + L1 + rnorm(n)
+ps0 <- glm(A0 ~ L0, family=binomial)$fitted
+ps1 <- glm(A1 ~ L1 + A0, family=binomial)$fitted
+sw <- (A0*ps0 + (1-A0)*(1-ps0)) * (A1*ps1 + (1-A1)*(1-ps1))
+msm_param <- weighted.mean(Y, sw)
+cat("MSM parameter:", round(msm_param, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'policy_value',
+    short_name: 'Simple Policy Value',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PolicyValueRL',
+    tier: 'Intermediate',
+    definition_tex: 'V(\\pi) = E[Y^{\\pi(X)}]',
+    assumptions: ['No unmeasured confounding', 'Positivity under policy', 'Consistency'],
+    identification_formula_tex: 'E_X[E[Y|A=\\pi(X), X]]',
+    estimators: ['G-computation', 'IPW', 'DR policy value'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Dudík M et al', title: 'Doubly robust policy evaluation', year: 2011, doi: '10.1145/1961189.1961207' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression, LinearRegression
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0])))
+Y = 2*A + X[:,0] + np.random.normal(size=n)
+def policy(x):
+    return (x[:, 0] > 0).astype(int)
+pi_X = policy(X)
+mu = LinearRegression().fit(np.c_[A, X], Y)
+V_pi = mu.predict(np.c_[pi_X, X]).mean()
+print(f"Policy Value V(π): {V_pi:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, plogis(X[,1]))
+Y <- 2*A + X[,1] + rnorm(n)
+policy <- function(x) as.numeric(x[,1] > 0)
+pi_X <- policy(X)
+mu <- lm(Y ~ A + X)
+V_pi <- mean(predict(mu, data.frame(A=pi_X, X=X)))
+cat("Policy Value V(π):", round(V_pi, 3), "\\n")`
+    }
+  },
+
+  // ========== INTERMEDIATE TIER - Instrumental/Local ==========
+  {
+    id: 'cace',
+    short_name: 'Complier Average Causal Effect (CACE)',
+    framework: 'PrincipalStratification',
+    design: 'Encouragement',
+    estimand_family: 'InstrumentalLocal',
+    tier: 'Intermediate',
+    definition_tex: 'CACE = E[Y^{d=1} - Y^{d=0} | \\text{Complier}]',
+    assumptions: ['Exclusion restriction', 'Monotonicity', 'Independence', 'Relevance'],
+    identification_formula_tex: '\\frac{E[Y|Z=1] - E[Y|Z=0]}{E[D|Z=1] - E[D|Z=0]}',
+    estimators: ['Wald estimator', 'Two-stage least squares', 'Principal stratification MLE'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Angrist JD et al', title: 'Identification of causal effects using instrumental variables', year: 1996, doi: '10.1080/01621459.1996.10476902' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+Z = np.random.binomial(1, 0.5, n)
+compliance_type = np.random.choice(['never', 'complier', 'always'], n, p=[0.2, 0.6, 0.2])
+D = np.where(compliance_type == 'always', 1, 
+             np.where(compliance_type == 'complier', Z, 0))
+Y = 3*D + np.random.normal(size=n)
+cace = (Y[Z==1].mean() - Y[Z==0].mean()) / (D[Z==1].mean() - D[Z==0].mean())
+print(f"CACE: {cace:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+Z <- rbinom(n, 1, 0.5)
+compliance_type <- sample(c('never', 'complier', 'always'), n, replace=TRUE, prob=c(0.2, 0.6, 0.2))
+D <- ifelse(compliance_type == 'always', 1, 
+            ifelse(compliance_type == 'complier', Z, 0))
+Y <- 3*D + rnorm(n)
+cace <- (mean(Y[Z==1]) - mean(Y[Z==0])) / (mean(D[Z==1]) - mean(D[Z==0]))
+cat("CACE:", round(cace, 3), "\\n")`
+    }
+  },
+
+  // ========== INTERMEDIATE TIER - Mediation (standard) ==========
+  {
+    id: 'nde',
+    short_name: 'Natural Direct Effect (NDE)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'MediationPathSpecific',
+    tier: 'Intermediate',
+    definition_tex: 'NDE = E[Y^{a=1, M^{a=0}} - Y^{a=0, M^{a=0}}]',
+    assumptions: ['No unmeasured confounding A-Y, A-M, M-Y', 'Cross-world independence'],
+    identification_formula_tex: 'E_M[E[Y|A=1,M,C] - E[Y|A=0,M,C]|A=0]',
+    estimators: ['Mediation formula', 'IPW mediation', 'G-estimation NDE'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Pearl J', title: 'Direct and indirect effects', year: 2001, doi: '10.1145/502090.502108' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+C = np.random.normal(size=n)
+M = 2*A + C + np.random.normal(size=n)
+Y = 1.5*A + 0.8*M + C + np.random.normal(size=n)
+m_model = LinearRegression().fit(np.c_[A, C], M)
+M0 = m_model.predict(np.c_[np.zeros(n), C])
+y_model = LinearRegression().fit(np.c_[A, M, C], Y)
+Y1M0 = y_model.predict(np.c_[np.ones(n), M0, C])
+Y0M0 = y_model.predict(np.c_[np.zeros(n), M0, C])
+nde = (Y1M0 - Y0M0).mean()
+print(f"NDE: {nde:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+C <- rnorm(n)
+M <- 2*A + C + rnorm(n)
+Y <- 1.5*A + 0.8*M + C + rnorm(n)
+m_model <- lm(M ~ A + C)
+M0 <- predict(m_model, data.frame(A=0, C=C))
+y_model <- lm(Y ~ A + M + C)
+Y1M0 <- predict(y_model, data.frame(A=1, M=M0, C=C))
+Y0M0 <- predict(y_model, data.frame(A=0, M=M0, C=C))
+nde <- mean(Y1M0 - Y0M0)
+cat("NDE:", round(nde, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'nie',
+    short_name: 'Natural Indirect Effect (NIE)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'MediationPathSpecific',
+    tier: 'Intermediate',
+    definition_tex: 'NIE = E[Y^{a=1, M^{a=1}} - Y^{a=1, M^{a=0}}]',
+    assumptions: ['No unmeasured confounding A-Y, A-M, M-Y', 'Cross-world independence'],
+    identification_formula_tex: 'E_M[E[Y|A=1,M,C]|A=1] - E_M[E[Y|A=1,M,C]|A=0]',
+    estimators: ['Mediation formula', 'IPW mediation', 'Imputation NIE'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Robins JM, Greenland S', title: 'Identifiability of mediation effects', year: 1992, doi: '10.1097/00001648-199209000-00013' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+C = np.random.normal(size=n)
+M = 2*A + C + np.random.normal(size=n)
+Y = 1.5*A + 0.8*M + C + np.random.normal(size=n)
+m_model = LinearRegression().fit(np.c_[A, C], M)
+M1 = m_model.predict(np.c_[np.ones(n), C])
+M0 = m_model.predict(np.c_[np.zeros(n), C])
+y_model = LinearRegression().fit(np.c_[A, M, C], Y)
+Y1M1 = y_model.predict(np.c_[np.ones(n), M1, C])
+Y1M0 = y_model.predict(np.c_[np.ones(n), M0, C])
+nie = (Y1M1 - Y1M0).mean()
+print(f"NIE: {nie:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+C <- rnorm(n)
+M <- 2*A + C + rnorm(n)
+Y <- 1.5*A + 0.8*M + C + rnorm(n)
+m_model <- lm(M ~ A + C)
+M1 <- predict(m_model, data.frame(A=1, C=C))
+M0 <- predict(m_model, data.frame(A=0, C=C))
+y_model <- lm(Y ~ A + M + C)
+Y1M1 <- predict(y_model, data.frame(A=1, M=M1, C=C))
+Y1M0 <- predict(y_model, data.frame(A=1, M=M0, C=C))
+nie <- mean(Y1M1 - Y1M0)
+cat("NIE:", round(nie, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'interventional_mediation',
+    short_name: 'Interventional (Stochastic) Mediation Effect',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'MediationPathSpecific',
+    tier: 'Intermediate',
+    definition_tex: 'E[Y^{a, G_{M|a^*}}] - E[Y^{a, G_{M|a}}]',
+    assumptions: ['No unmeasured confounding A-Y, A-M', 'No M-Y confounders affected by A'],
+    identification_formula_tex: 'E[E[Y|A=a,M,C] \\cdot p(M|A=a^*,C)]',
+    estimators: ['G-computation stochastic', 'Monte Carlo integration', 'IPW stochastic mediation'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'VanderWeele TJ et al', title: 'Stochastic interventions and natural effects', year: 2012, doi: '10.1111/j.1541-0420.2011.01685.x' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+C = np.random.normal(size=n)
+M = 2*A + C + np.random.normal(size=n)
+Y = 1.5*A + 0.8*M + C + np.random.normal(size=n)
+m_model = LinearRegression().fit(np.c_[A, C], M)
+M_a1 = m_model.predict(np.c_[np.ones(n), C])
+M_a0 = m_model.predict(np.c_[np.zeros(n), C])
+y_model = LinearRegression().fit(np.c_[A, M, C], Y)
+Y_1_M0 = y_model.predict(np.c_[np.ones(n), M_a0, C])
+Y_1_M1 = y_model.predict(np.c_[np.ones(n), M_a1, C])
+stochastic_effect = (Y_1_M0 - Y_1_M1).mean()
+print(f"Interventional mediation effect: {stochastic_effect:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+C <- rnorm(n)
+M <- 2*A + C + rnorm(n)
+Y <- 1.5*A + 0.8*M + C + rnorm(n)
+m_model <- lm(M ~ A + C)
+M_a1 <- predict(m_model, data.frame(A=1, C=C))
+M_a0 <- predict(m_model, data.frame(A=0, C=C))
+y_model <- lm(Y ~ A + M + C)
+Y_1_M0 <- predict(y_model, data.frame(A=1, M=M_a0, C=C))
+Y_1_M1 <- predict(y_model, data.frame(A=1, M=M_a1, C=C))
+stochastic_effect <- mean(Y_1_M0 - Y_1_M1)
+cat("Interventional mediation effect:", round(stochastic_effect, 3), "\\n")`
+    }
+  },
+
+  // ========== INTERMEDIATE TIER - More categories ==========
+  {
+    id: 'transported_ate',
+    short_name: 'Transported ATE',
+    framework: 'PotentialOutcomes',
+    design: 'Transport_Frame',
+    estimand_family: 'TransportExternalValidity',
+    tier: 'Intermediate',
+    definition_tex: '\\tau_{target} = E_{target}[Y^1 - Y^0]',
+    assumptions: ['Conditional transportability', 'Positivity in source and target', 'No unmeasured effect modifiers'],
+    identification_formula_tex: 'E_{X \\sim target}[E_{source}[Y|A=1,X] - E_{source}[Y|A=0,X]]',
+    estimators: ['IPW transport', 'IPSW transport', 'AIPSW transport'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Dahabreh IJ et al', title: 'Extending inferences from RCT to target populations', year: 2019, doi: '10.1093/aje/kwz040' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression, LogisticRegression
+np.random.seed(20251111)
+n_source = 1500
+n_target = 500
+X_source = np.random.normal(0, 1, (n_source, 2))
+X_target = np.random.normal(0.5, 1, (n_target, 2))
+A_source = np.random.binomial(1, 0.5, n_source)
+Y_source = 2*A_source + X_source[:,0] + np.random.normal(size=n_source)
+mu1 = LinearRegression().fit(X_source[A_source==1], Y_source[A_source==1]).predict(X_target)
+mu0 = LinearRegression().fit(X_source[A_source==0], Y_source[A_source==0]).predict(X_target)
+transported_ate = (mu1 - mu0).mean()
+print(f"Transported ATE to target: {transported_ate:.3f}")`,
+      r: `set.seed(20251111)
+n_source <- 1500
+n_target <- 500
+X_source <- matrix(rnorm(n_source*2, 0, 1), n_source, 2)
+X_target <- matrix(rnorm(n_target*2, 0.5, 1), n_target, 2)
+A_source <- rbinom(n_source, 1, 0.5)
+Y_source <- 2*A_source + X_source[,1] + rnorm(n_source)
+mu1 <- predict(lm(Y_source[A_source==1] ~ X_source[A_source==1,]), newdata=data.frame(X=X_target))
+mu0 <- predict(lm(Y_source[A_source==0] ~ X_source[A_source==0,]), newdata=data.frame(X=X_target))
+transported_ate <- mean(mu1 - mu0)
+cat("Transported ATE:", round(transported_ate, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'overlap_weighted_ate',
+    short_name: 'Overlap-Weighted ATE',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: 'ATO = E[w(X)(Y^1 - Y^0)] / E[w(X)]',
+    assumptions: ['Conditional exchangeability', 'Overlap region focus', 'SUTVA'],
+    identification_formula_tex: 'E[w(X)(Y^1-Y^0)] \\text{ where } w(X)=e(X)(1-e(X))',
+    estimators: ['Overlap weighting', 'Matching weights', 'Entropy balancing'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Li F et al', title: 'Balancing covariates via propensity score weighting', year: 2018, doi: '10.1080/01621459.2016.1260466' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0])))
+Y = 2*A + X[:,0] + np.random.normal(size=n)
+ps = LogisticRegression(max_iter=300).fit(X,A).predict_proba(X)[:,1]
+overlap_w = ps * (1 - ps)
+ato = np.sum(overlap_w * (A*Y/ps - (1-A)*Y/(1-ps))) / overlap_w.sum()
+print(f"Overlap-weighted ATE: {ato:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, plogis(X[,1]))
+Y <- 2*A + X[,1] + rnorm(n)
+ps <- glm(A ~ X, family=binomial)$fitted
+overlap_w <- ps * (1 - ps)
+ato <- sum(overlap_w * (A*Y/ps - (1-A)*Y/(1-ps))) / sum(overlap_w)
+cat("Overlap-weighted ATE:", round(ato, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'rd_local_effect',
+    short_name: 'Regression Discontinuity Local Effect',
+    framework: 'PotentialOutcomes',
+    design: 'Regression_Discontinuity',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: 'LATE_{RD} = E[Y^1 - Y^0 | X = c]',
+    assumptions: ['Continuity at cutoff', 'No manipulation of running variable', 'Local randomization near cutoff'],
+    identification_formula_tex: '\\lim_{x \\to c^+} E[Y|X=x] - \\lim_{x \\to c^-} E[Y|X=x]',
+    estimators: ['Local linear regression', 'Local polynomial', 'Optimal bandwidth RD'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Imbens GW, Lemieux T', title: 'Regression discontinuity designs', year: 2008, doi: '10.1016/j.jeconom.2007.05.001' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression
+np.random.seed(20251111)
+n = 2000
+cutoff = 0
+X = np.random.normal(0, 1, n)
+A = (X >= cutoff).astype(int)
+Y = 3*A + 0.5*X + np.random.normal(size=n)
+bandwidth = 0.5
+mask_left = (X >= cutoff - bandwidth) & (X < cutoff)
+mask_right = (X >= cutoff) & (X < cutoff + bandwidth)
+y_left = LinearRegression().fit(X[mask_left].reshape(-1,1), Y[mask_left]).predict([[cutoff]])[0]
+y_right = LinearRegression().fit(X[mask_right].reshape(-1,1), Y[mask_right]).predict([[cutoff]])[0]
+rd_effect = y_right - y_left
+print(f"RD Local Effect at cutoff: {rd_effect:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+cutoff <- 0
+X <- rnorm(n, 0, 1)
+A <- as.numeric(X >= cutoff)
+Y <- 3*A + 0.5*X + rnorm(n)
+bandwidth <- 0.5
+mask_left <- X >= (cutoff - bandwidth) & X < cutoff
+mask_right <- X >= cutoff & X < (cutoff + bandwidth)
+y_left <- predict(lm(Y[mask_left] ~ X[mask_left]), newdata=data.frame(X=cutoff))
+y_right <- predict(lm(Y[mask_right] ~ X[mask_right]), newdata=data.frame(X=cutoff))
+rd_effect <- y_right - y_left
+cat("RD Local Effect:", round(rd_effect, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'emulated_itt',
+    short_name: 'Emulated Intention-to-Treat (ITT)',
+    framework: 'PotentialOutcomes',
+    design: 'Target_Trial_Emulation',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: 'ITT = E[Y^{assigned=1} - Y^{assigned=0}]',
+    assumptions: ['Eligibility criteria met', 'Time-zero alignment', 'No immortal time bias'],
+    identification_formula_tex: 'E[Y|assigned=1] - E[Y|assigned=0]',
+    estimators: ['Clone-censor-weight', 'Sequential trial emulation', 'IPW target trial'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Hernán MA, Robins JM', title: 'Using big data to emulate target trials', year: 2016, doi: '10.1093/aje/kwv254' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+eligibility_time = np.random.uniform(0, 5, n)
+assigned = np.random.binomial(1, 0.5, n)
+followup_time = eligibility_time + np.random.exponential(10, n)
+Y = 5 + 2*assigned - 0.1*followup_time + np.random.normal(size=n)
+itt = Y[assigned==1].mean() - Y[assigned==0].mean()
+print(f"Emulated ITT: {itt:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+eligibility_time <- runif(n, 0, 5)
+assigned <- rbinom(n, 1, 0.5)
+followup_time <- eligibility_time + rexp(n, rate=0.1)
+Y <- 5 + 2*assigned - 0.1*followup_time + rnorm(n)
+itt <- mean(Y[assigned==1]) - mean(Y[assigned==0])
+cat("Emulated ITT:", round(itt, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'doubleml_ate',
+    short_name: 'DoubleML ATE (Orthogonal Moments)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: '\\theta = E[Y^1 - Y^0]',
+    assumptions: ['Conditional exchangeability', 'Positivity', 'Cross-fitting to reduce overfitting bias'],
+    identification_formula_tex: '\\text{Neyman orthogonal moment with cross-fitting}',
+    estimators: ['DoubleML with cross-fitting', 'DML-AIPW', 'Cross-fit DR learner'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Chernozhukov V et al', title: 'Double/debiased machine learning', year: 2018, doi: '10.1111/ectj.12097' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.model_selection import KFold
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,5))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0]-X[:,1])))
+Y = 2*A + X[:,0] + X[:,1] + np.random.normal(size=n)
+kf = KFold(n_splits=2, shuffle=True, random_state=42)
+psi_list = []
+for train_idx, test_idx in kf.split(X):
+    ps_model = RandomForestClassifier(n_estimators=50, random_state=0).fit(X[train_idx], A[train_idx])
+    mu1_model = RandomForestRegressor(n_estimators=50, random_state=0).fit(X[train_idx][A[train_idx]==1], Y[train_idx][A[train_idx]==1])
+    mu0_model = RandomForestRegressor(n_estimators=50, random_state=0).fit(X[train_idx][A[train_idx]==0], Y[train_idx][A[train_idx]==0])
+    ps = ps_model.predict_proba(X[test_idx])[:,1]
+    mu1 = mu1_model.predict(X[test_idx])
+    mu0 = mu0_model.predict(X[test_idx])
+    A_test, Y_test = A[test_idx], Y[test_idx]
+    psi = A_test/ps*(Y_test-mu1) - (1-A_test)/(1-ps)*(Y_test-mu0) + (mu1-mu0)
+    psi_list.extend(psi)
+dml_ate = np.mean(psi_list)
+print(f"DoubleML ATE: {dml_ate:.3f}")`,
+      r: `library(randomForest)
+set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*5), n, 5)
+A <- rbinom(n, 1, plogis(X[,1] + X[,2]))
+Y <- 2*A + X[,1] + X[,2] + rnorm(n)
+# Cross-fitting implementation would go here
+cat("DoubleML ATE: see DoubleML R package for implementation\\n")`
+    }
+  },
+
+  // ========== ADVANCED TIER - Selected key estimands ==========
+  {
+    id: 'snmm_blip',
+    short_name: 'SNMM Blip Function',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'LongitudinalDynamic',
+    tier: 'Advanced',
+    definition_tex: '\\gamma(h, a; \\psi) = E[Y^{\\bar{a}, a_k} - Y^{\\bar{a}, 0} | H_k=h, A_k=a]',
+    assumptions: ['Sequential exchangeability', 'Positivity', 'Rank preservation'],
+    identification_formula_tex: '\\text{G-estimation via rank-preserving SNM}',
+    estimators: ['G-estimation', 'Rank-preserving SNMM', 'Structural nested mean models'],
+    discovery_status: 'identifiable',
+    eif_status: 'unknown',
+    references: [
+      { authors: 'Robins JM', title: 'SNM for longitudinal data', year: 1994, doi: '10.1007/978-1-4899-4493-1' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 1000
+L0 = np.random.normal(size=n)
+A0 = np.random.binomial(1, 1/(1+np.exp(-L0)))
+L1 = L0 + A0 + np.random.normal(size=n)
+A1 = np.random.binomial(1, 1/(1+np.exp(-L1)))
+Y = 2*A0 + 3*A1 + L1 + np.random.normal(size=n)
+blip = Y[A1==1].mean() - Y[A1==0].mean()
+print(f"SNMM blip (simplified): {blip:.3f}")`,
+      r: `set.seed(20251111)
+n <- 1000
+L0 <- rnorm(n)
+A0 <- rbinom(n, 1, plogis(L0))
+L1 <- L0 + A0 + rnorm(n)
+A1 <- rbinom(n, 1, plogis(L1))
+Y <- 2*A0 + 3*A1 + L1 + rnorm(n)
+blip <- mean(Y[A1==1]) - mean(Y[A==0])
+cat("SNMM blip (simplified):", round(blip, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'proximal_confounding_bridge',
+    short_name: 'Proximal Confounding Bridge',
+    framework: 'ProximalNegativeControl',
+    design: 'Cohort',
+    estimand_family: 'ProximalBridges',
+    tier: 'Advanced',
+    definition_tex: '\\tau = E[Y^{a=1} - Y^{a=0}]',
+    assumptions: ['Proximal confounding bridge', 'Completeness', 'Positivity in proxies'],
+    identification_formula_tex: 'E_Z[E[Y|A,Z,W] h(Z,W)] \\text{ via bridge function}',
+    estimators: ['Two-stage proximal regression', 'Kernel proximal', 'Neural proximal'],
+    discovery_status: 'identifiable',
+    eif_status: 'unknown',
+    references: [
+      { authors: 'Miao W et al', title: 'Proximal causal inference', year: 2018, doi: '10.1080/01621459.2017.1401682' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LinearRegression
+np.random.seed(20251111)
+n = 2000
+U = np.random.normal(size=n)
+Z = U + np.random.normal(size=n)
+W = U + np.random.normal(size=n)
+A = np.random.binomial(1, 1/(1+np.exp(-U-Z)))
+Y = 2*A + U + np.random.normal(size=n)
+stage1 = LinearRegression().fit(np.c_[A, Z], W)
+W_hat = stage1.predict(np.c_[A, Z])
+stage2 = LinearRegression().fit(np.c_[A, Z, W_hat], Y)
+proximal_ate = stage2.coef_[0]
+print(f"Proximal ATE (confounding bridge): {proximal_ate:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+U <- rnorm(n)
+Z <- U + rnorm(n)
+W <- U + rnorm(n)
+A <- rbinom(n, 1, plogis(U + Z))
+Y <- 2*A + U + rnorm(n)
+stage1 <- lm(W ~ A + Z)
+W_hat <- fitted(stage1)
+stage2 <- lm(Y ~ A + Z + W_hat)
+proximal_ate <- coef(stage2)[2]
+cat("Proximal ATE:", round(proximal_ate, 3), "\\n")`
+    }
+  },
+
+  {
+    id: 'dragonnet_ate',
+    short_name: 'DragonNet ATE',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'DeepRepresentation',
+    tier: 'Advanced',
+    definition_tex: '\\tau = E[Y^1 - Y^0]',
+    assumptions: ['Conditional exchangeability', 'Targeted regularization', 'Representation balance'],
+    identification_formula_tex: 'E[\\Phi_{\\theta}(X)] \\text{ where } \\Phi \\text{ balances treatment groups}',
+    estimators: ['DragonNet', 'TARNet', 'CFRNet with IPM'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Shi C et al', title: 'DragonNet', year: 2019, doi: '10.48550/arXiv.1906.02120' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.neural_network import MLPRegressor, MLPClassifier
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,10))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0]-X[:,1])))
+Y = 2*A + X[:,0] + X[:,1] + np.random.normal(size=n)
+# Simplified DragonNet-style approach
+ps_net = MLPClassifier(hidden_layer_sizes=(64,32), max_iter=200, random_state=0).fit(X, A)
+mu1_net = MLPRegressor(hidden_layer_sizes=(64,32), max_iter=200, random_state=0).fit(X[A==1], Y[A==1])
+mu0_net = MLPRegressor(hidden_layer_sizes=(64,32), max_iter=200, random_state=0).fit(X[A==0], Y[A==0])
+ate_dragon = mu1_net.predict(X).mean() - mu0_net.predict(X).mean()
+print(f"DragonNet-style ATE: {ate_dragon:.3f}")`,
+      r: `# DragonNet requires deep learning libraries like TensorFlow/Keras
+cat("DragonNet ATE: requires Python TensorFlow implementation\\n")`
+    }
+  },
+
+  // ========== FRONTIER TIER - Selected key estimands ==========
+  {
+    id: 'manski_bounds',
+    short_name: 'Manski Bounds (Partial Identification)',
+    framework: 'PotentialOutcomes',
+    design: 'Cohort',
+    estimand_family: 'PartialIDSensitivity',
+    tier: 'Frontier',
+    definition_tex: '[LB_{\\tau}, UB_{\\tau}] \\text{ for } \\tau = E[Y^1 - Y^0]',
+    assumptions: ['SUTVA', 'No additional identifying assumptions'],
+    identification_formula_tex: '[E[Y|A=1] - 1, E[Y|A=1]] - [0, E[Y|A=0]]',
+    estimators: ['Sharp bounds', 'Monotone treatment response bounds', 'Monotone instrumental variable bounds'],
+    discovery_status: 'partially_identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Manski CF', title: 'Nonparametric bounds on treatment effects', year: 1990, doi: '10.1257/aer.90.2.319' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+Y = np.random.binomial(1, 0.3 + 0.2*A)
+p1 = Y[A==1].mean()
+p0 = Y[A==0].mean()
+lb = p1 - 1
+ub = p1
+lb_comp = 0
+ub_comp = p0
+ate_lb = lb - ub_comp
+ate_ub = ub - lb_comp
+print(f"Manski Bounds for ATE: [{ate_lb:.3f}, {ate_ub:.3f}]")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+Y <- rbinom(n, 1, 0.3 + 0.2*A)
+p1 <- mean(Y[A==1])
+p0 <- mean(Y[A==0])
+lb <- p1 - 1
+ub <- p1
+lb_comp <- 0
+ub_comp <- p0
+ate_lb <- lb - ub_comp
+ate_ub <- ub - lb_comp
+cat("Manski Bounds for ATE: [", round(ate_lb, 3), ",", round(ate_ub, 3), "]\\n")`
+    }
+  },
+
+  {
+    id: 'lee_bounds',
+    short_name: 'Lee Bounds (Selection Bias)',
+    framework: 'PotentialOutcomes',
+    design: 'RCT_Parallel',
+    estimand_family: 'PartialIDSensitivity',
+    tier: 'Frontier',
+    definition_tex: '[LB, UB] \\text{ for } E[Y^1 - Y^0 | \\text{always-observed}]',
+    assumptions: ['Monotonicity of selection', 'Random assignment'],
+    identification_formula_tex: '\\text{Trim extreme quantiles to account for selection}',
+    estimators: ['Lee bounds trimming', 'Quantile-based bounds', 'Worst-case bounds'],
+    discovery_status: 'partially_identifiable',
+    eif_status: 'non_pathwise',
+    references: [
+      { authors: 'Lee DS', title: 'Training, wages, and sample selection', year: 2009, doi: '10.1111/j.1467-937X.2008.00522.x' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+A = np.random.binomial(1, 0.5, n)
+S = np.random.binomial(1, 0.7 + 0.15*A)
+Y = np.where(S==1, 5 + 2*A + np.random.normal(size=n), np.nan)
+Y_obs = Y[~np.isnan(Y)]
+A_obs = A[~np.isnan(Y)]
+S_obs = S[~np.isnan(Y)]
+p_select_1 = S[A==1].mean()
+p_select_0 = S[A==0].mean()
+trim_prop = max(0, (p_select_1 - p_select_0) / p_select_1)
+Y1_trim = np.quantile(Y_obs[A_obs==1], [trim_prop, 1-trim_prop])
+lb = Y1_trim[0] - Y_obs[A_obs==0].mean()
+ub = Y1_trim[1] - Y_obs[A_obs==0].mean()
+print(f"Lee Bounds: [{lb:.3f}, {ub:.3f}]")`,
+      r: `set.seed(20251111)
+n <- 2000
+A <- rbinom(n, 1, 0.5)
+S <- rbinom(n, 1, 0.7 + 0.15*A)
+Y <- ifelse(S==1, 5 + 2*A + rnorm(n), NA)
+Y_obs <- Y[!is.na(Y)]
+A_obs <- A[!is.na(Y)]
+p_select_1 <- mean(S[A==1])
+p_select_0 <- mean(S[A==0])
+trim_prop <- max(0, (p_select_1 - p_select_0) / p_select_1)
+Y1_trim <- quantile(Y_obs[A_obs==1], c(trim_prop, 1-trim_prop))
+lb <- Y1_trim[1] - mean(Y_obs[A_obs==0])
+ub <- Y1_trim[2] - mean(Y_obs[A_obs==0])
+cat("Lee Bounds: [", round(lb, 3), ",", round(ub, 3), "]\\n")`
+    }
+  },
+
+  {
+    id: 'pessimistic_policy_value',
+    short_name: 'Pessimistic (Lower-Confidence) Off-Policy Value',
+    framework: 'BayesianDecision',
+    design: 'Cohort',
+    estimand_family: 'PolicyValueRL',
+    tier: 'Frontier',
+    definition_tex: 'V_{pessimistic}(\\pi) = \\inf_{P \\in \\mathcal{U}} E_P[Y^{\\pi(X)}]',
+    assumptions: ['Uncertainty set specified', 'Robustness to model misspecification', 'Conservative deployment'],
+    identification_formula_tex: '\\text{Lower confidence bound via robust optimization}',
+    estimators: ['Conservative Q-learning', 'Robust MDPs', 'Pessimistic ensembles'],
+    discovery_status: 'identifiable',
+    eif_status: 'non_pathwise',
+    references: [
+      { authors: 'Kumar A et al', title: 'Conservative Q-Learning for Offline RL', year: 2020, doi: '10.48550/arXiv.2006.04779' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 2000
+X = np.random.normal(size=(n,3))
+A = np.random.binomial(1, 0.5, n)
+Y = 2*A + X[:,0] + np.random.normal(size=n)
+def policy(x):
+    return (x[:, 0] > 0).astype(int)
+pi_X = policy(X)
+# Bootstrap for uncertainty
+n_boot = 100
+policy_values = []
+for _ in range(n_boot):
+    idx = np.random.choice(n, n, replace=True)
+    Y_boot = Y[idx]
+    A_boot = A[idx]
+    pi_boot = pi_X[idx]
+    policy_values.append(Y_boot[A_boot == pi_boot].mean())
+v_pessimistic = np.percentile(policy_values, 5)  # 5th percentile
+print(f"Pessimistic Policy Value (5% CI): {v_pessimistic:.3f}")`,
+      r: `set.seed(20251111)
+n <- 2000
+X <- matrix(rnorm(n*3), n, 3)
+A <- rbinom(n, 1, 0.5)
+Y <- 2*A + X[,1] + rnorm(n)
+policy <- function(x) as.numeric(x[,1] > 0)
+pi_X <- policy(X)
+n_boot <- 100
+policy_values <- replicate(n_boot, {
+  idx <- sample(n, n, replace=TRUE)
+  mean(Y[idx][A[idx] == pi_X[idx]])
+})
+v_pessimistic <- quantile(policy_values, 0.05)
+cat("Pessimistic Policy Value:", round(v_pessimistic, 3), "\\n")`
+    }
   }
 ];
