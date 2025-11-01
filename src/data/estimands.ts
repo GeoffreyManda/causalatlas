@@ -851,5 +851,156 @@ library(glmnet)
 model <- glmnet(X_all, Y_all, alpha=0, lambda=1)
 cat("IRM-style coef:", coef(model)[2:3], "\\n")`
     }
+  },
+
+  {
+    id: 'bayesian_ate',
+    short_name: 'Bayesian Causal Effect',
+    framework: 'BayesianDecision',
+    design: 'Cohort',
+    estimand_family: 'PopulationEffects',
+    tier: 'Intermediate',
+    definition_tex: 'P(\\tau \\mid D) \\text{ where } \\tau = E[Y^1 - Y^0]',
+    assumptions: ['Prior specification', 'Likelihood model', 'Posterior identifiability'],
+    identification_formula_tex: 'P(\\tau \\mid Y, A, X) \\propto P(Y \\mid \\tau, A, X) P(\\tau)',
+    estimators: ['MCMC', 'Variational Bayes', 'Stan/PyMC'],
+    discovery_status: 'identifiable',
+    eif_status: 'available',
+    references: [
+      { authors: 'Rubin DB', title: 'Bayesian Inference for Causal Effects', year: 1978, doi: '10.1214/aos/1176344064' }
+    ],
+    examples: {
+      python: `import numpy as np
+from scipy import stats
+np.random.seed(20251111)
+n = 1000
+X = np.random.normal(size=(n,3))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0])))
+Y = 2*A + X[:,0] + np.random.normal(size=n)
+# Simple Bayesian posterior approximation
+y1_samples = Y[A==1]
+y0_samples = Y[A==0]
+tau_posterior = []
+for _ in range(5000):
+    y1_boot = np.random.choice(y1_samples, size=len(y1_samples), replace=True)
+    y0_boot = np.random.choice(y0_samples, size=len(y0_samples), replace=True)
+    tau_posterior.append(y1_boot.mean() - y0_boot.mean())
+tau_mean = np.mean(tau_posterior)
+tau_ci = np.quantile(tau_posterior, [0.025, 0.975])
+print(f"Bayesian ATE: {tau_mean:.3f}, 95% CI: [{tau_ci[0]:.3f}, {tau_ci[1]:.3f}]")`,
+      r: `set.seed(20251111)
+n <- 1000
+X <- matrix(rnorm(n*3), n, 3)
+A <- rbinom(n, 1, plogis(X[,1]))
+Y <- 2*A + X[,1] + rnorm(n)
+y1_samples <- Y[A==1]
+y0_samples <- Y[A==0]
+tau_posterior <- replicate(5000, {
+  y1_boot <- sample(y1_samples, replace=TRUE)
+  y0_boot <- sample(y0_samples, replace=TRUE)
+  mean(y1_boot) - mean(y0_boot)
+})
+tau_mean <- mean(tau_posterior)
+tau_ci <- quantile(tau_posterior, c(0.025, 0.975))
+cat("Bayesian ATE:", round(tau_mean, 3), "95% CI: [", round(tau_ci[1], 3), ",", round(tau_ci[2], 3), "]\\n")`
+    }
+  },
+
+  {
+    id: 'bayesian_sensitivity',
+    short_name: 'Bayesian Sensitivity Analysis',
+    framework: 'BayesianDecision',
+    design: 'Cohort',
+    estimand_family: 'PartialIDSensitivity',
+    tier: 'Advanced',
+    definition_tex: 'P(\\tau \\mid D, \\gamma) \\text{ varying unmeasured confounding } \\gamma',
+    assumptions: ['Prior on confounding strength', 'Sensitivity parameter bounds'],
+    identification_formula_tex: '\\int P(\\tau \\mid D, \\gamma) P(\\gamma) d\\gamma',
+    estimators: ['Prior-weighted posterior', 'Sensitivity curve analysis'],
+    discovery_status: 'partially_identifiable',
+    eif_status: 'unknown',
+    references: [
+      { authors: 'Imbens GW', title: 'Sensitivity to exogeneity assumptions', year: 2003, doi: '10.1257/000282803321946921' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 1000
+U = np.random.normal(size=n)
+X = np.random.normal(size=(n,2))
+A = np.random.binomial(1, 1/(1+np.exp(-X[:,0]-0.5*U)))
+Y = 1.5*A + X[:,0] + 0.8*U + np.random.normal(size=n)
+# Sensitivity analysis over gamma (confounding strength)
+gammas = np.linspace(0, 1, 11)
+tau_estimates = []
+for gamma in gammas:
+    # Adjust for varying confounding
+    Y_adj = Y - gamma*U
+    tau = Y_adj[A==1].mean() - Y_adj[A==0].mean()
+    tau_estimates.append(tau)
+print(f"Sensitivity range: [{min(tau_estimates):.3f}, {max(tau_estimates):.3f}]")`,
+      r: `set.seed(20251111)
+n <- 1000
+U <- rnorm(n)
+X <- matrix(rnorm(n*2), n, 2)
+A <- rbinom(n, 1, plogis(X[,1] + 0.5*U))
+Y <- 1.5*A + X[,1] + 0.8*U + rnorm(n)
+gammas <- seq(0, 1, by=0.1)
+tau_estimates <- sapply(gammas, function(gamma) {
+  Y_adj <- Y - gamma*U
+  mean(Y_adj[A==1]) - mean(Y_adj[A==0])
+})
+cat("Sensitivity range: [", round(min(tau_estimates), 3), ",", round(max(tau_estimates), 3), "]\\n")`
+    }
+  },
+
+  {
+    id: 'value_of_information',
+    short_name: 'Expected Value of Information',
+    framework: 'BayesianDecision',
+    design: 'RCT_Parallel',
+    estimand_family: 'PolicyValueRL',
+    tier: 'Frontier',
+    definition_tex: 'EVSI = E[\\max_d E[U(d) \\mid D_{new}]] - \\max_d E[U(d) \\mid D]',
+    assumptions: ['Utility function specified', 'Decision space defined', 'Prior beliefs'],
+    identification_formula_tex: '\\text{Monte Carlo over posterior predictive}',
+    estimators: ['Nested simulation', 'MCMC-based EVSI'],
+    discovery_status: 'identifiable',
+    eif_status: 'non_pathwise',
+    references: [
+      { authors: 'Claxton K', title: 'Expected value of sample information', year: 1999, doi: '10.1002/(SICI)1099-1050' }
+    ],
+    examples: {
+      python: `import numpy as np
+np.random.seed(20251111)
+n = 500
+# Current data
+Y_control = np.random.normal(5, 2, n)
+Y_treat = np.random.normal(6.5, 2, n)
+# Simulate decision under current info
+current_benefit = Y_treat.mean() - Y_control.mean()
+current_decision = 1 if current_benefit > 1.0 else 0
+# Simulate value with new RCT data
+n_new = 200
+Y_control_new = np.random.normal(5, 2, n_new)
+Y_treat_new = np.random.normal(6.5, 2, n_new)
+new_benefit = Y_treat_new.mean() - Y_control_new.mean()
+new_decision = 1 if new_benefit > 1.0 else 0
+evsi = abs(new_benefit - current_benefit) if new_decision != current_decision else 0
+print(f"EVSI: {evsi:.3f} (value of additional RCT)")`,
+      r: `set.seed(20251111)
+n <- 500
+Y_control <- rnorm(n, 5, 2)
+Y_treat <- rnorm(n, 6.5, 2)
+current_benefit <- mean(Y_treat) - mean(Y_control)
+current_decision <- ifelse(current_benefit > 1.0, 1, 0)
+n_new <- 200
+Y_control_new <- rnorm(n_new, 5, 2)
+Y_treat_new <- rnorm(n_new, 6.5, 2)
+new_benefit <- mean(Y_treat_new) - mean(Y_control_new)
+new_decision <- ifelse(new_benefit > 1.0, 1, 0)
+evsi <- ifelse(new_decision != current_decision, abs(new_benefit - current_benefit), 0)
+cat("EVSI:", round(evsi, 3), "(value of additional RCT)\\n")`
+    }
   }
 ];
