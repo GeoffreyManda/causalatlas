@@ -44,7 +44,6 @@ const NetworkView = () => {
 
   // Estimands Network Effect
   useEffect(() => {
-    console.log('Estimands useEffect running, ref:', !!estimandsSvgRef.current, 'tab:', activeTab);
     if (!estimandsSvgRef.current || activeTab !== 'estimands') return;
 
     const filteredEstimands = estimandsData.filter(e => {
@@ -223,7 +222,6 @@ const NetworkView = () => {
 
   // Theory Network Effect
   useEffect(() => {
-    console.log('Theory useEffect running, ref:', !!theorySvgRef.current, 'tab:', activeTab);
     if (!theorySvgRef.current || activeTab !== 'theory') return;
 
     const filteredTopics = allTheoryTopics.filter(topic => {
@@ -231,89 +229,136 @@ const NetworkView = () => {
       return true;
     });
 
-    const svg = d3.select(theorySvgRef.current);
-    svg.selectAll('*').remove();
+    const width = 1800;
+    const height = 1200;
 
-    const width = 1200;
-    const height = 800;
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    d3.select(theorySvgRef.current).selectAll('*').remove();
 
-    // Build hierarchy: root → tiers → topics
-    const groupedByTier = d3.group(filteredTopics, d => d.tier);
-    const hierarchyData: any = {
-      name: 'Theory Topics',
-      children: Array.from(groupedByTier, ([tier, topics]) => ({
-        name: tier,
-        children: topics.map(t => ({ name: t.title, id: t.id, tier: t.tier }))
-      }))
-    };
+    const svg = d3.select(theorySvgRef.current)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('class', 'w-full h-full');
 
-    const root = d3.hierarchy(hierarchyData)
-      .sum(() => 1)
+    // Build hierarchy: Root → Tier → Topics
+    const hierarchy: any = { name: 'Theory Topics', type: 'root', children: [] };
+    const tierMap = new Map();
+
+    filteredTopics.forEach(topic => {
+      if (!tierMap.has(topic.tier)) {
+        const tierNode = { name: topic.tier, type: 'tier', children: [] };
+        tierMap.set(topic.tier, tierNode);
+        hierarchy.children.push(tierNode);
+      }
+      const tierNode = tierMap.get(topic.tier);
+      
+      tierNode.children.push({
+        name: topic.title,
+        type: 'topic',
+        tier: topic.tier,
+        id: topic.id,
+        size: 1
+      });
+    });
+
+    const root = d3.hierarchy(hierarchy)
+      .sum((d: any) => d.size || 0)
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    d3.treemap<any>()
-      .size([width - margin.left - margin.right, height - margin.top - margin.bottom])
-      .padding(2)
-      (root);
+    const treeLayout = d3.tree<any>()
+      .size([height - 100, width - 400])
+      .separation((a, b) => (a.parent === b.parent ? 1 : 1.2));
 
-    const g = svg.append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+    treeLayout(root);
 
-    const tierColors: Record<string, string> = {
-      'Foundational': '#3b82f6',
-      'Intermediate': '#10b981',
-      'Advanced': '#f59e0b',
-      'Frontier': '#a855f7'
-    };
-
-    const cell = g.selectAll('g')
-      .data(root.leaves())
-      .enter()
-      .append('g')
-      .attr('transform', (d: any) => `translate(${d.x0},${d.y0})`);
-
-    cell.append('rect')
-      .attr('width', (d: any) => d.x1 - d.x0)
-      .attr('height', (d: any) => d.y1 - d.y0)
-      .attr('fill', (d: any) => tierColors[d.data.tier] || '#6b7280')
-      .attr('opacity', 0.7)
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .style('cursor', 'pointer')
-      .on('mouseover', function() {
-        d3.select(this).attr('opacity', 0.9);
+    // Draw links
+    svg.append('g')
+      .selectAll('path')
+      .data(root.links())
+      .join('path')
+      .attr('d', d3.linkHorizontal()
+        .x((d: any) => d.y + 200)
+        .y((d: any) => d.x + 50))
+      .attr('fill', 'none')
+      .attr('stroke', (d: any) => {
+        if (d.target.data.type === 'tier') return 'hsl(215 70% 50%)';
+        return 'hsl(215 15% 60%)';
       })
-      .on('mouseout', function() {
-        d3.select(this).attr('opacity', 0.7);
+      .attr('stroke-width', (d: any) => {
+        if (d.target.data.type === 'tier') return 3;
+        return 1.5;
       })
-      .on('click', (event: any, d: any) => {
-        if (d.data.id) {
-          navigate(`/theory-overview?id=${d.data.id}`);
-        } else if (d.parent && !d.parent.parent) {
-          // This is a tier node (parent is root)
-          navigate(`/theory-library?tier=${encodeURIComponent(d.data.name)}`);
-        }
-      });
+      .attr('stroke-opacity', 0.6);
 
-    cell.append('text')
-      .attr('x', 4)
-      .attr('y', 16)
-      .text((d: any) => d.data.name)
-      .attr('font-size', '11px')
-      .attr('fill', '#fff')
-      .attr('font-weight', 'bold')
-      .style('pointer-events', 'none')
-      .each(function(d: any) {
-        const self = d3.select(this);
-        const width = d.x1 - d.x0 - 8;
-        let text = d.data.name;
-        self.text(text);
-        while (self.node()!.getComputedTextLength() > width && text.length > 0) {
-          text = text.slice(0, -1);
-          self.text(text + '...');
+    // Draw nodes
+    const node = svg.append('g')
+      .selectAll('g')
+      .data(root.descendants())
+      .join('g')
+      .attr('transform', (d: any) => `translate(${d.y + 200},${d.x + 50})`)
+      .style('cursor', 'pointer');
+
+    node.append('circle')
+      .attr('r', (d: any) => {
+        if (d.data.type === 'root') return 16;
+        if (d.data.type === 'tier') return 12;
+        return 6;
+      })
+      .attr('fill', (d: any) => {
+        if (d.data.type === 'root') return 'hsl(280 85% 55%)';
+        if (d.data.type === 'tier') return 'hsl(215 70% 50%)';
+        switch (d.data.tier) {
+          case 'Foundational': return 'hsl(215 85% 55%)';
+          case 'Intermediate': return 'hsl(142 70% 45%)';
+          case 'Advanced': return 'hsl(25 90% 55%)';
+          case 'Frontier': return 'hsl(265 75% 58%)';
+          default: return 'hsl(215 15% 60%)';
         }
-      });
+      })
+      .attr('stroke', 'white')
+      .attr('stroke-width', 2);
+
+    node.append('text')
+      .attr('dy', '0.31em')
+      .attr('x', (d: any) => d.children ? -20 : 20)
+      .attr('text-anchor', (d: any) => d.children ? 'end' : 'start')
+      .text((d: any) => {
+        const name = d.data.name;
+        return name.length > 40 ? name.substring(0, 38) + '...' : name;
+      })
+      .attr('font-size', (d: any) => {
+        if (d.data.type === 'root') return '16px';
+        if (d.data.type === 'tier') return '14px';
+        return '11px';
+      })
+      .attr('font-weight', (d: any) => d.data.type === 'topic' ? 'normal' : 'bold')
+      .attr('fill', 'hsl(215 25% 15%)');
+
+    // Click handlers
+    node.on('click', (event: any, d: any) => {
+      event.stopPropagation();
+      if (d.data.type === 'topic' && d.data.id) {
+        navigate(`/theory-overview?id=${d.data.id}`);
+      } else if (d.data.type === 'tier') {
+        navigate(`/theory-library?tier=${encodeURIComponent(d.data.name)}`);
+      }
+    });
+
+    // Hover effects
+    node.on('mouseenter', function(event: any, d: any) {
+      const circle = d3.select(this).select('circle');
+      const currentRadius = parseFloat(circle.attr('r'));
+      circle.transition().duration(200)
+        .attr('r', currentRadius + 2)
+        .attr('stroke-width', 3);
+    }).on('mouseleave', function(event: any, d: any) {
+      const circle = d3.select(this).select('circle');
+      let originalRadius = 6;
+      if (d.data.type === 'root') originalRadius = 16;
+      if (d.data.type === 'tier') originalRadius = 12;
+      
+      circle.transition().duration(200)
+        .attr('r', originalRadius)
+        .attr('stroke-width', 2);
+    });
 
   }, [selectedTheoryTier, activeTab, navigate]);
 
@@ -497,7 +542,7 @@ const NetworkView = () => {
                 <svg 
                   ref={theorySvgRef}
                   width="100%"
-                  height="800"
+                  height="1200"
                   className="mx-auto border rounded-lg bg-white"
                 />
               </div>
