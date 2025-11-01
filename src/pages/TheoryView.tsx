@@ -41,7 +41,8 @@ const TheoryView = () => {
   const definitionSlides = Math.ceil(currentTopic.keyDefinitions.length / 3);
   const contentSlides = Math.ceil(contentParagraphs / 3);
   const referenceSlides = Math.ceil(currentTopic.references.length / 3);
-  const totalSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
+  const totalContentSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
+  const totalSlides = totalContentSlides + 1; // +1 for navigation slide
 
   // Filter topics
   const filteredTopics = allTopics.filter(t => {
@@ -51,9 +52,14 @@ const TheoryView = () => {
 
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced'];
 
-  // Reset slide index when topic changes
+  // Reset slide index when topic changes or restart param
   useEffect(() => {
-    setSlideIndex(0);
+    if (searchParams.get('restart') === 'true') {
+      setSlideIndex(0);
+      setSearchParams({ id: topicId }); // Remove restart param
+    } else {
+      setSlideIndex(0);
+    }
   }, [topicId]);
 
   const goToNext = () => {
@@ -79,9 +85,10 @@ const TheoryView = () => {
     const loadingToast = toast.loading('Generating PDF...');
     
     try {
+      // Only include content slides in PDF, exclude navigation slide
       await generateSlidesFromRenderer(
         (index) => setSlideIndex(index),
-        totalSlides,
+        totalContentSlides,
         'theory-slide-container',
         `${currentTopic.title.replace(/[^a-z0-9]/gi, '_')}_theory.pdf`,
         (current, total) => {
@@ -194,44 +201,14 @@ const TheoryView = () => {
 
         {/* Slide */}
         <div className="flex items-center justify-center mb-8" id="theory-slide-container">
-          <TheorySlide topic={currentTopic} slideIndex={slideIndex} />
+          <TheorySlide 
+            topic={currentTopic} 
+            slideIndex={slideIndex}
+            totalContentSlides={totalContentSlides}
+            onNavigate={navigate}
+            topicId={topicId}
+          />
         </div>
-
-        {/* End of slides navigation card */}
-        {slideIndex === totalSlides - 1 && (
-          <div className="mb-6 p-6 rounded-lg border-2 border-primary bg-card shadow-lg">
-            <h3 className="text-xl font-bold mb-4 text-center">End of Slides</h3>
-            <p className="text-center text-muted-foreground mb-6">
-              You've reached the last slide. Where would you like to go next?
-            </p>
-            <div className="grid md:grid-cols-3 gap-3">
-              <Button onClick={() => navigate('/')} variant="outline" className="gap-2">
-                <Home className="h-4 w-4" />
-                Home
-              </Button>
-              <Button onClick={() => navigate('/learning')} variant="outline" className="gap-2">
-                <GraduationCap className="h-4 w-4" />
-                Learning Hub
-              </Button>
-              <Button onClick={() => navigate(`/network?node=${topicId}`)} variant="default" className="gap-2">
-                <Network className="h-4 w-4" />
-                Back to Network
-              </Button>
-              <Button onClick={() => navigate('/estimands')} variant="outline" className="gap-2">
-                <Target className="h-4 w-4" />
-                Estimands Library
-              </Button>
-              <Button onClick={() => navigate('/slides')} variant="outline" className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                Generated Slides
-              </Button>
-              <Button onClick={() => setSlideIndex(0)} variant="outline" className="gap-2">
-                <ChevronLeft className="h-4 w-4" />
-                Restart Slides
-              </Button>
-            </div>
-          </div>
-        )}
 
         {/* Navigation */}
         <div className="flex items-center justify-between">

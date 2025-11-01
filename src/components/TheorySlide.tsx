@@ -1,16 +1,20 @@
 import { TheoryTopic } from '@/data/theory';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { BookOpen, Target, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Target, Lightbulb, Home, Network, GraduationCap, ChevronLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import 'katex/dist/katex.min.css';
 
 interface TheorySlideProps {
   topic: TheoryTopic;
   slideIndex: number;
+  totalContentSlides?: number;
+  onNavigate?: (path: string) => void;
+  topicId?: string;
 }
 
-const TheorySlide = ({ topic, slideIndex }: TheorySlideProps) => {
+const TheorySlide = ({ topic, slideIndex, totalContentSlides, onNavigate, topicId }: TheorySlideProps) => {
   // Helper: Split content into chunks
   const chunkArray = <T,>(arr: T[], size: number): T[][] => {
     const chunks: T[][] = [];
@@ -192,6 +196,46 @@ const TheorySlide = ({ topic, slideIndex }: TheorySlideProps) => {
         </div>
       );
     }
+  }
+
+  // Navigation Slide (final slide, non-downloadable)
+  if (totalContentSlides !== undefined && slideIndex === totalContentSlides && onNavigate) {
+    return (
+      <div className="w-full aspect-[16/9] bg-gradient-to-br from-primary/10 via-background to-primary/5 rounded-xl shadow-2xl p-12">
+        <div className="h-full flex flex-col items-center justify-center">
+          <h2 className="text-5xl font-bold mb-4 text-center">End of Slides</h2>
+          <p className="text-center text-muted-foreground mb-8 text-xl">
+            You've reached the last slide. Where would you like to go next?
+          </p>
+          <div className="grid grid-cols-3 gap-4 w-full max-w-3xl">
+            <Button onClick={() => onNavigate('/')} variant="outline" className="gap-2 h-16 text-lg">
+              <Home className="h-5 w-5" />
+              Home
+            </Button>
+            <Button onClick={() => onNavigate('/learning')} variant="outline" className="gap-2 h-16 text-lg">
+              <GraduationCap className="h-5 w-5" />
+              Learning Hub
+            </Button>
+            <Button onClick={() => onNavigate(`/network?node=${topicId}`)} variant="default" className="gap-2 h-16 text-lg">
+              <Network className="h-5 w-5" />
+              Back to Network
+            </Button>
+            <Button onClick={() => onNavigate('/estimands')} variant="outline" className="gap-2 h-16 text-lg">
+              <Target className="h-5 w-5" />
+              Estimands Library
+            </Button>
+            <Button onClick={() => onNavigate('/slides')} variant="outline" className="gap-2 h-16 text-lg">
+              <BookOpen className="h-5 w-5" />
+              Generated Slides
+            </Button>
+            <Button onClick={() => onNavigate(`/theory?id=${topicId}&restart=true`)} variant="outline" className="gap-2 h-16 text-lg">
+              <ChevronLeft className="h-5 w-5" />
+              Restart Slides
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return null;
