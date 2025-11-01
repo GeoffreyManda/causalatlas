@@ -5,12 +5,19 @@ import { estimandsData } from '@/data/estimands';
 import { causalTheory } from '@/data/theory';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import * as d3 from 'd3';
 
 const NetworkView = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
   const [layoutMode, setLayoutMode] = useState<'static' | 'dynamic'>('static');
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+  const [selectedFramework, setSelectedFramework] = useState<string>('all');
+  const [highlightedType, setHighlightedType] = useState<string | null>(null);
+
+  const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
+  const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -18,18 +25,15 @@ const NetworkView = () => {
     const width = 1600;
     const height = 1000;
 
-    // Clear previous content
     d3.select(svgRef.current).selectAll('*').remove();
 
     const svg = d3.select(svgRef.current)
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('class', 'w-full h-full');
 
-    // Create HIERARCHICAL STRUCTURE
     const nodes: any[] = [];
     const links: any[] = [];
 
-    // Layer 1: Theory Topics (top tier)
     const foundationalTheory = causalTheory.filter(t => t.tier === 'Foundational').slice(0, 4);
     foundationalTheory.forEach((theory, i) => {
       nodes.push({
@@ -45,13 +49,22 @@ const NetworkView = () => {
       });
     });
 
-    // Layer 2: Frameworks (middle tier)
-    const frameworks = Array.from(new Set(estimandsData.map(e => e.framework)));
-    frameworks.forEach((fw, i) => {
+    const allFrameworks = Array.from(new Set(estimandsData.map(e => e.framework)));
+    const filteredFrameworksSet = new Set(
+      estimandsData
+        .filter(e => selectedTier === 'all' || e.tier === selectedTier)
+        .map(e => e.framework)
+    );
+    const frameworksToShow = selectedFramework === 'all' 
+      ? allFrameworks.filter(fw => filteredFrameworksSet.has(fw))
+      : allFrameworks.filter(fw => fw === selectedFramework);
+    
+    frameworksToShow.forEach((fw, i) => {
       nodes.push({
         id: `fw_${fw}`,
         label: fw.replace(/([A-Z])/g, ' $1').trim(),
         type: 'framework',
+        framework: fw,
         x: 150 + i * 300,
         y: 280,
         fx: layoutMode === 'static' ? 150 + i * 300 : null,
@@ -59,16 +72,23 @@ const NetworkView = () => {
       });
     });
 
-    // Layer 3: Estimands grouped by tier (bottom tiers)
     const tierY = { Basic: 500, Intermediate: 650, Advanced: 800, Frontier: 920 };
     const tierXOffset: any = {};
     
-    frameworks.forEach(fw => {
+    frameworksToShow.forEach(fw => {
       tierXOffset[fw] = { Basic: 0, Intermediate: 0, Advanced: 0, Frontier: 0 };
     });
 
-    estimandsData.forEach((estimand) => {
-      const fwIndex = frameworks.indexOf(estimand.framework);
+    const filteredEstimands = estimandsData.filter(e => {
+      if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
+      if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+      return true;
+    });
+
+    filteredEstimands.forEach((estimand) => {
+      const fwIndex = frameworksToShow.indexOf(estimand.framework);
+      if (fwIndex === -1) return;
+      
       const offset = tierXOffset[estimand.framework][estimand.tier];
       
       nodes.push({
@@ -85,7 +105,6 @@ const NetworkView = () => {
       
       tierXOffset[estimand.framework][estimand.tier]++;
       
-      // Link estimand to framework
       links.push({
         source: `fw_${estimand.framework}`,
         target: estimand.id,
@@ -93,7 +112,6 @@ const NetworkView = () => {
       });
     });
 
-    // Force simulation
     const simulation = d3.forceSimulation(nodes)
       .force('x', d3.forceX((d: any) => d.x).strength(layoutMode === 'static' ? 1 : 0.2))
       .force('y', d3.forceY((d: any) => d.y).strength(layoutMode === 'static' ? 1 : 0.2))
@@ -104,7 +122,6 @@ const NetworkView = () => {
         .distance(100)
         .strength(layoutMode === 'dynamic' ? 0.4 : 0.1));
 
-    // Add links
     const link = svg.append('g')
       .selectAll('line')
       .data(links)
@@ -113,7 +130,6 @@ const NetworkView = () => {
       .attr('stroke-width', 1.5)
       .attr('stroke-opacity', 0.4);
 
-    // Add nodes
     const node = svg.append('g')
       .selectAll('g')
       .data(nodes)
@@ -124,13 +140,8 @@ const NetworkView = () => {
         .on('drag', dragged)
         .on('end', dragended));
 
-    // Add circles
     node.append('circle')
-      .attr('r', (d: any) => {
-        if (d.type === 'theory') return 35;
-        if (d.type === 'framework') return 28;
-        return 18;
-      })
+      .attr('r', (d: any) => d.type === 'theory' ? 35 : d.type === 'framework' ? 28 : 18)
       .attr('fill', (d: any) => {
         if (d.type === 'theory') return 'hsl(280 65% 60%)';
         if (d.type === 'framework') return 'hsl(215 70% 50%)';
@@ -142,70 +153,46 @@ const NetworkView = () => {
           default: return 'hsl(215 15% 60%)';
         }
       })
+      .attr('opacity', (d: any) => {
+        if (!highlightedType) return 1;
+        if (d.type === highlightedType || d.tier === highlightedType) return 1;
+        return 0.2;
+      })
       .attr('stroke', 'white')
       .attr('stroke-width', 2.5)
       .attr('filter', 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))');
 
-    // Add labels
     node.append('text')
       .text((d: any) => d.label)
       .attr('text-anchor', 'middle')
-      .attr('dy', (d: any) => {
-        if (d.type === 'theory') return 52;
-        if (d.type === 'framework') return 45;
-        return 32;
-      })
-      .attr('font-size', (d: any) => {
-        if (d.type === 'theory') return '13px';
-        if (d.type === 'framework') return '12px';
-        return '10px';
-      })
+      .attr('dy', (d: any) => d.type === 'theory' ? 52 : d.type === 'framework' ? 45 : 32)
+      .attr('font-size', (d: any) => d.type === 'theory' ? '13px' : d.type === 'framework' ? '12px' : '10px')
       .attr('font-weight', (d: any) => d.type !== 'estimand' ? 'bold' : 'normal')
       .attr('fill', 'hsl(215 25% 15%)')
       .style('pointer-events', 'none');
 
-    // Click handlers
     node.on('click', (event: any, d: any) => {
       event.stopPropagation();
       if (d.type === 'estimand') {
-        navigate(`/slides?id=${d.id}`);
+        navigate(`/slides?id=${d.id}`, { state: { from: '/network' } });
       } else if (d.type === 'theory') {
-        navigate(`/theory?id=${d.originalId}`);
+        navigate(`/theory?id=${d.originalId}`, { state: { from: '/network' } });
       } else if (d.type === 'framework') {
-        // Filter estimands page by framework
-        navigate(`/estimands`);
+        setSelectedFramework(d.framework);
       }
     });
 
-    // Hover effects
     node.on('mouseenter', function() {
-      d3.select(this).select('circle')
-        .transition()
-        .duration(200)
-        .attr('r', (d: any) => {
-          if (d.type === 'theory') return 40;
-          if (d.type === 'framework') return 32;
-          return 22;
-        });
+      d3.select(this).select('circle').transition().duration(200)
+        .attr('r', (d: any) => d.type === 'theory' ? 40 : d.type === 'framework' ? 32 : 22);
     }).on('mouseleave', function() {
-      d3.select(this).select('circle')
-        .transition()
-        .duration(200)
-        .attr('r', (d: any) => {
-          if (d.type === 'theory') return 35;
-          if (d.type === 'framework') return 28;
-          return 18;
-        });
+      d3.select(this).select('circle').transition().duration(200)
+        .attr('r', (d: any) => d.type === 'theory' ? 35 : d.type === 'framework' ? 28 : 18);
     });
 
-    // Update positions
     simulation.on('tick', () => {
-      link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
-
+      link.attr('x1', (d: any) => d.source.x).attr('y1', (d: any) => d.source.y)
+        .attr('x2', (d: any) => d.target.x).attr('y2', (d: any) => d.target.y);
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
@@ -228,86 +215,79 @@ const NetworkView = () => {
       }
     }
 
-    return () => {
-      simulation.stop();
-    };
-  }, [layoutMode, navigate]);
+    return () => simulation.stop();
+  }, [layoutMode, navigate, selectedTier, selectedFramework, highlightedType]);
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="container py-8">
-        <div className="mb-6 flex flex-col md:flex-row items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Causal Inference Network</h1>
-            <p className="text-muted-foreground max-w-2xl">
-              Three-tier hierarchical view: Theory (top) → Frameworks (middle) → Estimands by Difficulty (bottom)
-              <br />
-              <span className="text-sm">Click any node to navigate to detailed slides and tutorials</span>
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button 
-              variant={layoutMode === 'static' ? 'default' : 'outline'}
-              onClick={() => setLayoutMode('static')}
-              size="sm"
-            >
-              Static Layout
-            </Button>
-            <Button 
-              variant={layoutMode === 'dynamic' ? 'default' : 'outline'}
-              onClick={() => setLayoutMode('dynamic')}
-              size="sm"
-            >
-              Dynamic Layout
-            </Button>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mb-6 p-4 rounded-lg border bg-card">
-          <h3 className="font-semibold mb-3">Node Types & Difficulty Levels</h3>
-          <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full" style={{ background: 'hsl(280 65% 60%)' }}></div>
-              <span className="text-sm font-medium">Theory</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full" style={{ background: 'hsl(215 70% 50%)' }}></div>
-              <span className="text-sm font-medium">Framework</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-tier-basic"></div>
-              <span className="text-sm">Basic</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-tier-intermediate"></div>
-              <span className="text-sm">Intermediate</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-tier-advanced"></div>
-              <span className="text-sm">Advanced</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-tier-frontier"></div>
-              <span className="text-sm">Frontier</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Network Visualization */}
-        <div className="border rounded-lg bg-white p-4 shadow-sm">
-          <svg ref={svgRef} className="w-full" style={{ height: '900px' }}></svg>
-        </div>
-
-        <div className="mt-4 p-4 rounded-lg border bg-muted/30">
-          <p className="text-sm text-muted-foreground">
-            <strong>How to use:</strong> {layoutMode === 'static' 
-              ? 'Hierarchical layout with fixed tiers. Drag nodes to adjust positioning within tiers.'
-              : 'Force-directed layout allows free exploration. Nodes cluster naturally based on connections. Drag to rearrange.'
-            } Click theory nodes (purple) for conceptual slides, framework nodes (blue) for overview, or estimand nodes (colored by tier) for detailed tutorials.
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Causal Inference Network</h1>
+          <p className="text-muted-foreground max-w-3xl">
+            Three-tier hierarchical view: Theory → Frameworks → Estimands. Click nodes to navigate or use filters.
           </p>
+        </div>
+
+        <div className="mb-6 flex justify-end gap-2">
+          <Button variant={layoutMode === 'static' ? 'default' : 'outline'} onClick={() => setLayoutMode('static')} size="sm">Static</Button>
+          <Button variant={layoutMode === 'dynamic' ? 'default' : 'outline'} onClick={() => setLayoutMode('dynamic')} size="sm">Dynamic</Button>
+        </div>
+
+        <div className="mb-6 p-4 rounded-lg border bg-card">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filter Tier</label>
+              <div className="flex flex-wrap gap-2">
+                {tiers.map(tier => (
+                  <Badge key={tier} variant={selectedTier === tier ? 'default' : 'outline'}
+                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                    onClick={() => setSelectedTier(tier)}>
+                    {tier === 'all' ? 'All' : tier}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filter Framework</label>
+              <div className="flex flex-wrap gap-2">
+                {frameworks.map(fw => (
+                  <Badge key={fw} variant={selectedFramework === fw ? 'default' : 'outline'}
+                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                    onClick={() => setSelectedFramework(fw)}>
+                    {fw === 'all' ? 'All' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Card className="mb-6 p-4">
+          <h3 className="font-semibold mb-3">Legend (Click to Highlight)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
+            {[
+              { type: 'theory', color: 'hsl(280 65% 60%)', label: 'Theory' },
+              { type: 'framework', color: 'hsl(215 70% 50%)', label: 'Framework' },
+              { type: 'Basic', color: null, label: 'Basic' },
+              { type: 'Intermediate', color: null, label: 'Intermediate' },
+              { type: 'Advanced', color: null, label: 'Advanced' },
+              { type: 'Frontier', color: null, label: 'Frontier' }
+            ].map(item => (
+              <button key={item.type}
+                onClick={() => setHighlightedType(highlightedType === item.type ? null : item.type)}
+                className={`flex items-center gap-2 p-2 rounded hover:bg-muted/50 transition-colors ${highlightedType === item.type ? 'bg-muted' : ''}`}>
+                <div className={`h-6 w-6 rounded-full ${item.color ? '' : `bg-tier-${item.type.toLowerCase()}`}`} 
+                  style={item.color ? { background: item.color } : undefined}></div>
+                <span className="text-sm">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+
+        <div className="border rounded-lg bg-card p-4 shadow-sm">
+          <svg ref={svgRef} className="w-full" style={{ height: '900px' }}></svg>
         </div>
       </div>
     </div>

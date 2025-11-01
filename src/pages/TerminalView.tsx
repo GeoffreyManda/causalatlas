@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Trash2, Copy, Check, Package } from 'lucide-react';
+import { Play, Trash2, Copy, Check, Package, Download, ArrowLeft } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ import { getRequirements } from '@/data/requirements';
 
 const TerminalView = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedEstimand, setSelectedEstimand] = useState<string>('ate');
   const [pythonCode, setPythonCode] = useState('');
   const [rCode, setRCode] = useState('');
@@ -20,9 +22,22 @@ const TerminalView = () => {
   const [currentTab, setCurrentTab] = useState('python');
   const [copied, setCopied] = useState(false);
   const [packagesInstalled, setPackagesInstalled] = useState(false);
-  const [frameworkFilter, setFrameworkFilter] = useState<string>('all');
-  const [tierFilter, setTierFilter] = useState<string>('all');
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+  const [selectedFramework, setSelectedFramework] = useState<string>('all');
   const [pyodideInstance, setPyodideInstance] = useState<any>(null);
+
+  // Get referrer from state or default to playground
+  const referrer = (location.state as any)?.from || '/estimands';
+
+  // Filter estimands
+  const filteredEstimands = estimandsData.filter(e => {
+    if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
+    if (selectedFramework !== 'all' && e.framework !== selectedFramework) return false;
+    return true;
+  });
+
+  const tiers = ['all', 'Basic', 'Intermediate', 'Advanced', 'Frontier'];
+  const frameworks = ['all', ...Array.from(new Set(estimandsData.map(e => e.framework)))];
 
   // Ensure Pyodide is loaded only once
   const ensurePyodide = async () => {
@@ -172,6 +187,19 @@ OUT_VAL = _buf.getvalue()
     toast.success('Copied to clipboard');
   };
 
+  const downloadCode = () => {
+    const code = currentTab === 'python' ? pythonCode : rCode;
+    const filename = `${selectedEstimand}_${currentTab}.${currentTab === 'python' ? 'py' : 'R'}`;
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${filename}`);
+  };
+
   const currentEstimand = estimandsData.find(e => e.id === selectedEstimand);
 
   return (
@@ -179,27 +207,75 @@ OUT_VAL = _buf.getvalue()
       <Navigation />
       
       <div className="container py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Code Playground</h1>
-          <p className="text-muted-foreground">
-            Execute estimand examples with auto-installed packages
+        {/* Back button */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(referrer)}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h1 className="text-3xl font-bold">Code Playground</h1>
+          <div className="w-24" /> {/* Spacer for centering */}
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 p-4 rounded-lg border bg-card">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filter by Tier</label>
+              <div className="flex flex-wrap gap-2">
+                {tiers.map(tier => (
+                  <Badge
+                    key={tier}
+                    variant={selectedTier === tier ? 'default' : 'outline'}
+                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                    onClick={() => setSelectedTier(tier)}
+                  >
+                    {tier === 'all' ? 'All' : tier}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filter by Framework</label>
+              <div className="flex flex-wrap gap-2">
+                {frameworks.map(fw => (
+                  <Badge
+                    key={fw}
+                    variant={selectedFramework === fw ? 'default' : 'outline'}
+                    className="cursor-pointer px-3 py-1.5 text-xs hover:scale-105 transition-transform"
+                    onClick={() => setSelectedFramework(fw)}
+                  >
+                    {fw === 'all' ? 'All' : fw.replace(/([A-Z])/g, ' $1').trim()}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Showing {filteredEstimands.length} of {estimandsData.length} estimands
           </p>
         </div>
 
         {/* Estimand Selector */}
         <div className="mb-6 p-4 rounded-lg border bg-card">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <label className="text-sm font-medium mb-2 block">Select Estimand</label>
               <Select value={selectedEstimand} onValueChange={setSelectedEstimand}>
-                <SelectTrigger className="w-full md:w-[400px]">
+                <SelectTrigger className="w-full bg-popover">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  {estimandsData.map(e => (
+                <SelectContent className="max-h-[400px] bg-popover z-50">
+                  {filteredEstimands.map(e => (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.short_name}
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">{e.tier}</Badge>
+                        {e.short_name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -216,8 +292,7 @@ OUT_VAL = _buf.getvalue()
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Code Editor */}
-          <div className="space-y-4">
+            <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Code</h2>
               <div className="flex gap-2">
@@ -233,6 +308,16 @@ OUT_VAL = _buf.getvalue()
                     Install Packages
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={downloadCode}
+                  disabled={!pythonCode && !rCode}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"

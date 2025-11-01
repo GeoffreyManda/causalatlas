@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import TheorySlide from '@/components/TheorySlide';
 import { causalTheory } from '@/data/theory';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Download, ArrowLeft } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const TheoryView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const topicId = searchParams.get('id') || causalTheory[0].id;
   const [slideIndex, setSlideIndex] = useState(0);
+  const [selectedTier, setSelectedTier] = useState<string>('all');
+
+  // Get referrer from state or default to learning hub
+  const referrer = (location.state as any)?.from || '/learning';
 
   const currentTopic = causalTheory.find(t => t.id === topicId) || causalTheory[0];
   
@@ -21,6 +29,14 @@ const TheoryView = () => {
   const contentSlides = Math.ceil(contentParagraphs / 3);
   const referenceSlides = Math.ceil(currentTopic.references.length / 3);
   const totalSlides = 1 + objectiveSlides + definitionSlides + contentSlides + 2 + referenceSlides; // title + objectives + definitions + content + 2 code + references
+
+  // Filter topics
+  const filteredTopics = causalTheory.filter(t => {
+    if (selectedTier !== 'all' && t.tier !== selectedTier) return false;
+    return true;
+  });
+
+  const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced'];
 
   // Reset slide index when topic changes
   useEffect(() => {
@@ -58,23 +74,70 @@ const TheoryView = () => {
     setSlideIndex(0);
   };
 
+  const downloadSlides = () => {
+    toast.info('Theory slide download coming soon (paywall feature)');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8">
+        {/* Back button and download */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(referrer)}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            variant="outline"
+            onClick={downloadSlides}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download Slides (Premium)
+          </Button>
+        </div>
+
+        {/* Filter */}
+        <div className="mb-6 p-4 rounded-lg border bg-card">
+          <label className="text-sm font-medium mb-2 block">Filter by Level</label>
+          <div className="flex flex-wrap gap-2">
+            {tiers.map(tier => (
+              <Badge
+                key={tier}
+                variant={selectedTier === tier ? 'default' : 'outline'}
+                className="cursor-pointer px-4 py-2 hover:scale-105 transition-transform"
+                onClick={() => setSelectedTier(tier)}
+              >
+                {tier === 'all' ? 'All Levels' : tier}
+              </Badge>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            Showing {filteredTopics.length} of {causalTheory.length} topics
+          </p>
+        </div>
+
         {/* Header with topic selector */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <BookOpen className="h-6 w-6 text-primary" />
             <Select value={topicId} onValueChange={handleTopicChange}>
-              <SelectTrigger className="w-[400px]">
+              <SelectTrigger className="w-full max-w-[400px] bg-popover">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {causalTheory.map(topic => (
+              <SelectContent className="max-h-[400px] bg-popover z-50">
+                {filteredTopics.map(topic => (
                   <SelectItem key={topic.id} value={topic.id}>
-                    {topic.title}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">{topic.tier}</Badge>
+                      {topic.title}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

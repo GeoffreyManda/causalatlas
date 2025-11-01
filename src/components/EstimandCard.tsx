@@ -36,8 +36,8 @@ const EstimandCard = ({ estimand, onClick }: EstimandCardProps) => {
   
   const handleSlidesClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const index = estimand.id;
-    navigate(`/slides?id=${index}`);
+    // Pass navigation state so slides view knows where we came from
+    navigate(`/slides?id=${estimand.id}`, { state: { from: '/estimands' } });
   };
 
   return (
