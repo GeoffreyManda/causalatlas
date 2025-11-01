@@ -10,21 +10,12 @@ import { Card } from '@/components/ui/card';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const NetworkView = () => {
-  console.log('NetworkView component rendering');
   const estimandsSvgRef = useRef<SVGSVGElement>(null);
   const theorySvgRef = useRef<SVGSVGElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const highlightNodeId = searchParams.get('node');
   const [activeTab, setActiveTab] = useState<string>('estimands');
-  const [mounted, setMounted] = useState(false);
-  
-  console.log('Active tab:', activeTab, 'mounted:', mounted);
-  
-  // Force re-render after mount
-  useLayoutEffect(() => {
-    setMounted(true);
-  }, []);
   
   // State for estimands filters
   const [selectedTier, setSelectedTier] = useState<string>('all');
@@ -53,10 +44,7 @@ const NetworkView = () => {
 
   // Estimands Network Effect
   useEffect(() => {
-    console.log('Estimands effect triggered, ref exists:', !!estimandsSvgRef.current, 'activeTab:', activeTab, 'mounted:', mounted);
-    if (!estimandsSvgRef.current || activeTab !== 'estimands' || !mounted) return;
-
-    console.log('Rendering estimands network...');
+    if (!estimandsSvgRef.current || activeTab !== 'estimands') return;
 
     const filteredEstimands = estimandsData.filter(e => {
       if (selectedTier !== 'all' && e.tier !== selectedTier) return false;
@@ -72,8 +60,7 @@ const NetworkView = () => {
     d3.select(estimandsSvgRef.current).selectAll('*').remove();
 
     const svg = d3.select(estimandsSvgRef.current)
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('class', 'w-full h-full');
+      .attr('viewBox', `0 0 ${width} ${height}`);
 
     // Build hierarchy: Root → Framework → Design → Family → Estimands
 
@@ -232,14 +219,11 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate, mounted]);
+  }, [selectedTier, selectedFramework, selectedDesign, selectedFamily, highlightNodeId, activeTab, navigate]);
 
   // Theory Network Effect
   useEffect(() => {
-    console.log('Theory effect triggered, ref exists:', !!theorySvgRef.current, 'activeTab:', activeTab, 'mounted:', mounted);
-    if (!theorySvgRef.current || activeTab !== 'theory' || !mounted) return;
-
-    console.log('Rendering theory network...');
+    if (!theorySvgRef.current || activeTab !== 'theory') return;
 
     const filteredTopics = allTheoryTopics.filter(topic => {
       if (selectedTheoryTier !== 'all' && topic.tier !== selectedTheoryTier) return false;
@@ -252,8 +236,7 @@ const NetworkView = () => {
     d3.select(theorySvgRef.current).selectAll('*').remove();
 
     const svg = d3.select(theorySvgRef.current)
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('class', 'w-full h-full');
+      .attr('viewBox', `0 0 ${width} ${height}`);
 
     // Categorize topics into Math vs Causal
     const mathTopicIds = [
@@ -406,7 +389,7 @@ const NetworkView = () => {
         .attr('stroke-width', 2);
     });
 
-  }, [selectedTheoryTier, activeTab, navigate, mounted]);
+  }, [selectedTheoryTier, activeTab, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -434,7 +417,7 @@ const NetworkView = () => {
             </TabsList>
 
             {/* ESTIMANDS TAB */}
-            <TabsContent value="estimands">
+            <TabsContent value="estimands" forceMount>
               {/* Estimands Filters */}
               <div className="mb-8 p-6 rounded-lg border bg-card">
                 <h2 className="text-2xl font-bold mb-6">Filters</h2>
