@@ -1050,5 +1050,314 @@ cat("Posterior SD:", round(sqrt(post_var), 3), "\\n")`
     references: [
       { authors: 'Gustafson P', title: 'Bayesian Inference for Partially Identified Models', year: 2015, doi: '10.1201/b18308' }
     ]
+  },
+
+  // ========== PROPENSITY SCORE METHODS ==========
+  {
+    id: 'unconfoundedness_propensity_score',
+    title: 'Unconfoundedness and the Propensity Score',
+    tier: 'Intermediate',
+    description: 'The ignorability assumption and propensity score methods for causal inference',
+    content: `## The Unconfoundedness Assumption
+
+**Unconfoundedness** (also called **ignorability** or **conditional exchangeability**) is the fundamental assumption that enables causal inference from observational data.
+
+**Formal Definition:**
+(Y¹, Y⁰) ⊥ A | X
+
+This states: conditional on measured covariates X, treatment assignment A is independent of potential outcomes (Y¹, Y⁰).
+
+**Intuition:** Once we control for X, treatment is "as good as random" - there are no unmeasured confounders affecting both treatment and outcome.
+
+---
+
+## The Propensity Score
+
+The **propensity score** is the probability of receiving treatment given covariates:
+
+e(X) = P(A=1 | X)
+
+**Rosenbaum & Rubin's (1983) Key Result:**
+If unconfoundedness holds given X, then it also holds given e(X):
+
+(Y¹, Y⁰) ⊥ A | X  ⟹  (Y¹, Y⁰) ⊥ A | e(X)
+
+**Why This Matters:** Instead of conditioning on high-dimensional X, we can condition on the scalar e(X). This is a powerful **dimension reduction**.
+
+---
+
+## Propensity Score Methods
+
+### 1. **Matching**
+Pair treated and control units with similar propensity scores.
+- **Nearest neighbor:** Match each treated unit to closest control
+- **Caliper matching:** Only match within specified distance
+- **Optimal matching:** Minimize total distance
+
+**Advantages:** Intuitive, transparent
+**Limitations:** Discards unmatched units, potential bias if poor matches
+
+### 2. **Stratification/Subclassification**
+Divide units into strata based on propensity score quintiles (or finer), estimate effects within strata, then aggregate.
+
+**Rosenbaum & Rubin (1984):** 5 strata remove ~90% of bias due to confounding.
+
+### 3. **Inverse Probability Weighting (IPW)**
+Weight each unit by inverse of probability of their observed treatment:
+
+w_i = A_i / e(X_i) + (1 - A_i) / (1 - e(X_i))
+
+This creates a **pseudo-population** where treatment is independent of X.
+
+**ATE Estimator:**
+τ̂_IPW = (1/n) Σ [A_i Y_i / e(X_i) - (1-A_i) Y_i / (1-e(X_i))]
+
+**Advantages:** Uses all data, targets population ATE
+**Limitations:** Sensitive to extreme weights (positivity violations)
+
+### 4. **Covariate Adjustment / Regression**
+Include propensity score as covariate in outcome regression:
+
+E[Y | A, e(X)]
+
+Can be combined with other adjustment methods.
+
+### 5. **Doubly Robust Methods**
+Combine propensity score with outcome regression (e.g., AIPW, TMLE). Correct if **either** model is correctly specified.
+
+---
+
+## Key Assumptions
+
+**1. Unconfoundedness:** (Y¹, Y⁰) ⊥ A | X
+- All confounders are measured and included in X
+- Requires domain knowledge and causal reasoning (DAGs)
+
+**2. Positivity/Overlap:** 0 < e(X) < 1 for all X
+- Every covariate pattern has non-zero probability of both treatments
+- Violations: extreme weights, poor matches, limited generalizability
+
+**3. SUTVA:** No interference, well-defined treatment
+
+---
+
+## Diagnostics
+
+### Balance Checks
+After propensity score adjustment, check if covariates are balanced:
+- **Standardized mean differences:** Should be < 0.1
+- **Variance ratios:** Should be close to 1
+- **Overlap plots:** Visualize propensity score distributions
+
+### Sensitivity Analysis
+- **Rosenbaum bounds:** How strong must unmeasured confounding be to change conclusions?
+- **E-values:** Minimum strength of unmeasured confounder to explain away effect
+- **Simulation-based:** Posit unmeasured confounder and assess impact
+
+---
+
+## Practical Tips
+
+1. **Propensity score estimation:**
+   - Use flexible models (boosting, super learner)
+   - Include interactions and non-linearities
+   - Maximize covariate balance, not prediction accuracy
+
+2. **Trimming:** Discard units with extreme propensity scores (e.g., < 0.1 or > 0.9) to improve overlap
+
+3. **Weight stabilization:** Use stabilized weights to reduce variance:
+   w_i = P(A_i) / P(A_i | X_i)
+
+4. **Combine methods:** Use propensity scores for initial balance, then outcome regression for final estimate
+
+---
+
+## When Unconfoundedness Fails
+
+If unmeasured confounding exists:
+- **Instrumental variables:** Use natural experiments
+- **Difference-in-differences:** Control for time-invariant confounding
+- **Regression discontinuity:** Exploit threshold-based assignment
+- **Sensitivity analysis:** Quantify robustness to violations
+- **Proximal causal inference:** Use proxy variables`,
+    prerequisites: ['intro_causal_inference', 'framework_potential_outcomes'],
+    learningObjectives: [
+      'Define unconfoundedness and understand its role in causal inference',
+      'Explain the propensity score and its dimension reduction property',
+      'Apply propensity score methods: matching, IPW, stratification',
+      'Assess balance and overlap using diagnostics',
+      'Conduct sensitivity analysis for unmeasured confounding'
+    ],
+    keyDefinitions: [
+      { term: 'Unconfoundedness', definition: '(Y¹, Y⁰) ⊥ A | X - treatment assignment is independent of potential outcomes given measured covariates' },
+      { term: 'Propensity Score', definition: 'e(X) = P(A=1 | X) - probability of treatment given covariates' },
+      { term: 'Positivity', definition: '0 < e(X) < 1 - all covariate patterns have positive probability of both treatments' },
+      { term: 'Balancing Score', definition: 'A function of covariates such that conditioning on it balances treatment groups' },
+      { term: 'Inverse Probability Weighting', definition: 'Weighting observations by 1/e(X) or 1/(1-e(X)) to create pseudo-population' }
+    ],
+    examples: {
+      python: `import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import NearestNeighbors
+
+np.random.seed(42)
+n = 2000
+
+# ========== SIMULATE DATA WITH CONFOUNDING ==========
+# Confounders
+X1 = np.random.normal(0, 1, n)
+X2 = np.random.normal(0, 1, n)
+X = np.column_stack([X1, X2])
+
+# Treatment depends on X (selection bias)
+logit_A = 0.5 + 0.8*X1 - 0.6*X2
+prob_A = 1 / (1 + np.exp(-logit_A))
+A = np.random.binomial(1, prob_A)
+
+# Outcome depends on X AND A
+# True ATE = 2.0
+Y = 5.0 + 2.0*A + 1.5*X1 + 1.2*X2 + np.random.normal(0, 1, n)
+
+print("=== CONFOUNDED DATA ===")
+print(f"True ATE: 2.0")
+
+# Naive estimate (biased!)
+naive = Y[A==1].mean() - Y[A==0].mean()
+print(f"Naive difference: {naive:.3f} (BIASED)")
+
+# ========== PROPENSITY SCORE ESTIMATION ==========
+ps_model = LogisticRegression(max_iter=1000)
+ps_model.fit(X, A)
+propensity_scores = ps_model.predict_proba(X)[:, 1]
+
+print(f"\\n=== PROPENSITY SCORES ===")
+print(f"Mean PS (treated): {propensity_scores[A==1].mean():.3f}")
+print(f"Mean PS (control): {propensity_scores[A==0].mean():.3f}")
+print(f"PS range: [{propensity_scores.min():.3f}, {propensity_scores.max():.3f}]")
+
+# ========== METHOD 1: IPW ==========
+weights = A / propensity_scores + (1-A) / (1-propensity_scores)
+# Trim extreme weights
+weights = np.clip(weights, 0, 10)
+
+ate_ipw = np.average(Y[A==1], weights=weights[A==1]) - \\
+          np.average(Y[A==0], weights=weights[A==0])
+print(f"\\n=== IPW ESTIMATE ===")
+print(f"ATE (IPW): {ate_ipw:.3f}")
+
+# ========== METHOD 2: MATCHING ==========
+# 1:1 nearest neighbor matching on propensity score
+ps_treated = propensity_scores[A==1].reshape(-1, 1)
+ps_control = propensity_scores[A==0].reshape(-1, 1)
+
+nn = NearestNeighbors(n_neighbors=1)
+nn.fit(ps_control)
+distances, indices = nn.kneighbors(ps_treated)
+
+Y_treated_matched = Y[A==1]
+Y_control_matched = Y[A==0][indices.flatten()]
+
+ate_matching = (Y_treated_matched - Y_control_matched).mean()
+print(f"\\n=== MATCHING ESTIMATE ===")
+print(f"ATE (1:1 Matching): {ate_matching:.3f}")
+
+# ========== METHOD 3: STRATIFICATION ==========
+# Divide into 5 strata by PS quintiles
+strata = np.digitize(propensity_scores, 
+                     np.percentile(propensity_scores, [20, 40, 60, 80]))
+
+ate_strat = 0
+for s in range(5):
+    mask = strata == s
+    if A[mask].sum() > 0 and (1-A[mask]).sum() > 0:
+        effect_s = Y[mask & (A==1)].mean() - Y[mask & (A==0)].mean()
+        ate_strat += effect_s * mask.sum() / n
+
+print(f"\\n=== STRATIFICATION ESTIMATE ===")
+print(f"ATE (5 Strata): {ate_strat:.3f}")
+
+# ========== BALANCE CHECK ==========
+# Standardized mean difference before/after
+def smd(x, a):
+    m1, m0 = x[a==1].mean(), x[a==0].mean()
+    s1, s0 = x[a==1].std(), x[a==0].std()
+    return (m1 - m0) / np.sqrt((s1**2 + s0**2) / 2)
+
+print(f"\\n=== BALANCE (Std Mean Diff) ===")
+print(f"Before adjustment: X1={smd(X1, A):.3f}, X2={smd(X2, A):.3f}")
+
+# After IPW
+smd_x1_ipw = smd(X1, A) * np.sqrt(weights.mean())  # Approximation
+smd_x2_ipw = smd(X2, A) * np.sqrt(weights.mean())
+print(f"After IPW: ~balanced (weights applied)")`,
+      r: `library(MatchIt)
+library(WeightIt)
+
+set.seed(42)
+n <- 2000
+
+# ========== SIMULATE DATA ==========
+X1 <- rnorm(n)
+X2 <- rnorm(n)
+
+# Treatment with confounding
+logit_A <- 0.5 + 0.8*X1 - 0.6*X2
+prob_A <- 1 / (1 + exp(-logit_A))
+A <- rbinom(n, 1, prob_A)
+
+# Outcome (True ATE = 2.0)
+Y <- 5.0 + 2.0*A + 1.5*X1 + 1.2*X2 + rnorm(n)
+
+df <- data.frame(Y, A, X1, X2)
+
+cat("=== TRUE ATE: 2.0 ===\\n")
+cat("Naive estimate:", round(mean(Y[A==1]) - mean(Y[A==0]), 3), "\\n\\n")
+
+# ========== PROPENSITY SCORE ==========
+ps_model <- glm(A ~ X1 + X2, family = binomial(), data = df)
+df$ps <- predict(ps_model, type = "response")
+
+cat("=== PROPENSITY SCORES ===\\n")
+cat("Mean PS (treated):", round(mean(df$ps[A==1]), 3), "\\n")
+cat("Mean PS (control):", round(mean(df$ps[A==0]), 3), "\\n\\n")
+
+# ========== METHOD 1: IPW ==========
+df$weights <- ifelse(A == 1, 1/df$ps, 1/(1-df$ps))
+df$weights <- pmin(df$weights, 10)  # Trim
+
+ate_ipw <- weighted.mean(Y[A==1], df$weights[A==1]) - 
+           weighted.mean(Y[A==0], df$weights[A==0])
+cat("=== IPW ===\\n")
+cat("ATE (IPW):", round(ate_ipw, 3), "\\n\\n")
+
+# ========== METHOD 2: MATCHING ==========
+m_out <- matchit(A ~ X1 + X2, data = df, method = "nearest", distance = "logit")
+matched_data <- match.data(m_out)
+
+ate_matching <- mean(matched_data$Y[matched_data$A==1]) - 
+                mean(matched_data$Y[matched_data$A==0])
+cat("=== MATCHING ===\\n")
+cat("ATE (Matching):", round(ate_matching, 3), "\\n\\n")
+
+# ========== BALANCE CHECK ==========
+# SMD function
+smd <- function(x, a) {
+  m1 <- mean(x[a==1])
+  m0 <- mean(x[a==0])
+  s1 <- sd(x[a==1])
+  s0 <- sd(x[a==0])
+  (m1 - m0) / sqrt((s1^2 + s0^2) / 2)
+}
+
+cat("=== BALANCE (Std Mean Diff) ===\\n")
+cat("Before: X1=", round(smd(X1, A), 3), ", X2=", round(smd(X2, A), 3), "\\n")
+cat("After matching: improved balance\\n")`
+    },
+    references: [
+      { authors: 'Rosenbaum PR, Rubin DB', title: 'The central role of the propensity score in observational studies for causal effects', year: 1983, doi: '10.1093/biomet/70.1.41' },
+      { authors: 'Rosenbaum PR, Rubin DB', title: 'Reducing bias in observational studies using subclassification on the propensity score', year: 1984, doi: '10.1080/01621459.1984.10478078' },
+      { authors: 'Austin PC', title: 'An Introduction to Propensity Score Methods for Reducing Confounding', year: 2011, doi: '10.1080/00273171.2011.568786' },
+      { authors: 'Stuart EA', title: 'Matching methods for causal inference: A review', year: 2010, doi: '10.1214/09-STS313' }
+    ]
   }
 ];

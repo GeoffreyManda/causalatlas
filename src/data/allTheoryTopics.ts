@@ -1,4 +1,4 @@
-import { TheoryTopic } from './theory';
+import { TheoryTopic, causalTheory } from './theory';
 import { frameworks } from './frameworks';
 import { studyDesigns } from './studyDesigns';
 import { estimandFamilies } from './estimandFamilies';
@@ -176,6 +176,7 @@ cat("Naive estimate (biased):", round(naive_effect, 2), "\\n")`
 // Export all theory topics combined
 export const allTheoryTopics: TheoryTopic[] = [
   introTopic,
+  ...causalTheory,  // Include core theory topics (DAGs, identification, etc.)
   ...frameworkTopics,
   ...studyDesignTopics,
   ...familyTopics
