@@ -23,9 +23,9 @@ export async function initializePython() {
       indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
     });
     
-    // Load common packages
-    await pyodideInstance.loadPackage(['numpy', 'scipy', 'scikit-learn', 'pandas']);
-    console.log('Pyodide loaded with packages');
+    // Load common packages including matplotlib for plotting
+    await pyodideInstance.loadPackage(['numpy', 'scipy', 'scikit-learn', 'pandas', 'matplotlib']);
+    console.log('Pyodide loaded with packages (numpy, scipy, scikit-learn, pandas, matplotlib)');
     
     return pyodideInstance;
   } finally {

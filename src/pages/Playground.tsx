@@ -189,12 +189,15 @@ const Playground = () => {
 
   const handleLessonSelect = (lesson: Lesson) => {
     setSelectedLesson(lesson);
-    setCode(language === 'python' ? lesson.pythonCode : lesson.rCode);
+    // Auto-switch to Python (preferred) or R based on lesson content
+    const targetLanguage = lesson.pythonCode ? 'python' : 'r';
+    setLanguage(targetLanguage);
+    setCode(targetLanguage === 'python' ? lesson.pythonCode : lesson.rCode);
     setOutput('');
     setShowLessons(false);
     toast({
       title: 'Lesson loaded',
-      description: lesson.title,
+      description: `${lesson.title} (${targetLanguage === 'python' ? 'Python' : 'R'})`,
     });
   };
 
