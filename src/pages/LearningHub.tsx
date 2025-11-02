@@ -10,7 +10,7 @@ import { estimandsData } from '@/data/estimands';
 const LearningHub = () => {
   const navigate = useNavigate();
   
-  // Categorize topics using same logic as TheoryLibrary
+  // Categorize topics using same strict logic
   const isMathTopic = (topic: any) => {
     const title = topic.title.toLowerCase();
     const desc = topic.description.toLowerCase();
@@ -25,7 +25,8 @@ const LearningHub = () => {
       'intervention', 'treatment', 'estimand', 'identification', 'unconfoundedness',
       'ignorability', 'exogeneity', 'endogeneity', 'selection bias', 'omitted variable',
       'synthetic control', 'event study', 'parallel trends', 'common support',
-      'balancing score', 'overlap', 'positivity', 'sutva', 'consistency'
+      'balancing score', 'overlap', 'positivity', 'sutva', 'consistency', 'framework',
+      'study design', 'observational', 'experimental'
     ];
     
     if (causalKeywords.some(keyword => content.includes(keyword))) {
@@ -33,13 +34,20 @@ const LearningHub = () => {
     }
     
     const pureMathKeywords = [
-      'probability theory', 'distribution theory', 'expectation theory', 'variance',
+      'measure theory', 'probability space', 'sigma-algebra', 'measurable',
+      'expectation', 'moment', 'variance', 'covariance', 'correlation',
+      'distribution', 'density', 'cumulative distribution',
       'convergence', 'limit theorem', 'central limit', 'law of large numbers',
       'moment generating', 'characteristic function', 'martingale',
-      'maximum likelihood', 'bayesian inference', 'hypothesis testing',
-      'confidence interval', 'p-value', 'power analysis',
-      'linear algebra', 'matrix theory', 'optimization',
-      'bootstrap', 'cross-validation', 'regularization'
+      'maximum likelihood', 'bayesian', 'hypothesis test', 'fisher information',
+      'confidence interval', 'p-value', 'power analysis', 'likelihood ratio',
+      'linear algebra', 'matrix', 'eigenvalue', 'optimization',
+      'bootstrap', 'cross-validation', 'regularization', 'lasso', 'ridge',
+      'statistical inference', 'estimator properties', 'bias', 'consistency',
+      'asymptotic', 'efficient', 'unbiased', 'sufficient statistic',
+      'regression analysis', 'linear model', 'generalized linear',
+      'semiparametric', 'nonparametric', 'kernel', 'spline',
+      'random variable', 'stochastic', 'markov', 'process'
     ];
     
     return pureMathKeywords.some(keyword => content.includes(keyword));

@@ -24,7 +24,7 @@ const TheoryLibrary = () => {
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced', 'Frontier'];
   const categories = ['all', 'math', 'causal'];
   
-  // Categorize topics - Causal keywords take priority
+  // Categorize topics - More strict math detection
   const isMathTopic = (topic: any) => {
     const title = topic.title.toLowerCase();
     const desc = topic.description.toLowerCase();
@@ -39,7 +39,8 @@ const TheoryLibrary = () => {
       'intervention', 'treatment', 'estimand', 'identification', 'unconfoundedness',
       'ignorability', 'exogeneity', 'endogeneity', 'selection bias', 'omitted variable',
       'synthetic control', 'event study', 'parallel trends', 'common support',
-      'balancing score', 'overlap', 'positivity', 'sutva', 'consistency'
+      'balancing score', 'overlap', 'positivity', 'sutva', 'consistency', 'framework',
+      'study design', 'observational', 'experimental'
     ];
     
     // If it contains causal keywords, it's a causal topic
@@ -47,15 +48,22 @@ const TheoryLibrary = () => {
       return false;
     }
     
-    // Pure math keywords - only these without causal context
+    // Pure math keywords - these are definitely math topics
     const pureMathKeywords = [
-      'probability theory', 'distribution theory', 'expectation theory', 'variance',
+      'measure theory', 'probability space', 'sigma-algebra', 'measurable',
+      'expectation', 'moment', 'variance', 'covariance', 'correlation',
+      'distribution', 'density', 'cumulative distribution',
       'convergence', 'limit theorem', 'central limit', 'law of large numbers',
       'moment generating', 'characteristic function', 'martingale',
-      'maximum likelihood', 'bayesian inference', 'hypothesis testing',
-      'confidence interval', 'p-value', 'power analysis',
-      'linear algebra', 'matrix theory', 'optimization',
-      'bootstrap', 'cross-validation', 'regularization'
+      'maximum likelihood', 'bayesian', 'hypothesis test', 'fisher information',
+      'confidence interval', 'p-value', 'power analysis', 'likelihood ratio',
+      'linear algebra', 'matrix', 'eigenvalue', 'optimization',
+      'bootstrap', 'cross-validation', 'regularization', 'lasso', 'ridge',
+      'statistical inference', 'estimator properties', 'bias', 'consistency',
+      'asymptotic', 'efficient', 'unbiased', 'sufficient statistic',
+      'regression analysis', 'linear model', 'generalized linear',
+      'semiparametric', 'nonparametric', 'kernel', 'spline',
+      'random variable', 'stochastic', 'markov', 'process'
     ];
     
     // Check if it's a pure math topic
@@ -67,6 +75,16 @@ const TheoryLibrary = () => {
     if (selectedCategory === 'math' && !isMathTopic(topic)) return false;
     if (selectedCategory === 'causal' && isMathTopic(topic)) return false;
     return true;
+  }).sort((a, b) => {
+    // Sort by tier order: Foundational → Intermediate → Advanced → Frontier
+    const tierOrder = { 'Foundational': 1, 'Basic': 1, 'Intermediate': 2, 'Advanced': 3, 'Frontier': 4 };
+    const tierA = tierOrder[a.tier as keyof typeof tierOrder] || 5;
+    const tierB = tierOrder[b.tier as keyof typeof tierOrder] || 5;
+    
+    if (tierA !== tierB) return tierA - tierB;
+    
+    // Within same tier, sort alphabetically by title
+    return a.title.localeCompare(b.title);
   });
 
   const stats = {
