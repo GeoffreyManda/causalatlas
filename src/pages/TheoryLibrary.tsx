@@ -13,10 +13,12 @@ const TheoryLibrary = () => {
   const [selectedTier, setSelectedTier] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  // Apply filter from URL param on mount
+  // Apply filters from URL params on mount
   useEffect(() => {
     const tier = searchParams.get('tier');
+    const category = searchParams.get('category');
     if (tier) setSelectedTier(tier);
+    if (category) setSelectedCategory(category);
   }, [searchParams]);
   
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced', 'Frontier'];
