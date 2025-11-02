@@ -4,14 +4,15 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Play, RotateCcw, Download, Upload, Settings } from 'lucide-react';
+import { Play, RotateCcw, Download, BookOpen, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { GraphicsCanvas } from '@/components/GraphicsCanvas';
+import { executePython, executeR } from '@/lib/codeExecution';
+import { allLessons, lessonsByTier, type Lesson } from '@/data/lessons';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const STARTER_CODE = {
   python: `# Python Code Editor with Visualization
@@ -136,6 +137,8 @@ const Playground = () => {
   const [output, setOutput] = useState('');
   const [running, setRunning] = useState(false);
   const [activeView, setActiveView] = useState('output');
+  const [showLessons, setShowLessons] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -176,8 +179,23 @@ const Playground = () => {
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
-    setCode(STARTER_CODE[value as keyof typeof STARTER_CODE] || '');
+    if (!selectedLesson) {
+      setCode(STARTER_CODE[value as keyof typeof STARTER_CODE] || '');
+    } else {
+      setCode(value === 'python' ? selectedLesson.pythonCode : selectedLesson.rCode);
+    }
     setOutput('');
+  };
+
+  const handleLessonSelect = (lesson: Lesson) => {
+    setSelectedLesson(lesson);
+    setCode(language === 'python' ? lesson.pythonCode : lesson.rCode);
+    setOutput('');
+    setShowLessons(false);
+    toast({
+      title: 'Lesson loaded',
+      description: lesson.title,
+    });
   };
 
   const runCode = async () => {
@@ -195,7 +213,6 @@ const Playground = () => {
 
     try {
       if (language === 'html') {
-        // Render HTML directly in iframe
         if (iframeRef.current) {
           const doc = iframeRef.current.contentDocument;
           if (doc) {
@@ -207,7 +224,6 @@ const Playground = () => {
         setActiveView('preview');
         setOutput('HTML rendered in preview tab');
       } else if (language === 'javascript') {
-        // Execute JavaScript locally
         try {
           const logs: string[] = [];
           const originalLog = console.log;
@@ -223,18 +239,19 @@ const Playground = () => {
         } catch (error: any) {
           setOutput(`Error: ${error.message}`);
         }
-      } else {
-        // For Python and R, call edge function
-        const { data, error } = await supabase.functions.invoke('execute-code', {
-          body: { code, language },
-        });
-
-        if (error) throw error;
-
-        setOutput(data.output || data.error || 'No output');
+      } else if (language === 'python') {
+        const result = await executePython(code);
+        setOutput(result.error || result.output);
         
-        if (terminalInstance.current && data.output) {
-          terminalInstance.current.writeln(data.output);
+        if (terminalInstance.current && result.output) {
+          terminalInstance.current.writeln(result.output);
+        }
+      } else if (language === 'r') {
+        const result = await executeR(code);
+        setOutput(result.error || result.output);
+        
+        if (terminalInstance.current && result.output) {
+          terminalInstance.current.writeln(result.output);
         }
       }
 
@@ -277,6 +294,15 @@ const Playground = () => {
       {/* Toolbar */}
       <div className="border-b bg-card px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          <Button 
+            onClick={() => setShowLessons(!showLessons)} 
+            variant={showLessons ? "default" : "outline"} 
+            size="sm"
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Lessons
+          </Button>
+
           <Select value={language} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select language" />
@@ -290,7 +316,7 @@ const Playground = () => {
           </Select>
 
           <Button onClick={runCode} disabled={running} size="sm">
-            <Play className="h-4 w-4 mr-2" />
+            {running ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
             Run
           </Button>
 
@@ -305,16 +331,55 @@ const Playground = () => {
           </Button>
         </div>
 
-        <Button variant="ghost" size="sm">
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
+        {selectedLesson && (
+          <div className="text-sm text-muted-foreground">
+            {selectedLesson.title}
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
       <ResizablePanelGroup direction="horizontal" className="flex-1">
+        {/* Lessons Panel */}
+        {showLessons && (
+          <>
+            <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+              <div className="h-full flex flex-col">
+                <div className="border-b bg-muted px-4 py-2 text-sm font-medium">
+                  Causal Inference Lessons
+                </div>
+                <ScrollArea className="flex-1">
+                  <div className="p-4 space-y-4">
+                    {Object.entries(lessonsByTier).map(([tier, lessons]) => (
+                      <div key={tier}>
+                        <h3 className="font-semibold text-sm mb-2">{tier}</h3>
+                        <div className="space-y-1">
+                          {lessons.map(lesson => (
+                            <Button
+                              key={lesson.id}
+                              variant={selectedLesson?.id === lesson.id ? "secondary" : "ghost"}
+                              className="w-full justify-start text-left h-auto py-2"
+                              onClick={() => handleLessonSelect(lesson)}
+                            >
+                              <div className="flex flex-col items-start">
+                                <div className="text-sm font-medium">{lesson.title}</div>
+                                <div className="text-xs text-muted-foreground">{lesson.description.slice(0, 50)}...</div>
+                              </div>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </ResizablePanel>
+            <ResizableHandle />
+          </>
+        )}
+
         {/* Editor Panel */}
-        <ResizablePanel defaultSize={50} minSize={30}>
+        <ResizablePanel defaultSize={showLessons ? 40 : 50} minSize={30}>
           <div className="h-full flex flex-col">
             <div className="border-b bg-muted px-4 py-2 text-sm font-medium">
               Editor
@@ -342,7 +407,7 @@ const Playground = () => {
         <ResizableHandle />
 
         {/* Output Panel */}
-        <ResizablePanel defaultSize={50} minSize={30}>
+        <ResizablePanel defaultSize={showLessons ? 40 : 50} minSize={30}>
           <div className="h-full flex flex-col">
             <Tabs value={activeView} onValueChange={setActiveView} className="flex-1 flex flex-col">
               <div className="border-b bg-muted">
