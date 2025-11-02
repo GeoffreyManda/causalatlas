@@ -276,6 +276,13 @@ const Playground = () => {
         }
         setActiveView('preview');
         setOutput('HTML rendered in preview tab');
+        
+        // Write to terminal
+        if (terminalInstance.current) {
+          terminalInstance.current.writeln('=== HTML Rendered ===');
+          terminalInstance.current.writeln('View the Preview tab to see output');
+          terminalInstance.current.writeln('');
+        }
       } else if (language === 'javascript') {
         try {
           const logs: string[] = [];
@@ -288,29 +295,71 @@ const Playground = () => {
           eval(code);
 
           console.log = originalLog;
-          setOutput(logs.join('\n') || 'Code executed successfully (no output)');
+          const outputText = logs.join('\n') || 'Code executed successfully (no output)';
+          setOutput(outputText);
+          
+          // Write to terminal
+          if (terminalInstance.current) {
+            terminalInstance.current.writeln('=== JavaScript Output ===');
+            terminalInstance.current.writeln(outputText);
+            terminalInstance.current.writeln('');
+          }
+          
+          setActiveView('output');
         } catch (error: any) {
-          setOutput(`Error: ${error.message}`);
+          const errorMsg = `Error: ${error.message}`;
+          setOutput(errorMsg);
+          
+          if (terminalInstance.current) {
+            terminalInstance.current.writeln('=== JavaScript Error ===');
+            terminalInstance.current.writeln(errorMsg);
+            terminalInstance.current.writeln('');
+          }
+          
+          setActiveView('output');
         }
       } else if (language === 'python') {
         const result = await executePython(code);
-        setOutput(result.error || result.output);
+        const outputText = result.error || result.output;
+        setOutput(outputText);
         
-        if (terminalInstance.current && result.output) {
-          terminalInstance.current.writeln(result.output);
+        // Write to terminal
+        if (terminalInstance.current) {
+          terminalInstance.current.writeln('=== Python Output ===');
+          terminalInstance.current.writeln(outputText);
+          terminalInstance.current.writeln('');
+        }
+        
+        // Auto-switch to graphics tab if DAG code is detected
+        if (code.includes('dag(') || code.includes('DAG(') || code.includes('create_dag')) {
+          setActiveView('graphics');
+        } else {
+          setActiveView('output');
         }
       } else if (language === 'r') {
         const result = await executeR(code);
-        setOutput(result.error || result.output);
+        const outputText = result.error || result.output;
+        setOutput(outputText);
         
-        if (terminalInstance.current && result.output) {
-          terminalInstance.current.writeln(result.output);
+        // Write to terminal
+        if (terminalInstance.current) {
+          terminalInstance.current.writeln('=== R Output ===');
+          terminalInstance.current.writeln(outputText);
+          terminalInstance.current.writeln('');
+        }
+        
+        // Auto-switch to graphics tab if DAG code is detected
+        if (code.includes('dag(') || code.includes('DAG(') || code.includes('create_dag')) {
+          setActiveView('graphics');
+        } else {
+          setActiveView('output');
         }
       }
 
       toast({
         title: 'Code executed',
-        description: 'Check the output below',
+        description: code.includes('dag(') || code.includes('DAG(') ? 'View graphics tab' : 
+                     language === 'html' ? 'View preview tab' : 'Check the output tab',
       });
     } catch (error: any) {
       const errorMsg = error.message || 'Failed to execute code';
@@ -329,7 +378,23 @@ const Playground = () => {
     setOutput('');
     if (terminalInstance.current) {
       terminalInstance.current.clear();
+      terminalInstance.current.writeln('Welcome to Causal Atlas IDE Terminal');
+      terminalInstance.current.writeln('Python & R Runtime with Package Installation');
+      terminalInstance.current.writeln('');
     }
+    // Clear iframe preview
+    if (iframeRef.current) {
+      const doc = iframeRef.current.contentDocument;
+      if (doc) {
+        doc.open();
+        doc.write('');
+        doc.close();
+      }
+    }
+    toast({
+      title: 'Cleared',
+      description: 'All outputs have been cleared',
+    });
   };
 
   const downloadCode = () => {

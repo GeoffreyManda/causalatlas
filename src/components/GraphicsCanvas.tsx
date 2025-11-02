@@ -260,6 +260,17 @@ export const GraphicsCanvas = ({ code, language }: GraphicsCanvasProps) => {
             <p className="text-sm">Run code with plot/visualization commands to see output here</p>
           </div>
         )}
+        {dagData && (
+          <div className="mt-4 p-3 bg-muted rounded-lg text-sm">
+            <p className="font-semibold mb-1">DAG Structure:</p>
+            <p className="text-muted-foreground">
+              {dagData.nodes.length} nodes, {dagData.edges.length} edges
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Drag nodes to rearrange • Arrows show causal direction
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
