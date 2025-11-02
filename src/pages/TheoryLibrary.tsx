@@ -22,12 +22,42 @@ const TheoryLibrary = () => {
   const tiers = ['all', 'Foundational', 'Intermediate', 'Advanced', 'Frontier'];
   const categories = ['all', 'math', 'causal'];
   
-  // Categorize topics
+  // Categorize topics - Causal keywords take priority
   const isMathTopic = (topic: any) => {
-    const mathKeywords = ['probability', 'distribution', 'expectation', 'variance', 'conditional', 'independence', 'theorem', 'proof', 'algebra', 'calculus', 'statistical', 'regression'];
     const title = topic.title.toLowerCase();
     const desc = topic.description.toLowerCase();
-    return mathKeywords.some(keyword => title.includes(keyword) || desc.includes(keyword));
+    const content = title + ' ' + desc;
+    
+    // Causal inference keywords - if any of these appear, it's NOT a math topic
+    const causalKeywords = [
+      'causal', 'dag', 'd-separation', 'do-calculus', 'counterfactual', 'potential outcome',
+      'instrumental variable', 'rdd', 'regression discontinuity', 'difference-in-differences',
+      'did', 'matching', 'propensity score', 'ate', 'att', 'atet', 'cate', 'late',
+      'backdoor', 'front-door', 'collider', 'confounder', 'mediation', 'graphoid',
+      'intervention', 'treatment', 'estimand', 'identification', 'unconfoundedness',
+      'ignorability', 'exogeneity', 'endogeneity', 'selection bias', 'omitted variable',
+      'synthetic control', 'event study', 'parallel trends', 'common support',
+      'balancing score', 'overlap', 'positivity', 'sutva', 'consistency'
+    ];
+    
+    // If it contains causal keywords, it's a causal topic
+    if (causalKeywords.some(keyword => content.includes(keyword))) {
+      return false;
+    }
+    
+    // Pure math keywords - only these without causal context
+    const pureMathKeywords = [
+      'probability theory', 'distribution theory', 'expectation theory', 'variance',
+      'convergence', 'limit theorem', 'central limit', 'law of large numbers',
+      'moment generating', 'characteristic function', 'martingale',
+      'maximum likelihood', 'bayesian inference', 'hypothesis testing',
+      'confidence interval', 'p-value', 'power analysis',
+      'linear algebra', 'matrix theory', 'optimization',
+      'bootstrap', 'cross-validation', 'regularization'
+    ];
+    
+    // Check if it's a pure math topic
+    return pureMathKeywords.some(keyword => content.includes(keyword));
   };
   
   const filteredTopics = allTheoryTopics.filter(topic => {
