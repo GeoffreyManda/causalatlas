@@ -1,73 +1,89 @@
-# Welcome to your Lovable project
+# Causal Inference Atlas - Interactive Educational Platform
 
-## Project info
+A fully functional, publication-grade educational platform for learning causal inference, featuring interactive code execution, comprehensive content from leading textbooks, and advanced visualization tools.
 
-**URL**: https://lovable.dev/projects/5baa0ab1-b87b-4f21-bb7f-26211883d138
+## 🌟 Key Features
 
-## How can I edit this code?
+### 1. **Complete Slide-Based Educational Content**
+- **35+ Estimands** with detailed explanations
+- **100+ Theory Topics** organized by tier
+- **Scientifically Valid Content** based on Hernán & Robins "What If" and Pearl's "Causality"
+- Complete sections: Data Structure, Diagnostics, Sensitivity, Ethics & Reporting
 
-There are several ways of editing your application.
+### 2. **Fully Functional Code Playground**
+- **Code Translation Engine**: Automatic translation between R, Python, JavaScript, and HTML
+- **Complete Code Execution**: Python (Pyodide), R (WebR), JavaScript, HTML
+- **Terminal with Package Manager**: Install packages on-the-fly (`pip install`, `install.packages()`)
+- **60+ Lessons** with complete, working code (no placeholders)
 
-**Use Lovable**
+### 3. **GitHub Pages Deployment**
+- Configured for automatic deployment via GitHub Actions
+- Optimized production build with code splitting
+- Triggers on push to `main` and `claude/**` branches
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5baa0ab1-b87b-4f21-bb7f-26211883d138) and start prompting.
+## 🚀 Quick Start
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Local Development
+```bash
+npm install
 npm run dev
+# Open http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+### Production Build
+```bash
+npm run build
+npm run preview
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📚 Content from Leading Textbooks
 
-**Use GitHub Codespaces**
+### From "What If" (Hernán & Robins)
+- Chapter 1: Definition of causal effects using potential outcomes
+- Chapter 2: Randomization and exchangeability
+- Chapter 12: Inverse Probability Weighting (IPW)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### From "Causality" (Pearl)
+- Chapter 3: do-calculus and backdoor criterion
+- Backdoor adjustment formula implementation
+- DAG-based identification strategies
 
-## What technologies are used for this project?
+## 🛠️ Technical Stack
 
-This project is built with:
+- **React 18.3** with TypeScript
+- **Vite 5.4** build tool
+- **Tailwind CSS 3.4** with custom design system
+- **Pyodide 0.26.4**: Python in browser
+- **WebR 0.3.3**: R in browser
+- **D3.js 7.9**: Interactive visualizations
+- **Monaco Editor**: VS Code-like editing experience
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📊 Statistics
 
-## How can I deploy this project?
+- **35+ Estimands** with complete documentation
+- **100+ Theory Topics** across all tiers
+- **60+ Lessons** with executable code
+- **5 Causal Frameworks** covered
+- **18 Study Designs** documented
 
-Simply open [Lovable](https://lovable.dev/projects/5baa0ab1-b87b-4f21-bb7f-26211883d138) and click on Share -> Publish.
+## 🎯 Using the Platform
 
-## Can I connect a custom domain to my Lovable project?
+1. **Browse estimands** in the library (filterable by tier, framework, design)
+2. **Learn theory** through comprehensive slide presentations
+3. **Practice coding** in the interactive playground
+4. **Translate code** between languages with one click
+5. **Visualize relationships** in the network view
 
-Yes, you can!
+## 📖 Documentation
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+For detailed documentation, see the source code comments and inline help.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🙏 Acknowledgments
+
+- Miguel Hernán and Jamie Robins for "What If"
+- Judea Pearl for "Causality"
+- The broader causal inference community
+
+---
+
+**Built for the causal inference community**
