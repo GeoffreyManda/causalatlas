@@ -163,8 +163,58 @@ const Playground = () => {
     fitAddon.fit();
 
     terminal.writeln('Welcome to Causal Atlas IDE Terminal');
-    terminal.writeln('Type your commands here...');
+    terminal.writeln('Python & R Runtime with Package Installation');
     terminal.writeln('');
+    terminal.writeln('Commands:');
+    terminal.writeln('  Python: pip install <package>');
+    terminal.writeln('  R: install.packages("<package>")');
+    terminal.writeln('');
+    terminal.write('$ ');
+
+    let currentLine = '';
+
+    terminal.onData(async (data) => {
+      const code = data.charCodeAt(0);
+
+      if (code === 13) { // Enter
+        terminal.writeln('');
+        
+        if (currentLine.trim()) {
+          const command = currentLine.trim();
+          
+          if (command.startsWith('pip install ')) {
+            const pkg = command.substring(12).trim();
+            terminal.writeln(`Installing Python package: ${pkg}...`);
+            const { installPythonPackage } = await import('@/lib/codeExecution');
+            const result = await installPythonPackage(pkg);
+            terminal.writeln(result.error || result.output);
+          } else if (command.includes('install.packages')) {
+            const match = command.match(/install\.packages\(['"]([^'"]+)['"]\)/);
+            if (match) {
+              const pkg = match[1];
+              terminal.writeln(`Installing R package: ${pkg}...`);
+              const { installRPackage } = await import('@/lib/codeExecution');
+              const result = await installRPackage(pkg);
+              terminal.writeln(result.error || result.output);
+            }
+          } else {
+            terminal.writeln(`Unknown command: ${command}`);
+            terminal.writeln('Use "pip install <package>" or \'install.packages("<package>")\'');
+          }
+        }
+        
+        currentLine = '';
+        terminal.write('$ ');
+      } else if (code === 127) { // Backspace
+        if (currentLine.length > 0) {
+          currentLine = currentLine.slice(0, -1);
+          terminal.write('\b \b');
+        }
+      } else if (code >= 32) { // Printable characters
+        currentLine += data;
+        terminal.write(data);
+      }
+    });
 
     terminalInstance.current = terminal;
 

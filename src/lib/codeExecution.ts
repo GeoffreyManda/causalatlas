@@ -55,9 +55,36 @@ export async function initializeR() {
   }
 }
 
+export async function installPythonPackage(packageName: string): Promise<{ output: string; error?: string }> {
+  try {
+    const pyodide = await initializePython();
+    await pyodide.loadPackage(['micropip']);
+    await pyodide.runPythonAsync(`
+      import micropip
+      await micropip.install('${packageName}')
+    `);
+    return { output: `Successfully installed ${packageName}` };
+  } catch (error: any) {
+    return { 
+      output: '', 
+      error: `Failed to install ${packageName}: ${error.message}`
+    };
+  }
+}
+
 export async function executePython(code: string): Promise<{ output: string; error?: string }> {
   try {
     const pyodide = await initializePython();
+    
+    // Check for pip install commands
+    const pipMatch = code.match(/pip install ([a-zA-Z0-9_-]+)/);
+    if (pipMatch) {
+      const packageName = pipMatch[1];
+      const installResult = await installPythonPackage(packageName);
+      if (installResult.error) return installResult;
+      // Remove the pip install line and continue
+      code = code.replace(/pip install [a-zA-Z0-9_-]+\n?/, '');
+    }
     
     // Capture stdout
     let output = '';
@@ -79,9 +106,42 @@ export async function executePython(code: string): Promise<{ output: string; err
   }
 }
 
+export async function installRPackage(packageName: string): Promise<{ output: string; error?: string }> {
+  try {
+    const webR = await initializeR();
+    const shelter = await new webR.Shelter();
+    
+    try {
+      await shelter.captureR(`install.packages('${packageName}', repos='https://cran.r-project.org')`, {
+        withAutoprint: false,
+        captureStreams: true,
+        captureConditions: false,
+      });
+      return { output: `Successfully installed ${packageName}` };
+    } finally {
+      shelter.purge();
+    }
+  } catch (error: any) {
+    return { 
+      output: '', 
+      error: `Failed to install ${packageName}: ${error.message}`
+    };
+  }
+}
+
 export async function executeR(code: string): Promise<{ output: string; error?: string }> {
   try {
     const webR = await initializeR();
+    
+    // Check for install.packages commands
+    const installMatch = code.match(/install\.packages\(['"]([^'"]+)['"]\)/);
+    if (installMatch) {
+      const packageName = installMatch[1];
+      const installResult = await installRPackage(packageName);
+      if (installResult.error) return installResult;
+      // Remove the install.packages line and continue
+      code = code.replace(/install\.packages\(['"][^'"]+['"]\)\n?/, '');
+    }
     
     let output = '';
     

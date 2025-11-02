@@ -1,5 +1,6 @@
 import { estimandsData } from './estimands';
 import { allTheoryTopics } from './allTheoryTopics';
+import { dagLessons } from './dagLessons';
 
 export interface Lesson {
   id: string;
@@ -41,6 +42,7 @@ export const theoryLessons: Lesson[] = allTheoryTopics
 
 // All lessons combined
 export const allLessons: Lesson[] = [
+  ...dagLessons,
   ...theoryLessons,
   ...estimandLessons
 ];
