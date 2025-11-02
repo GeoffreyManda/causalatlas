@@ -175,30 +175,516 @@ export const causalTheory: TheoryTopic[] = [
   },
 
   {
-    id: 'optimization_methods',
-    title: 'Optimization Methods',
-    tier: 'Intermediate',
-    description: 'Convex optimization, gradient descent, Newton methods, and constrained optimization',
-    content: `*Content pending. This topic will cover: convex functions, gradient descent, Newton-Raphson, constrained optimization, Lagrange multipliers, KKT conditions.*`,
-    prerequisites: ['linear_algebra_statistics'],
+    id: 'multivariate_distributions',
+    title: 'Multivariate Distributions',
+    tier: 'Foundational',
+    description: 'Joint, marginal, and conditional distributions; multivariate normal; transformations',
+    content: `Understanding multiple random variables simultaneously is essential for causal inference with multiple confounders and covariates.`,
+    prerequisites: ['expectation_theory'],
     learningObjectives: [
-      'Identify convex optimization problems',
-      'Apply gradient descent methods',
-      'Use Newton-Raphson algorithm',
-      'Solve constrained optimization with Lagrange multipliers'
+      'Work with joint probability distributions',
+      'Compute marginal and conditional distributions',
+      'Understand multivariate normal distribution',
+      'Apply transformation theorems (Jacobian)'
     ],
     keyDefinitions: [
-      { term: 'Convex function', definition: 'f(λx + (1-λ)y) ≤ λf(x) + (1-λ)f(y) for λ ∈ [0,1]' },
-      { term: 'Gradient descent', definition: 'Iterative: x_{k+1} = x_k - α∇f(x_k)' },
-      { term: 'Newton method', definition: 'x_{k+1} = x_k - H^{-1}∇f(x_k) using Hessian H' },
-      { term: 'Lagrange multiplier', definition: 'Method to optimize with equality constraints' }
+      { term: 'Joint distribution', definition: 'P(X,Y) describes probability of (X,Y) pairs' },
+      { term: 'Marginal distribution', definition: 'P(X) = ∫ P(X,Y) dY obtained by integrating out Y' },
+      { term: 'Conditional distribution', definition: 'P(Y|X) = P(X,Y)/P(X) when P(X) > 0' },
+      { term: 'Multivariate normal', definition: 'X ~ N(μ, Σ) with mean vector μ and covariance matrix Σ' }
     ],
     examples: {
-      python: `# Placeholder - optimization`,
-      r: `# Placeholder - optimization`
+      python: `# Multivariate Distributions
+import numpy as np
+import scipy.stats as stats
+
+# Define multivariate normal parameters
+mu = np.array([0, 0])  # mean vector
+Sigma = np.array([[1, 0.5], [0.5, 1]])  # covariance matrix
+
+# Create multivariate normal distribution
+mvn = stats.multivariate_normal(mean=mu, cov=Sigma)
+
+# Sample from distribution
+samples = mvn.rvs(size=1000)
+print(f"Sample shape: {samples.shape}")
+print(f"Sample mean: {samples.mean(axis=0)}")
+print(f"Sample covariance:\\n{np.cov(samples.T)}")
+
+# Compute marginal distributions
+# X1 ~ N(0, 1)
+print(f"\\nMarginal X1 ~ N({mu[0]}, {Sigma[0,0]})")
+
+# Conditional distribution: X2|X1=x ~ N(μ_2|1, Σ_2|1)
+x1_given = 1.0
+mu_conditional = mu[1] + Sigma[1,0]/Sigma[0,0] * (x1_given - mu[0])
+sigma_conditional = Sigma[1,1] - Sigma[1,0]**2/Sigma[0,0]
+print(f"\\nConditional X2|X1={x1_given} ~ N({mu_conditional:.2f}, {sigma_conditional:.2f})")
+
+# Joint probability density at a point
+point = np.array([0, 0])
+pdf_value = mvn.pdf(point)
+print(f"\\nJoint PDF at (0,0): {pdf_value:.4f}")`,
+      r: `# Multivariate Distributions
+library(mvtnorm)
+
+# Define multivariate normal parameters
+mu <- c(0, 0)  # mean vector
+Sigma <- matrix(c(1, 0.5, 0.5, 1), nrow=2)  # covariance matrix
+
+# Sample from distribution
+set.seed(42)
+samples <- rmvnorm(n=1000, mean=mu, sigma=Sigma)
+cat("Sample dimensions:", dim(samples), "\\n")
+cat("Sample mean:", colMeans(samples), "\\n")
+cat("Sample covariance:\\n")
+print(cov(samples))
+
+# Marginal distributions
+# X1 ~ N(0, 1)
+cat("\\nMarginal X1 ~ N(", mu[1], ",", Sigma[1,1], ")\\n")
+
+# Conditional distribution: X2|X1=x ~ N(μ_2|1, Σ_2|1)
+x1_given <- 1.0
+mu_conditional <- mu[2] + Sigma[2,1]/Sigma[1,1] * (x1_given - mu[1])
+sigma_conditional <- Sigma[2,2] - Sigma[2,1]^2/Sigma[1,1]
+cat("\\nConditional X2|X1=", x1_given, " ~ N(", 
+    round(mu_conditional, 2), ",", round(sigma_conditional, 2), ")\\n")
+
+# Joint probability density at a point
+point <- c(0, 0)
+pdf_value <- dmvnorm(point, mean=mu, sigma=Sigma)
+cat("\\nJoint PDF at (0,0):", round(pdf_value, 4), "\\n")`
     },
     references: [
-      { authors: 'Boyd S, Vandenberghe L', title: 'Convex Optimization', year: 2004, doi: '10.1017/CBO9780511804441' }
+      { authors: 'Anderson TW', title: 'An Introduction to Multivariate Statistical Analysis', year: 2003, doi: '10.1002/9780470316641' }
+    ]
+  },
+
+  {
+    id: 'regression_analysis',
+    title: 'Regression Analysis Theory',
+    tier: 'Foundational',
+    description: 'Least squares, Gauss-Markov theorem, projection matrices, residuals, and model diagnostics',
+    content: `Regression is the workhorse of causal inference, providing the foundation for adjustment, outcome modeling, and understanding linear relationships.`,
+    prerequisites: ['linear_algebra_statistics', 'multivariate_distributions'],
+    learningObjectives: [
+      'Derive ordinary least squares estimator',
+      'Understand Gauss-Markov theorem',
+      'Compute residuals and fitted values',
+      'Perform model diagnostics and R²'
+    ],
+    keyDefinitions: [
+      { term: 'OLS estimator', definition: 'β̂ = (X^T X)^{-1} X^T Y minimizing sum of squared residuals' },
+      { term: 'Gauss-Markov theorem', definition: 'OLS is BLUE (Best Linear Unbiased Estimator) under assumptions' },
+      { term: 'Projection matrix', definition: 'H = X(X^T X)^{-1}X^T projects onto column space of X' },
+      { term: 'R-squared', definition: 'R² = 1 - SSE/SST measures proportion of variance explained' }
+    ],
+    examples: {
+      python: `# Regression Analysis Theory
+import numpy as np
+from scipy import stats
+
+# Generate data
+np.random.seed(42)
+n = 100
+X = np.random.randn(n, 2)
+X = np.column_stack([np.ones(n), X])  # Add intercept
+true_beta = np.array([1.0, 2.0, -1.5])
+y = X @ true_beta + np.random.randn(n) * 0.5
+
+# OLS Estimation: β̂ = (X'X)^{-1} X'y
+XtX = X.T @ X
+XtX_inv = np.linalg.inv(XtX)
+beta_hat = XtX_inv @ X.T @ y
+
+print("OLS Estimates:")
+print(f"β̂ = {beta_hat}")
+print(f"True β = {true_beta}")
+
+# Projection matrix H = X(X'X)^{-1}X'
+H = X @ XtX_inv @ X.T
+print(f"\\nProjection matrix H is idempotent: H² = H")
+print(f"Check: ||H² - H|| = {np.linalg.norm(H @ H - H):.10f}")
+
+# Fitted values and residuals
+y_hat = X @ beta_hat
+residuals = y - y_hat
+print(f"\\nResiduals sum to zero: {residuals.sum():.10f}")
+
+# Standard errors
+sigma_squared = (residuals ** 2).sum() / (n - X.shape[1])
+se_beta = np.sqrt(np.diag(XtX_inv) * sigma_squared)
+print(f"\\nStandard errors: {se_beta}")
+
+# R-squared
+SST = ((y - y.mean()) ** 2).sum()
+SSE = (residuals ** 2).sum()
+R2 = 1 - SSE / SST
+print(f"\\nR² = {R2:.4f}")
+
+# T-statistics
+t_stats = beta_hat / se_beta
+p_values = 2 * (1 - stats.t.cdf(np.abs(t_stats), n - X.shape[1]))
+print(f"\\nT-statistics: {t_stats}")
+print(f"P-values: {p_values}")`,
+      r: `# Regression Analysis Theory
+set.seed(42)
+
+# Generate data
+n <- 100
+X1 <- rnorm(n)
+X2 <- rnorm(n)
+X <- cbind(1, X1, X2)  # Design matrix with intercept
+true_beta <- c(1.0, 2.0, -1.5)
+y <- X %*% true_beta + rnorm(n, sd=0.5)
+
+# OLS Estimation: β̂ = (X'X)^{-1} X'y
+XtX <- t(X) %*% X
+XtX_inv <- solve(XtX)
+beta_hat <- XtX_inv %*% t(X) %*% y
+
+cat("OLS Estimates:\\n")
+print(beta_hat)
+cat("\\nTrue β:\\n")
+print(true_beta)
+
+# Projection matrix H = X(X'X)^{-1}X'
+H <- X %*% XtX_inv %*% t(X)
+cat("\\nProjection matrix H is idempotent: H² = H\\n")
+cat("Check: ||H² - H|| =", norm(H %*% H - H, "F"), "\\n")
+
+# Fitted values and residuals
+y_hat <- X %*% beta_hat
+residuals <- y - y_hat
+cat("\\nResiduals sum to zero:", sum(residuals), "\\n")
+
+# Standard errors
+sigma_squared <- sum(residuals^2) / (n - ncol(X))
+se_beta <- sqrt(diag(XtX_inv) * sigma_squared)
+cat("\\nStandard errors:", se_beta, "\\n")
+
+# R-squared
+SST <- sum((y - mean(y))^2)
+SSE <- sum(residuals^2)
+R2 <- 1 - SSE / SST
+cat("\\nR² =", round(R2, 4), "\\n")
+
+# T-statistics
+t_stats <- beta_hat / se_beta
+p_values <- 2 * (1 - pt(abs(t_stats), n - ncol(X)))
+cat("\\nT-statistics:", t_stats, "\\n")
+cat("P-values:", p_values, "\\n")
+
+# Compare with lm()
+fit <- lm(y ~ X1 + X2)
+cat("\\nVerification with lm():\\n")
+print(summary(fit)$coefficients)`
+    },
+    references: [
+      { authors: 'Greene WH', title: 'Econometric Analysis', year: 2018, doi: '10.4324/9781315794587' }
+    ]
+  },
+
+  {
+    id: 'likelihood_theory',
+    title: 'Likelihood Theory & Maximum Likelihood',
+    tier: 'Foundational',
+    description: 'Likelihood functions, score functions, Fisher information, and Cramér-Rao bound',
+    content: `Maximum likelihood estimation is the foundation for modern parametric and semiparametric methods in causal inference.`,
+    prerequisites: ['expectation_theory', 'multivariate_distributions'],
+    learningObjectives: [
+      'Construct likelihood functions',
+      'Derive maximum likelihood estimators',
+      'Compute Fisher information',
+      'Apply Cramér-Rao lower bound'
+    ],
+    keyDefinitions: [
+      { term: 'Likelihood', definition: 'L(θ|x) = f(x|θ) viewed as function of θ for fixed data x' },
+      { term: 'Score function', definition: 'U(θ) = ∂/∂θ log L(θ) has mean zero at true θ' },
+      { term: 'Fisher information', definition: 'I(θ) = E[U(θ)²] = -E[∂²/∂θ² log L(θ)]' },
+      { term: 'Cramér-Rao bound', definition: 'Var(T) ≥ 1/I(θ) for any unbiased estimator T' }
+    ],
+    examples: {
+      python: `# Likelihood Theory and MLE
+import numpy as np
+from scipy import stats, optimize
+
+# Generate data from normal distribution
+np.random.seed(42)
+true_mu = 5.0
+true_sigma = 2.0
+n = 100
+data = np.random.normal(true_mu, true_sigma, n)
+
+# Define log-likelihood for normal distribution
+def log_likelihood(params, data):
+    mu, sigma = params
+    if sigma <= 0:
+        return -np.inf
+    ll = -n/2 * np.log(2*np.pi) - n*np.log(sigma) - np.sum((data - mu)**2)/(2*sigma**2)
+    return ll
+
+# MLE via optimization
+def neg_log_lik(params, data):
+    return -log_likelihood(params, data)
+
+result = optimize.minimize(neg_log_lik, x0=[0, 1], args=(data,), 
+                          method='Nelder-Mead')
+mu_mle, sigma_mle = result.x
+
+print("Maximum Likelihood Estimates:")
+print(f"μ̂_MLE = {mu_mle:.4f} (true = {true_mu})")
+print(f"σ̂_MLE = {sigma_mle:.4f} (true = {true_sigma})")
+
+# Closed-form MLEs
+mu_mle_closed = data.mean()
+sigma_mle_closed = np.sqrt(((data - mu_mle_closed)**2).sum() / n)
+print(f"\\nClosed-form MLEs:")
+print(f"μ̂ = {mu_mle_closed:.4f}")
+print(f"σ̂ = {sigma_mle_closed:.4f}")
+
+# Score function at true parameters
+def score_mu(mu, sigma, data):
+    return np.sum(data - mu) / sigma**2
+
+def score_sigma(mu, sigma, data):
+    return -n/sigma + np.sum((data - mu)**2) / sigma**3
+
+score_mu_val = score_mu(mu_mle, sigma_mle, data)
+score_sigma_val = score_sigma(mu_mle, sigma_mle, data)
+print(f"\\nScore at MLE (should be ~0):")
+print(f"U(μ) = {score_mu_val:.6f}")
+print(f"U(σ) = {score_sigma_val:.6f}")
+
+# Fisher Information
+I_mu = n / true_sigma**2
+I_sigma = 2*n / true_sigma**2
+print(f"\\nFisher Information:")
+print(f"I(μ) = {I_mu:.2f}")
+print(f"I(σ) = {I_sigma:.2f}")
+
+# Cramér-Rao lower bounds
+CRLB_mu = 1 / I_mu
+CRLB_sigma = 1 / I_sigma
+print(f"\\nCramér-Rao Lower Bounds:")
+print(f"Var(μ̂) ≥ {CRLB_mu:.4f}")
+print(f"Var(σ̂) ≥ {CRLB_sigma:.4f}")
+
+# Actual variances of MLEs
+print(f"\\nActual asymptotic variances:")
+print(f"Var(μ̂_MLE) = σ²/n = {true_sigma**2/n:.4f}")
+print(f"Var(σ̂_MLE) ≈ σ²/(2n) = {true_sigma**2/(2*n):.4f}")`,
+      r: `# Likelihood Theory and MLE
+set.seed(42)
+
+# Generate data from normal distribution
+true_mu <- 5.0
+true_sigma <- 2.0
+n <- 100
+data <- rnorm(n, mean=true_mu, sd=true_sigma)
+
+# Define log-likelihood for normal distribution
+log_likelihood <- function(params, data) {
+  mu <- params[1]
+  sigma <- params[2]
+  if (sigma <= 0) return(-Inf)
+  ll <- -n/2 * log(2*pi) - n*log(sigma) - sum((data - mu)^2)/(2*sigma^2)
+  return(ll)
+}
+
+# MLE via optimization
+neg_log_lik <- function(params, data) {
+  -log_likelihood(params, data)
+}
+
+result <- optim(c(0, 1), neg_log_lik, data=data, method="Nelder-Mead")
+mu_mle <- result$par[1]
+sigma_mle <- result$par[2]
+
+cat("Maximum Likelihood Estimates:\\n")
+cat("μ̂_MLE =", round(mu_mle, 4), "(true =", true_mu, ")\\n")
+cat("σ̂_MLE =", round(sigma_mle, 4), "(true =", true_sigma, ")\\n")
+
+# Closed-form MLEs
+mu_mle_closed <- mean(data)
+sigma_mle_closed <- sqrt(sum((data - mu_mle_closed)^2) / n)
+cat("\\nClosed-form MLEs:\\n")
+cat("μ̂ =", round(mu_mle_closed, 4), "\\n")
+cat("σ̂ =", round(sigma_mle_closed, 4), "\\n")
+
+# Score function at true parameters
+score_mu <- function(mu, sigma, data) {
+  sum(data - mu) / sigma^2
+}
+
+score_sigma <- function(mu, sigma, data) {
+  -n/sigma + sum((data - mu)^2) / sigma^3
+}
+
+score_mu_val <- score_mu(mu_mle, sigma_mle, data)
+score_sigma_val <- score_sigma(mu_mle, sigma_mle, data)
+cat("\\nScore at MLE (should be ~0):\\n")
+cat("U(μ) =", round(score_mu_val, 6), "\\n")
+cat("U(σ) =", round(score_sigma_val, 6), "\\n")
+
+# Fisher Information
+I_mu <- n / true_sigma^2
+I_sigma <- 2*n / true_sigma^2
+cat("\\nFisher Information:\\n")
+cat("I(μ) =", round(I_mu, 2), "\\n")
+cat("I(σ) =", round(I_sigma, 2), "\\n")
+
+# Cramér-Rao lower bounds
+CRLB_mu <- 1 / I_mu
+CRLB_sigma <- 1 / I_sigma
+cat("\\nCramér-Rao Lower Bounds:\\n")
+cat("Var(μ̂) ≥", round(CRLB_mu, 4), "\\n")
+cat("Var(σ̂) ≥", round(CRLB_sigma, 4), "\\n")
+
+# Actual variances of MLEs
+cat("\\nActual asymptotic variances:\\n")
+cat("Var(μ̂_MLE) = σ²/n =", round(true_sigma^2/n, 4), "\\n")
+cat("Var(σ̂_MLE) ≈ σ²/(2n) =", round(true_sigma^2/(2*n), 4), "\\n")`
+    },
+    references: [
+      { authors: 'Casella G, Berger RL', title: 'Statistical Inference', year: 2002, doi: '10.1007/978-1-4899-4629-4' }
+    ]
+  },
+
+  {
+    id: 'statistical_inference',
+    title: 'Statistical Inference Fundamentals',
+    tier: 'Foundational',
+    description: 'Point estimation, confidence intervals, hypothesis testing, p-values, and error rates',
+    content: `Statistical inference provides the tools to draw conclusions from data with quantified uncertainty, essential for causal effect estimation.`,
+    prerequisites: ['likelihood_theory', 'convergence_limit_theorems'],
+    learningObjectives: [
+      'Construct confidence intervals',
+      'Perform hypothesis tests',
+      'Interpret p-values correctly',
+      'Understand Type I and Type II errors'
+    ],
+    keyDefinitions: [
+      { term: 'Confidence interval', definition: '[L, U] such that P(θ ∈ [L,U]) = 1-α for parameter θ' },
+      { term: 'P-value', definition: 'Probability of observing data as extreme as observed, under H₀' },
+      { term: 'Type I error', definition: 'Reject H₀ when H₀ is true (false positive), α = P(Type I)' },
+      { term: 'Type II error', definition: 'Fail to reject H₀ when H₁ is true (false negative), β = P(Type II)' }
+    ],
+    examples: {
+      python: `# Statistical Inference Fundamentals
+import numpy as np
+from scipy import stats
+
+# Generate data: test if treatment has effect
+np.random.seed(42)
+n_control = 50
+n_treated = 50
+control = np.random.normal(10, 2, n_control)
+treated = np.random.normal(12, 2, n_treated)  # True effect = 2
+
+# Point estimate of treatment effect
+ate_hat = treated.mean() - control.mean()
+print(f"Estimated ATE: {ate_hat:.3f}")
+
+# Standard error using pooled variance
+s_pooled = np.sqrt(((n_control-1)*control.var() + (n_treated-1)*treated.var()) / 
+                   (n_control + n_treated - 2))
+se = s_pooled * np.sqrt(1/n_control + 1/n_treated)
+print(f"Standard Error: {se:.3f}")
+
+# 95% Confidence Interval
+alpha = 0.05
+df = n_control + n_treated - 2
+t_crit = stats.t.ppf(1 - alpha/2, df)
+ci_lower = ate_hat - t_crit * se
+ci_upper = ate_hat + t_crit * se
+print(f"\\n95% CI: [{ci_lower:.3f}, {ci_upper:.3f}]")
+
+# Hypothesis test: H₀: ATE = 0 vs H₁: ATE ≠ 0
+t_stat = ate_hat / se
+p_value = 2 * (1 - stats.t.cdf(abs(t_stat), df))
+print(f"\\nHypothesis Test:")
+print(f"T-statistic: {t_stat:.3f}")
+print(f"P-value: {p_value:.4f}")
+print(f"Reject H₀ at α=0.05: {p_value < 0.05}")
+
+# Power analysis
+# Power = P(Reject H₀ | H₁ true) = 1 - β
+true_effect = 2.0
+ncp = true_effect / se  # Non-centrality parameter
+power = 1 - stats.t.cdf(t_crit, df, ncp) + stats.t.cdf(-t_crit, df, ncp)
+print(f"\\nPower Analysis:")
+print(f"Power (1-β) for true effect={true_effect}: {power:.3f}")
+
+# Multiple testing correction (Bonferroni)
+n_tests = 5
+alpha_bonf = alpha / n_tests
+print(f"\\nBonferroni correction for {n_tests} tests:")
+print(f"Individual α: {alpha_bonf:.4f}")
+
+# Effect size (Cohen's d)
+cohens_d = (treated.mean() - control.mean()) / s_pooled
+print(f"\\nCohen's d: {cohens_d:.3f}")`,
+      r: `# Statistical Inference Fundamentals
+set.seed(42)
+
+# Generate data: test if treatment has effect
+n_control <- 50
+n_treated <- 50
+control <- rnorm(n_control, mean=10, sd=2)
+treated <- rnorm(n_treated, mean=12, sd=2)  # True effect = 2
+
+# Point estimate of treatment effect
+ate_hat <- mean(treated) - mean(control)
+cat("Estimated ATE:", round(ate_hat, 3), "\\n")
+
+# Standard error using pooled variance
+s_pooled <- sqrt(((n_control-1)*var(control) + (n_treated-1)*var(treated)) / 
+                 (n_control + n_treated - 2))
+se <- s_pooled * sqrt(1/n_control + 1/n_treated)
+cat("Standard Error:", round(se, 3), "\\n")
+
+# 95% Confidence Interval
+alpha <- 0.05
+df <- n_control + n_treated - 2
+t_crit <- qt(1 - alpha/2, df)
+ci_lower <- ate_hat - t_crit * se
+ci_upper <- ate_hat + t_crit * se
+cat("\\n95% CI: [", round(ci_lower, 3), ",", round(ci_upper, 3), "]\\n")
+
+# Hypothesis test: H₀: ATE = 0 vs H₁: ATE ≠ 0
+t_stat <- ate_hat / se
+p_value <- 2 * (1 - pt(abs(t_stat), df))
+cat("\\nHypothesis Test:\\n")
+cat("T-statistic:", round(t_stat, 3), "\\n")
+cat("P-value:", round(p_value, 4), "\\n")
+cat("Reject H₀ at α=0.05:", p_value < 0.05, "\\n")
+
+# Verify with t.test
+test_result <- t.test(treated, control, var.equal=TRUE)
+cat("\\nVerification with t.test():\\n")
+print(test_result)
+
+# Power analysis
+true_effect <- 2.0
+ncp <- true_effect / se  # Non-centrality parameter
+power <- 1 - pt(t_crit, df, ncp) + pt(-t_crit, df, ncp)
+cat("\\nPower Analysis:\\n")
+cat("Power (1-β) for true effect=", true_effect, ":", round(power, 3), "\\n")
+
+# Multiple testing correction (Bonferroni)
+n_tests <- 5
+alpha_bonf <- alpha / n_tests
+cat("\\nBonferroni correction for", n_tests, "tests:\\n")
+cat("Individual α:", round(alpha_bonf, 4), "\\n")
+
+# Effect size (Cohen's d)
+cohens_d <- (mean(treated) - mean(control)) / s_pooled
+cat("\\nCohen's d:", round(cohens_d, 3), "\\n")`
+    },
+    references: [
+      { authors: 'Casella G, Berger RL', title: 'Statistical Inference', year: 2002, doi: '10.1007/978-1-4899-4629-4' }
     ]
   },
 
