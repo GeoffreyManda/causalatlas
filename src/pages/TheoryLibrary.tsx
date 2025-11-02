@@ -83,7 +83,57 @@ const TheoryLibrary = () => {
     
     if (tierA !== tierB) return tierA - tierB;
     
-    // Within same tier, sort alphabetically by title
+    // Within same tier, logical progression based on prerequisites
+    // Topics with no prerequisites come first, then those with prerequisites
+    const prereqCountA = a.prerequisites?.length || 0;
+    const prereqCountB = b.prerequisites?.length || 0;
+    
+    if (prereqCountA !== prereqCountB) return prereqCountA - prereqCountB;
+    
+    // Define logical ordering for common foundational topics
+    const foundationalOrder: { [key: string]: number } = {
+      // Math foundations - build up from basics
+      'probability_theory': 1,
+      'expectation_theory': 2,
+      'convergence_limit_theorems': 3,
+      'statistical_inference': 4,
+      'regression_analysis': 5,
+      'semiparametric_theory': 6,
+      
+      // Causal foundations - conceptual to technical
+      'introduction_causal_inference': 10,
+      'potential_outcomes': 11,
+      'causal_dags': 12,
+      'd_separation': 13,
+      'do_calculus': 14,
+      'identification': 15,
+      'confounding': 16,
+      'selection_bias': 17,
+      
+      // Study designs - simple to complex
+      'randomization': 20,
+      'observational': 21,
+      'matching': 22,
+      'regression_discontinuity': 23,
+      'instrumental_variables': 24,
+      'difference_in_differences': 25,
+      
+      // Advanced topics
+      'mediation': 30,
+      'time_varying': 31,
+      'sensitivity_analysis': 32,
+      'machine_learning_causal': 33,
+    };
+    
+    const idA = a.id.toLowerCase().replace(/[^a-z_]/g, '_');
+    const idB = b.id.toLowerCase().replace(/[^a-z_]/g, '_');
+    
+    const orderA = foundationalOrder[idA] || 999;
+    const orderB = foundationalOrder[idB] || 999;
+    
+    if (orderA !== orderB) return orderA - orderB;
+    
+    // Finally, sort alphabetically by title
     return a.title.localeCompare(b.title);
   });
 

@@ -36,6 +36,55 @@ const EstimandsLibrary = () => {
     if (selectedDesign !== 'all' && e.design !== selectedDesign) return false;
     if (selectedFamily !== 'all' && e.estimand_family !== selectedFamily) return false;
     return true;
+  }).sort((a, b) => {
+    // Define tier order
+    const tierOrder = { 'Basic': 1, 'Intermediate': 2, 'Advanced': 3, 'Frontier': 4 };
+    const tierA = tierOrder[a.tier as keyof typeof tierOrder] || 5;
+    const tierB = tierOrder[b.tier as keyof typeof tierOrder] || 5;
+    
+    if (tierA !== tierB) return tierA - tierB;
+    
+    // Within each tier, define logical progression order
+    const logicalOrder: { [key: string]: number } = {
+      // Basic: Simple population effects first
+      'ATE': 1,
+      'ATT': 2,
+      'ATC': 3,
+      'CATE': 4,
+      'ITE': 5,
+      
+      // Intermediate: Standard causal methods
+      'NDE': 10,
+      'NIE': 11,
+      'IV': 12,
+      'LATE': 13,
+      'RD': 14,
+      'DID': 15,
+      
+      // Advanced: Complex/dynamic methods
+      'TIME_VARYING': 20,
+      'DYNAMIC': 21,
+      'MEDIATION_COMPLEX': 22,
+      'QTE': 23,
+      'SURVIVAL': 24,
+      
+      // Frontier: ML and modern methods
+      'ML_CATE': 30,
+      'DEEP_LEARNING': 31,
+      'ADAPTIVE': 32,
+    };
+    
+    const orderA = logicalOrder[a.id] || 999;
+    const orderB = logicalOrder[b.id] || 999;
+    
+    if (orderA !== orderB) return orderA - orderB;
+    
+    // If not in logical order map, sort by family then alphabetically
+    if (a.estimand_family !== b.estimand_family) {
+      return a.estimand_family.localeCompare(b.estimand_family);
+    }
+    
+    return a.short_name.localeCompare(b.short_name);
   });
 
   return (
