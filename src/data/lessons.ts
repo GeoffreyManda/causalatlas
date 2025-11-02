@@ -1,6 +1,7 @@
 import { estimandsData } from './estimands';
 import { allTheoryTopics } from './allTheoryTopics';
 import { dagLessons } from './dagLessons';
+import comprehensiveLessons from './comprehensiveLessons';
 
 export interface Lesson {
   id: string;
@@ -42,6 +43,7 @@ export const theoryLessons: Lesson[] = allTheoryTopics
 
 // All lessons combined
 export const allLessons: Lesson[] = [
+  ...comprehensiveLessons,  // Comprehensive lessons from "What If" and "Causality" books
   ...dagLessons,
   ...theoryLessons,
   ...estimandLessons

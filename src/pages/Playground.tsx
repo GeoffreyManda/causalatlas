@@ -13,6 +13,8 @@ import { GraphicsCanvas } from '@/components/GraphicsCanvas';
 import { executePython, executeR } from '@/lib/codeExecution';
 import { allLessons, lessonsByTier, type Lesson } from '@/data/lessons';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { translateCode, type Language } from '@/lib/codeTranslator';
+import { ArrowRightLeft } from 'lucide-react';
 
 const STARTER_CODE = {
   python: `# Python Code Editor with Visualization
@@ -139,6 +141,7 @@ const Playground = () => {
   const [activeView, setActiveView] = useState('output');
   const [showLessons, setShowLessons] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [targetLanguage, setTargetLanguage] = useState<string>('r');
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -397,6 +400,24 @@ const Playground = () => {
     });
   };
 
+  const translateCurrentCode = () => {
+    try {
+      const translated = translateCode(code, language as Language, targetLanguage as Language);
+      setCode(translated);
+      setLanguage(targetLanguage);
+      toast({
+        title: 'Code translated',
+        description: `Translated from ${language} to ${targetLanguage}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Translation failed',
+        description: error.message || 'Could not translate code',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const downloadCode = () => {
     const blob = new Blob([code], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -432,6 +453,29 @@ const Playground = () => {
               <SelectItem value="html">HTML</SelectItem>
             </SelectContent>
           </Select>
+
+          <div className="flex items-center gap-2">
+            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+            <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Translate to" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="python">Python</SelectItem>
+                <SelectItem value="javascript">JavaScript</SelectItem>
+                <SelectItem value="r">R</SelectItem>
+                <SelectItem value="html">HTML</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={translateCurrentCode}
+              variant="outline"
+              size="sm"
+              disabled={language === targetLanguage}
+            >
+              Translate
+            </Button>
+          </div>
 
           <Button onClick={runCode} disabled={running} size="sm">
             {running ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}

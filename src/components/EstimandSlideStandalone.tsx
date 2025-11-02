@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { allTheoryTopics } from '@/data/allTheoryTopics';
 import { estimandFamilies } from '@/data/estimandFamilies';
+import { getSlideContentByFamily } from '@/data/estimandSlideContent';
 
 interface EstimandSlideStandaloneProps {
   estimand: Estimand;
@@ -35,6 +36,9 @@ interface EstimandSlideStandaloneProps {
 }
 
 const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, totalSlides, onNavigate, onSlideChange, estimandId, onDownload, onPreviousDeck, onNextDeck, hasPreviousDeck, hasNextDeck }: EstimandSlideStandaloneProps) => {
+  // Get comprehensive slide content
+  const slideContent = getSlideContentByFamily(estimand.estimand_family, estimand.framework, estimand.design, estimand.id);
+
   // Group topics and estimands by tier
   const theoryByTier = {
     Foundational: allTheoryTopics.filter(t => t.tier === 'Foundational'),
@@ -185,7 +189,7 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
     }
   }
 
-  // Slides for Data Structure & Study Design (placeholder)
+  // Slides for Data Structure & Study Design
   if (slideIndex === currentSlide++) {
     return (
       <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
@@ -193,9 +197,44 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
           <FileText className="h-10 w-10 text-primary" />
           <h2 className="text-4xl font-bold">Data Structure & Study Design</h2>
         </div>
-        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
-          <p>*Content pending. This section will cover: required variables, time indices, mediators/instruments/negative controls, and compatible designs (parallel/cluster/observational/RD/target trial/survey).* </p>
+        <div className="grid grid-cols-2 gap-6">
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Target className="h-6 w-6 text-primary" />
+              Required Variables
+            </h3>
+            <ul className="space-y-2 text-base">
+              {slideContent.dataStructure.requiredVariables.map((v, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{v}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Activity className="h-6 w-6 text-primary" />
+              Compatible Designs
+            </h3>
+            <ul className="space-y-2 text-base">
+              {slideContent.dataStructure.compatibleDesigns.map((d, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>{d}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
+        <Card className="p-6 mt-6 bg-muted/30">
+          <p className="text-base mb-3">
+            <strong className="text-primary">Time Structure:</strong> {slideContent.dataStructure.timeStructure}
+          </p>
+          <p className="text-base">
+            <strong className="text-primary">Sample Size:</strong> {slideContent.dataStructure.sampleSizeConsiderations}
+          </p>
+        </Card>
       </div>
     );
   }
@@ -236,7 +275,7 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
     }
   }
 
-  // Slides: Diagnostics & Validation (placeholder)
+  // Slides: Diagnostics & Validation
   if (slideIndex === currentSlide++) {
     return (
       <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
@@ -244,14 +283,57 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
           <Activity className="h-10 w-10 text-primary" />
           <h2 className="text-4xl font-bold">Diagnostics & Validation</h2>
         </div>
-        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
-          <p>*Content pending. This section will cover: overlap/positivity checks, weight distributions, misspecification tests, IF residual diagnostics, and ML stability.*</p>
+        <div className="grid grid-cols-2 gap-6">
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Positivity Checks</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.diagnostics.positivityChecks.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Balance Assessment</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.diagnostics.balanceAssessment.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Model Checks</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.diagnostics.modelChecks.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Residual Diagnostics</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.diagnostics.residualDiagnostics.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">✓</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       </div>
     );
   }
 
-  // Slides: Sensitivity & Robustness (placeholder)
+  // Slides: Sensitivity & Robustness
   if (slideIndex === currentSlide++) {
     return (
       <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
@@ -259,14 +341,57 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
           <Activity className="h-10 w-10 text-primary" />
           <h2 className="text-4xl font-bold">Sensitivity & Robustness</h2>
         </div>
-        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
-          <p>*Content pending. This section will cover: hidden bias (Rosenbaum Γ, E-values), MNAR/measurement error, transport robustness, and tipping-point curves.*</p>
+        <div className="grid grid-cols-2 gap-6">
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Unmeasured Confounding</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.sensitivity.unmeasuredConfounding.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">⚠</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Measurement Error</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.sensitivity.measurementError.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">⚠</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Model Misspecification</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.sensitivity.modelMisspecification.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">⚠</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Transportability</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.sensitivity.transportability.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">⚠</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       </div>
     );
   }
 
-  // Slides: Ethics, Governance & Reporting (placeholder)
+  // Slides: Ethics, Governance & Reporting
   if (slideIndex === currentSlide++) {
     return (
       <div className="w-full aspect-[16/9] bg-background rounded-xl shadow-2xl p-12">
@@ -274,8 +399,51 @@ const EstimandSlideStandalone = ({ estimand, slideIndex, totalContentSlides, tot
           <BookOpen className="h-10 w-10 text-primary" />
           <h2 className="text-4xl font-bold">Ethics, Governance & Reporting</h2>
         </div>
-        <div className="prose prose-lg max-w-none text-lg leading-relaxed space-y-4 text-foreground/90">
-          <p>*Content pending. This section will cover: target trial emulation protocol fields, consent/provenance, bias/harms registry, and reproducibility (seeds, env hashes, audit logs).*</p>
+        <div className="grid grid-cols-2 gap-6">
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Target Trial Protocol</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.ethics.targetTrialProtocol.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">📋</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Data Provenance</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.ethics.dataProvenance.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">📁</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Bias Registry</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.ethics.biasRegistry.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">⚖️</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+          <Card className="p-6 bg-gradient-to-br from-card to-primary/5">
+            <h3 className="text-xl font-bold mb-4 text-primary">Reproducibility</h3>
+            <ul className="space-y-2 text-sm">
+              {slideContent.ethics.reproducibility.map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">🔄</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       </div>
     );
